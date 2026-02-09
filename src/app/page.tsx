@@ -11,7 +11,7 @@ export default async function Home() {
         {/* Logo */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white">
-            AICU <span className="text-aicu-primary">Portal</span>
+            AICU.jp <span className="text-aicu-primary">Portal</span>
           </h1>
           <p className="mt-1 text-sm text-gray-400">
             Point・Profile・Post

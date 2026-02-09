@@ -3,8 +3,8 @@ import Providers from '@/components/Providers'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'AICU Portal - Point, Profile, Post',
-  description: 'AICUポイント管理・Discord連携ポータル',
+  title: 'AICU.jp Portal - Point, Profile, Post',
+  description: 'AICU.jpポイント管理・Discord連携ポータル',
 }
 
 export default function RootLayout({
