@@ -152,6 +152,177 @@ const points = account.balance?.points || 0;
 
 ---
 
+## Wix Headless Loyalty Program 詳細
+
+> 参考: [Wix Loyalty Accounts API](https://dev.wix.com/docs/sdk/backend-modules/loyalty/accounts/introduction)
+
+### 概要
+
+Wix Loyalty Program は、ポイント付与・管理・利用を一元化するシステム。
+Headless 実装では **Wix JavaScript SDK** を使用してバックエンドからアクセスする。
+
+### インストール
+
+```bash
+npm install @wix/sdk @wix/loyalty
+```
+
+### 認証方式
+
+Headless 実装では **API Key 認証**を使用：
+
+```typescript
+import { createClient, ApiKeyStrategy } from "@wix/sdk";
+import { accounts } from "@wix/loyalty";
+
+const wixClient = createClient({
+  auth: ApiKeyStrategy({
+    apiKey: process.env.WIX_API_KEY,      // API Key Manager で生成
+    siteId: process.env.WIX_SITE_ID,       // Wix サイト ID
+    accountId: process.env.WIX_ACCOUNT_ID, // Wix アカウント ID
+  }),
+  modules: { accounts },
+});
+```
+
+**API Key の取得方法**:
+1. [Wix API Key Manager](https://manage.wix.com/account/api-keys) にアクセス
+2. 新しい API Key を生成
+3. Loyalty API への権限を付与
+
+### 利用可能なメソッド
+
+| メソッド | 説明 | 用途 |
+|---------|------|------|
+| `getAccount(accountId)` | アカウント ID で取得 | 既知のアカウント照会 |
+| `getAccountBySecondaryId(contactId/memberId)` | Contact ID または Member ID で取得 | **推奨**: Wix会員IDからポイント取得 |
+| `getCurrentMemberAccount()` | 現在ログイン中の会員 | Wix認証使用時のみ |
+| `listAccounts()` | アカウント一覧取得 | 管理画面用 |
+| `queryLoyaltyAccounts()` | 高度なクエリ | フィルタリング |
+| `earnPoints(accountId, points)` | ポイント付与 | 購入時等 |
+| `adjustPoints(accountId, points)` | ポイント調整（+/-） | 手動調整 |
+| `getProgramTotals()` | プログラム全体の統計 | ダッシュボード |
+
+### アカウントオブジェクト構造
+
+```typescript
+interface LoyaltyAccount {
+  _id: string;                    // アカウント ID
+  contactId: string;              // Wix Contact ID（連携キー）
+  memberId?: string;              // Wix Member ID
+  balance: {
+    points: number;               // 現在のポイント残高 ★重要
+  };
+  earned: {
+    points: number;               // 累計獲得ポイント
+  };
+  adjusted: {
+    points: number;               // 累計調整ポイント
+  };
+  redeemed: {
+    points: number;               // 累計利用ポイント
+  };
+  rewardAvailability: {
+    rewardsAvailable: boolean;    // 利用可能な特典があるか
+  };
+  _createdDate: string;
+  _updatedDate: string;
+}
+```
+
+### 実装例：ポイント残高取得
+
+```typescript
+// src/lib/wix.ts
+import { createClient, ApiKeyStrategy } from "@wix/sdk";
+import { accounts } from "@wix/loyalty";
+
+const wixClient = createClient({
+  auth: ApiKeyStrategy({
+    apiKey: process.env.WIX_API_KEY!,
+    siteId: process.env.WIX_SITE_ID!,
+    accountId: process.env.WIX_ACCOUNT_ID!,
+  }),
+  modules: { accounts },
+});
+
+/**
+ * Wix Contact ID からポイント残高を取得
+ * Discord ユーザーの Email → Wix Contact ID → Loyalty Account
+ */
+export async function getPointsBalance(wixContactId: string): Promise<number> {
+  try {
+    const { account } = await wixClient.accounts.getAccountBySecondaryId({
+      secondaryId: {
+        contactId: wixContactId,
+      },
+    });
+    return account?.balance?.points ?? 0;
+  } catch (error) {
+    console.error("Failed to get loyalty account:", error);
+    return 0;
+  }
+}
+
+/**
+ * ポイント履歴取得（将来実装）
+ */
+export async function getPointsHistory(wixContactId: string) {
+  // Wix Loyalty API では直接的な履歴取得はなく、
+  // Transactions API や Webhook で管理する必要がある
+  // → Phase 2 で実装検討
+}
+```
+
+### Webhook イベント
+
+ポイント変動を検知するためのイベント：
+
+| イベント | 発火タイミング |
+|---------|---------------|
+| `onAccountCreated` | 新規アカウント作成時 |
+| `onAccountUpdated` | アカウント情報更新時 |
+| `onAccountPointsUpdated` | **ポイント変動時** ★重要 |
+| `onAccountRewardAvailabilityUpdated` | 特典利用可能状態変更時 |
+
+### 制限事項・注意点
+
+1. **バックエンド専用 API**
+   - Loyalty API は Backend Module のため、クライアントサイドから直接呼び出せない
+   - Next.js の Server Actions または API Routes で実装
+
+2. **権限昇格が必要**
+   - 一部の操作（ポイント調整等）は `elevate()` 関数で権限昇格が必要
+
+3. **Contact ID vs Member ID**
+   - `contactId`: Wix CRM のコンタクト ID（必須）
+   - `memberId`: Wix Members のログイン会員 ID（任意）
+   - p.aicu.jp では `contactId` を使用（Discord Email でマッチング）
+
+4. **レート制限**
+   - Wix API には呼び出し制限あり（具体的な数値は要確認）
+   - キャッシュ戦略の検討が必要
+
+### p.aicu.jp での実装方針
+
+```
+[Discord OAuth]
+     ↓ email 取得
+[Supabase member_links]
+     ↓ wix_contact_id 検索
+[Wix Loyalty API] getAccountBySecondaryId(contactId)
+     ↓ balance.points 取得
+[Dashboard] ポイント表示
+```
+
+**初回連携フロー**:
+1. Discord ログイン → Email 取得
+2. Wix Contacts API で Email 検索 → Contact ID 取得
+3. Supabase に Discord ID ↔ Contact ID マッピング保存
+4. 以降は Supabase から Contact ID を取得してポイント照会
+
+---
+
 ## ユーザーデータ（2025/02時点）
 
 | 項目 | 数値 | 備考 |
@@ -211,9 +382,13 @@ const points = account.balance?.points || 0;
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
 
-# Wix Headless
-WIX_CLIENT_ID=
-WIX_API_KEY=
+# Wix Headless（API Key 認証）
+WIX_API_KEY=          # API Key Manager で生成
+WIX_SITE_ID=          # Wix サイト ID（サイト設定から取得）
+WIX_ACCOUNT_ID=       # Wix アカウント ID
+
+# Wix Headless（OAuth 認証 - 代替）
+WIX_CLIENT_ID=        # OAuth App の Client ID（将来用）
 
 # Stripe
 STRIPE_SECRET_KEY=
@@ -228,14 +403,28 @@ NEXTAUTH_SECRET=
 NEXTAUTH_URL=https://p.aicu.jp
 ```
 
+**Wix Site ID の取得方法**:
+1. Wix ダッシュボード → サイト設定
+2. または URL から: `https://manage.wix.com/dashboard/{SITE_ID}/...`
+
 ---
 
 ## 関連リソース
 
+### 内部リソース
 - **リポジトリ**: https://github.com/aicuai/p-aicu-ai
 - **経営会議Issue**: https://github.com/aicuai/japan-corp/issues/124
-- **Wix API ドキュメント**: https://dev.wix.com/docs/sdk/api-reference/loyalty
+
+### Wix Headless ドキュメント
+- **Wix Headless 概要**: https://dev.wix.com/docs/go-headless
+- **JavaScript SDK**: https://dev.wix.com/docs/sdk/articles/get-started/about-the-wix-java-script-sdk
+- **API Key 認証**: https://dev.wix.com/docs/go-headless/develop-your-project/admin-operations/create-a-java-script-sdk-client-with-an-api-key
+- **Loyalty Accounts API**: https://dev.wix.com/docs/sdk/backend-modules/loyalty/accounts/introduction
+- **API Key Manager**: https://manage.wix.com/account/api-keys
+
+### その他
 - **NextAuth.js v5**: https://authjs.dev/
+- **Supabase**: https://supabase.com/docs
 
 ---
 
