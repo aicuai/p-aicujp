@@ -11,15 +11,7 @@ export default async function Dashboard() {
   return (
     <main className="min-h-screen flex flex-col">
       {/* Header */}
-      <header
-        className="sticky top-0 z-40"
-        style={{
-          background: 'var(--glass-bg)',
-          borderBottom: '1px solid var(--glass-border)',
-          backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
-          WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
-        }}
-      >
+      <header className="sticky top-0 z-40 bg-gray-900/80 backdrop-blur-md border-b border-white/10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-bold text-white">
             AICU <span className="text-aicu-primary">Portal</span>
@@ -50,13 +42,7 @@ export default async function Dashboard() {
         </div>
 
         {/* Profile */}
-        <div
-          className="rounded-xl p-5"
-          style={{
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
-          }}
-        >
+        <div className="rounded-xl p-5 bg-white/5 border border-white/10">
           <h2 className="text-base font-semibold text-white mb-3">プロフィール</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -75,19 +61,11 @@ export default async function Dashboard() {
         </div>
 
         {/* Membership */}
-        <div
-          className="rounded-xl p-5"
-          style={{
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
-          }}
-        >
+        <div className="rounded-xl p-5 bg-white/5 border border-white/10">
           <h2 className="text-base font-semibold text-white mb-3">会員プラン</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-400">現在のプラン</span>
-              <span className="text-aicu-primary font-medium">Free</span>
-            </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">現在のプラン</span>
+            <span className="text-aicu-primary font-medium">Free</span>
           </div>
         </div>
 
@@ -96,21 +74,15 @@ export default async function Dashboard() {
           href="https://j.aicu.ai/JoinDiscord"
           target="_blank"
           rel="noopener noreferrer"
-          className="block rounded-xl p-5 transition-opacity hover:opacity-90"
-          style={{
-            background: 'linear-gradient(135deg, rgba(88,101,242,0.3), rgba(88,101,242,0.1))',
-            border: '1px solid rgba(88,101,242,0.3)',
-          }}
+          className="flex items-center justify-between rounded-xl p-5 bg-[#5865F2]/20 border border-[#5865F2]/30 hover:bg-[#5865F2]/30 transition-colors"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-white">Discord</h2>
-              <p className="text-sm text-gray-400 mt-0.5">コミュニティに参加する</p>
-            </div>
-            <span className="px-3 py-1.5 bg-[#5865F2] text-white rounded-lg text-sm font-medium">
-              参加
-            </span>
+          <div>
+            <h2 className="text-base font-semibold text-white">Discord</h2>
+            <p className="text-sm text-gray-400 mt-0.5">コミュニティに参加する</p>
           </div>
+          <span className="px-3 py-1.5 bg-[#5865F2] text-white rounded-lg text-sm font-medium">
+            参加
+          </span>
         </a>
       </div>
 
