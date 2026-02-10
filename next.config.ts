@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/api/push/:path*", headers: corsHeaders },
       { source: "/api/profile/:path*", headers: corsHeaders },
+      { source: "/api/surveys/:path*", headers: corsHeaders },
     ]
   },
 }
