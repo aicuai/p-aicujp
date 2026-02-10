@@ -2,6 +2,7 @@
 
 import { createServerSupabase } from "@/lib/supabase"
 import { redirect } from "next/navigation"
+import { headers } from "next/headers"
 
 /** サーバーコンポーネント用: 認証ユーザー取得 */
 export async function getUser() {
@@ -17,7 +18,10 @@ export async function signInWithEmail(formData: FormData) {
 
   const supabase = await createServerSupabase()
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3200"
+  // リクエスト元のドメインに合わせてリダイレクト先を決定
+  const h = await headers()
+  const origin = h.get("origin") || h.get("referer")
+  const siteUrl = origin ? new URL(origin).origin : (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3200")
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
