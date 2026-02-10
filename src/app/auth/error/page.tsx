@@ -20,18 +20,28 @@ function ErrorContent() {
   const message = errorMessages[error ?? ""] ?? errorMessages.Default
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="max-w-sm w-full space-y-6 text-center">
-        <h1 className="text-2xl font-bold text-white">認証エラー</h1>
-        <div className="rounded-xl p-5 bg-red-900/30 border border-red-700">
-          <p className="text-sm text-red-300">{message}</p>
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <div style={{ maxWidth: 360, width: "100%", textAlign: "center" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)", marginBottom: 16 }}>認証エラー</h1>
+        <div className="card" style={{ padding: 20, border: "1px solid rgba(239, 68, 68, 0.15)" }}>
+          <p style={{ fontSize: 14, color: "#ef4444" }}>{message}</p>
           {error && (
-            <p className="text-xs text-gray-400 mt-2">Error code: {error}</p>
+            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 8 }}>Error code: {error}</p>
           )}
         </div>
         <a
           href="/"
-          className="inline-block px-6 py-2 bg-aicu-primary hover:bg-aicu-secondary text-white rounded-lg text-sm transition-colors"
+          style={{
+            display: "inline-block",
+            marginTop: 20,
+            padding: "8px 24px",
+            background: "var(--aicu-teal)",
+            color: "#fff",
+            borderRadius: 8,
+            fontSize: 14,
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
         >
           ログインに戻る
         </a>
@@ -42,7 +52,7 @@ function ErrorContent() {
 
 export default function AuthErrorPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-white">Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}>Loading...</div>}>
       <ErrorContent />
     </Suspense>
   )

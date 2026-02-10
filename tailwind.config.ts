@@ -10,9 +10,8 @@ const config: Config = {
     extend: {
       colors: {
         aicu: {
-          primary: '#6366f1',
-          secondary: '#8b5cf6',
-          accent: '#f59e0b',
+          teal: '#41C9B4',
+          'teal-dark': '#35a896',
         },
       },
     },

@@ -92,7 +92,7 @@ SUPABASE_ANON_KEY=
 ## 開発コマンド
 
 ```bash
-# 開発サーバー
+# 開発サーバー（localhost:3200）
 npm run dev
 
 # ビルド

@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev      # 開発サーバー (localhost:3000)
+npm run dev      # 開発サーバー (localhost:3200)
 npm run build    # プロダクションビルド
 npm start        # プロダクションサーバー起動
 npm run lint     # ESLint (next lint)

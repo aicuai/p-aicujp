@@ -60,124 +60,149 @@ export default async function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gray-900 border-b border-gray-700">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-white">
-            AICU.jp <span className="text-aicu-primary">Portal</span>
-          </h1>
-          <div className="flex items-center gap-3">
+      <header className="glass-nav" style={{ position: "sticky", top: 0, zIndex: 40 }}>
+        <div style={{ maxWidth: 640, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="font-outfit" style={{ fontSize: 20, fontWeight: 800, color: "var(--aicu-teal)", letterSpacing: "-0.02em" }}>
+              AICU
+            </span>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+              Portal
+            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {user.image && (
               <img
                 src={user.image}
                 alt=""
-                className="w-8 h-8 rounded-full"
+                style={{ width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--border)" }}
               />
             )}
-            <span className="text-sm text-gray-300 hidden sm:inline">{user.name}</span>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)", display: "none" }} className="sm:!inline">
+              {user.name}
+            </span>
             <SignOutButton />
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <div className="flex-1 w-full max-w-lg mx-auto px-4 py-6 space-y-4">
-        {/* Points Card */}
-        <div className="bg-gradient-to-r from-aicu-primary to-aicu-secondary rounded-2xl p-5 text-white">
-          <p className="text-sm opacity-80">AICUポイント</p>
-          <p className="text-3xl font-bold mt-1">
-            {points !== null ? points.toLocaleString() : "---"}
-            <span className="text-base ml-1">pt</span>
-          </p>
-          {!wixLinked && (
-            <p className="text-xs opacity-60 mt-2">Wix 未連携（メールアドレスが一致すると自動連携されます）</p>
-          )}
-        </div>
-
-        {/* Profile */}
-        <div className="rounded-xl p-5 bg-gray-800 border border-gray-700">
-          <h2 className="text-base font-semibold text-white mb-3">プロフィール</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-400">名前</span>
-              <span className="text-white">
-                {wixProfile?.nickname ?? wixProfile?.firstName ?? user.name}
-              </span>
-            </div>
-            {wixProfile?.company && (
-              <div className="flex justify-between">
-                <span className="text-gray-400">会社</span>
-                <span className="text-white">{wixProfile.company}</span>
-              </div>
+      <div style={{ flex: 1, width: "100%", maxWidth: 640, margin: "0 auto", padding: "16px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Points Card */}
+          <div className="animate-in" style={{
+            borderRadius: "var(--radius)",
+            padding: 20,
+            color: "#fff",
+            background: "linear-gradient(135deg, var(--aicu-teal), var(--aicu-teal-dark))",
+            boxShadow: "0 8px 24px rgba(65, 201, 180, 0.2)",
+            position: "relative",
+            overflow: "hidden",
+          }}>
+            <div style={{
+              position: "absolute",
+              top: -20,
+              right: -20,
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.12)",
+            }} />
+            <p style={{ fontSize: 13, opacity: 0.85, fontWeight: 500, margin: 0 }}>AICUポイント</p>
+            <p style={{ fontSize: 36, fontWeight: 700, marginTop: 4, letterSpacing: "-0.02em" }}>
+              {points !== null ? points.toLocaleString() : "---"}
+              <span style={{ fontSize: 15, fontWeight: 400, marginLeft: 4, opacity: 0.8 }}>pt</span>
+            </p>
+            {!wixLinked && (
+              <p style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>Wix 未連携（メールアドレスが一致すると自動連携されます）</p>
             )}
-            <div className="flex justify-between">
-              <span className="text-gray-400">メール</span>
-              <span className="text-white">{user.email ?? "未設定"}</span>
+          </div>
+
+          {/* Profile */}
+          <div className="card animate-in-delay" style={{ padding: 20 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>プロフィール</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <ProfileRow label="名前" value={wixProfile?.nickname ?? wixProfile?.firstName ?? user.name ?? "—"} />
+              {wixProfile?.company && <ProfileRow label="会社" value={wixProfile.company} />}
+              <ProfileRow label="メール" value={user.email ?? "未設定"} />
+              <ProfileRow label="Discord" value="連携済み" valueColor="#34c759" />
+              <ProfileRow
+                label="Wix"
+                value={wixLinked ? "連携済み" : "未連携"}
+                valueColor={wixLinked ? "#34c759" : "#ff9500"}
+              />
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Discord</span>
-              <span className="text-green-400">連携済み</span>
+          </div>
+
+          {/* Membership */}
+          <div className="card animate-in-delay-2" style={{ padding: 20 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>会員プラン</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+              <span style={{ color: "var(--text-secondary)" }}>現在のプラン</span>
+              <span style={{ color: "var(--aicu-teal)", fontWeight: 600 }}>Free</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Wix</span>
-              {wixLinked ? (
-                <span className="text-green-400">連携済み</span>
-              ) : (
-                <span className="text-yellow-400">未連携</span>
+          </div>
+
+          {/* Superuser Panel */}
+          {isSuperuser && (
+            <div className="card animate-in-delay-2" style={{ padding: 20, border: "1px solid rgba(239, 68, 68, 0.15)" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "#ef4444", marginBottom: 12 }}>Super User</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, fontFamily: "monospace", color: "var(--text-tertiary)" }}>
+                <p>discord_id: {user.discord_id ?? "—"}</p>
+                <p>email: {user.email ?? "—"}</p>
+                <p>unified_user_id: {unifiedUserId ?? "—"}</p>
+              </div>
+              {!wixLinked && (
+                <div style={{ marginTop: 12 }}>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>Wix に登録しているメールアドレスを入力して連携</p>
+                  <LinkWixForm />
+                </div>
               )}
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Membership */}
-        <div className="rounded-xl p-5 bg-gray-800 border border-gray-700">
-          <h2 className="text-base font-semibold text-white mb-3">会員プラン</h2>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-400">現在のプラン</span>
-            <span className="text-aicu-primary font-medium">Free</span>
-          </div>
-        </div>
-
-        {/* Superuser Panel */}
-        {isSuperuser && (
-          <div className="rounded-xl p-5 bg-red-900/30 border border-red-700/50 space-y-3">
-            <h2 className="text-base font-semibold text-red-300">Super User</h2>
-            <div className="space-y-1 text-xs font-mono text-gray-400">
-              <p>discord_id: {user.discord_id ?? "—"}</p>
-              <p>email: {user.email ?? "—"}</p>
-              <p>unified_user_id: {unifiedUserId ?? "—"}</p>
+          {/* Discord Community */}
+          <a
+            href="https://j.aicu.ai/JoinDiscord"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="card card-hover animate-in-delay-3"
+            style={{ padding: 20, display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}
+          >
+            <div>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Discord</h2>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>コミュニティに参加する</p>
             </div>
-            {!wixLinked && (
-              <>
-                <p className="text-xs text-gray-400">Wix に登録しているメールアドレスを入力して連携</p>
-                <LinkWixForm />
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Discord Community */}
-        <a
-          href="https://j.aicu.ai/JoinDiscord"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-between rounded-xl p-5 bg-[#5865F2]/20 border border-[#5865F2]/30 hover:bg-[#5865F2]/30 transition-colors"
-        >
-          <div>
-            <h2 className="text-base font-semibold text-white">Discord</h2>
-            <p className="text-sm text-gray-400 mt-0.5">コミュニティに参加する</p>
-          </div>
-          <span className="px-3 py-1.5 bg-[#5865F2] text-white rounded-lg text-sm font-medium">
-            参加
-          </span>
-        </a>
+            <span style={{
+              padding: "6px 14px",
+              background: "#5865F2",
+              color: "#fff",
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              boxShadow: "0 2px 8px rgba(88, 101, 242, 0.2)",
+            }}>
+              参加
+            </span>
+          </a>
+        </div>
       </div>
 
       {/* Footer */}
-      <div className="text-center text-xs text-gray-600 py-4">
+      <div style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", padding: "16px" }}>
         &copy; 2026 AICU Japan Inc.
       </div>
     </main>
+  )
+}
+
+function ProfileRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+      <span style={{ color: "var(--text-secondary)" }}>{label}</span>
+      <span style={{ color: valueColor ?? "var(--text-primary)", fontWeight: valueColor ? 500 : 400 }}>{value}</span>
+    </div>
   )
 }

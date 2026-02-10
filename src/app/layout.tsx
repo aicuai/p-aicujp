@@ -1,6 +1,19 @@
 import type { Metadata } from 'next'
+import { Noto_Sans_JP, Outfit } from 'next/font/google'
 import Providers from '@/components/Providers'
 import './globals.css'
+
+const notoSansJP = Noto_Sans_JP({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '900'],
+  variable: '--font-noto',
+})
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-outfit',
+})
 
 export const metadata: Metadata = {
   title: 'AICU.jp Portal - Point, Profile, Post',
@@ -13,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ja">
-      <body className="min-h-screen bg-gray-900 text-white antialiased">
+    <html lang="ja" className={`${notoSansJP.variable} ${outfit.variable}`}>
+      <body className="min-h-screen">
         <Providers>{children}</Providers>
       </body>
     </html>
