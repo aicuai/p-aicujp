@@ -358,7 +358,7 @@ export default async function Dashboard() {
           <a href="https://www.aicu.blog/terms/plan-free" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>利用規約</a>
           <a href="https://www.aicu.blog/terms/legal" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>法的免責事項</a>
         </div>
-        <p>&copy; 2026 AICU Japan Inc.</p>
+        <p>&copy; 2026 AICU Japan 株式会社</p>
       </footer>
     </main>
   )

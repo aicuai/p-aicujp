@@ -59,7 +59,7 @@ export default function PolicyPage() {
 
           <Section title="4. データの管理">
             <p>
-              収集されたデータは、AICU Inc.が厳重に管理します。
+              収集されたデータは、AICU Japan 株式会社が厳重に管理します。
               データの保管にはSupabaseを使用し、アクセス制御とデータの暗号化を実施しています。
             </p>
           </Section>
@@ -78,7 +78,7 @@ export default function PolicyPage() {
 
           <Section title="6. プライバシーポリシー" last>
             <p>
-              AICU Inc.のプライバシーポリシーについては、以下をご確認ください。
+              AICU Japan 株式会社のプライバシーポリシーについては、以下をご確認ください。
             </p>
             <p style={{ marginTop: 8 }}>
               <a href="https://corp.aicu.ai/ja/privacy" target="_blank" rel="noopener" style={{ color: "#0031D8", textDecoration: "underline" }}>
@@ -90,7 +90,7 @@ export default function PolicyPage() {
 
         {/* Footer */}
         <div style={{ textAlign: "center", marginTop: 24, fontSize: 12, color: "#bbb" }}>
-          AICU Inc. / <a href="https://aicu.jp" style={{ color: "var(--aicu-teal, #41C9B4)", textDecoration: "none" }}>aicu.jp</a>
+          AICU Japan 株式会社 / <a href="https://aicu.jp" style={{ color: "var(--aicu-teal, #41C9B4)", textDecoration: "none" }}>aicu.jp</a>
         </div>
       </div>
     </div>
