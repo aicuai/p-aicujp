@@ -17,6 +17,29 @@ function getLocalReaction(currentQ, answer) {
   return LOCAL_REACTIONS[idx];
 }
 
+// Progress milestones — shown once at each threshold
+const PROGRESS_MILESTONES = [
+  { at: 0.25, text: "4分の1まで来ました！" },
+  { at: 0.50, text: "半分まで来ました！あと少しです" },
+  { at: 0.75, text: "あと4分の1！もうすぐ完了です" },
+  { at: 0.90, text: "あともう少しで終わりです！" },
+];
+const _shownMilestones = new Set();
+
+function getProgressComment(pct, answered, total) {
+  for (const m of PROGRESS_MILESTONES) {
+    if (pct >= m.at && !_shownMilestones.has(m.at)) {
+      // Check the previous answer count didn't already cross this threshold
+      if ((answered - 1) / total < m.at) {
+        _shownMilestones.add(m.at);
+        return m.text;
+      }
+      _shownMilestones.add(m.at); // mark as passed even if we missed it
+    }
+  }
+  return null;
+}
+
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -747,8 +770,15 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
     saveProgress(surveyId, next, newAns);
 
     if (q.id !== "entry_1127213393" && answer) {
-      const reaction = getLocalReaction(q, answer);
-      if (reaction) await addMsg("reaction", reaction);
+      const currentAnswered = Object.keys(newAns).length;
+      const pct = totalQ > 0 ? currentAnswered / totalQ : 0;
+      const progressComment = getProgressComment(pct, currentAnswered, totalQ);
+      if (progressComment) {
+        await addMsg("reaction", progressComment);
+      } else {
+        const reaction = getLocalReaction(q, answer);
+        if (reaction) await addMsg("reaction", reaction);
+      }
     }
 
     // Advance past sections and skipped questions
