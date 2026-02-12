@@ -11,7 +11,7 @@ export const R2602_CONFIG: SurveyConfig = {
   estimatedMinutes: 5,
   questions: [
     // ── 同意 ──
-    { id: "section_intro", type: "section", title: '生成AI時代の"つくる人"調査 2026.02', description: "あなたの創造が、AIと社会をつなぐデータになる。\n所要時間：約5分 / 匿名回答 / 10,000 AICUポイント贈呈\n\n前回調査結果: https://u.aicu.jp/r/R2511\n調査協力: 一般財団法人デジタルコンテンツ協会（DCAJ）" },
+    { id: "section_intro", type: "section", title: '生成AI時代の"つくる人"調査 2026.02', description: "あなたの創造が、AIと社会をつなぐデータになる。\n所要時間：約5分 / 匿名回答 / 10,000 AICUポイント贈呈\n\n前回調査結果: https://u.aicu.jp/r/R2511\n調査協力: 一般財団法人デジタルコンテンツ協会（DCAJ）\nhttps://www.dcaj.or.jp/privacy/" },
     { id: "entry_1127213393", entryId: 1127213393, type: "single_choice", question: "本調査結果のデータ利用方針についてご同意いただけますか？", required: true, options: ["同意する","同意しない"] },
 
     // ── 基本情報 ──
@@ -39,9 +39,9 @@ export const R2602_CONFIG: SurveyConfig = {
     { id: "entry_998532907", entryId: 998532907, type: "single_choice", question: "AIに関する学習・スキルアップのために投資した月額平均は？", required: true, options: ["0円（無料の範囲）","有償〜月1,000円未満","月1,000〜5,000円","月5,000〜10,000円","月10,000～20,000円","月20,000円～30,000円","月30,000円～40,000円","月40,000円～50,000円","月50,000円以上"] },
     { id: "entry_2000848438", entryId: 2000848438, type: "multi_choice", question: "生成AIに関する知識・スキルを主にどこで学んでいますか？\n複数選択可", required: true, options: ["コミュニティ","オンライン動画コンテンツ","Web上の技術記事・ブログ","書籍・電子書籍","独学","特に学んでいない"] },
     { id: "entry_653106127", entryId: 653106127, type: "single_choice", question: "生成AIに関する知識・スキルで\"最も\"役に立つものは？\nベストを1つ選択", required: true, options: ["コミュニティ","オンライン動画コンテンツ","Web上の技術記事・ブログ","書籍・電子書籍","独学","特に学んでいない"] },
-    { id: "entry_1829344839", entryId: 1829344839, type: "multi_choice", question: "主に使用している制作環境（OS・ハードウェア）は？（複数選択可）", required: false, options: ["Windows 10以前","Windows 11","Copilot+ PC（AIアシスト搭載Windows）","AI PC（Neural Processing Unit搭載PCなど）","Mac（M1以前）","Mac（M2以降）","Linux環境","スマートフォン","タブレット","上記に該当しない・使っていない"] },
-    { id: "entry_505387619", entryId: 505387619, type: "dropdown", question: "主に使用している制作環境（GPU・計算環境）は？", required: true, options: ["クラウド演算基盤用GPU（L4／A100／H100／B100等）","サーバー用GPU(GB10, GeForce RTX 6000 ada等)","GeForce RTX 5000シリーズ","GeForce RTX 4000シリーズ","GeForce RTX 3000シリーズ","GeForce RTX 2000シリーズ","GPU搭載なし","AMD Radeonシリーズ","Apple Silicon","クラウド環境（Google Colab, AWS, GCP, RunPod など）","上記に該当しない・使っていない"] },
-    { id: "entry_1878680578", entryId: 1878680578, type: "multi_choice", question: "主に使用しているツール・サービスは？\n複数選択可", required: true, popularOptions: ["ChatGPT","ComfyUI","Midjourney","Stable Diffusion (SDXL等のオープンモデル)","Google Gemini(App/Web)"], options: ["A1111","Adobe Photoshop","Adobe Premiere","Adobe After Effects","AICU.jp","CapCut","ChatGPT","Civitai","CoeFont","Comfy Cloud","ComfyUI","DALL·E","DaVinci Resolve","Dreamina","FAL","ElevenLabs","Envato","Final Cut Pro","Flux","freepik","Genspark","GitHub","Google Gemini(App/Web)","Google ImageFX","Google Whisk","Google Veo3","Google Nano Banana","Hailuo (MiniMax)","higgsfield.ai","HuggingFace","Kling","krea.ai","dzine.ai","florafauna.ai","filmora","Forge","Leonardo.ai","Midjourney","n8n","NijiJourney","seaart.ai","Sora(App)","Sora2(API)","Stable Diffusion (SDXL等のオープンモデル)","Stability AI","Suno","RunPod","Runway","Topaz Video AI","Udio","vidu","Wan.video","にじボイス"] },
+    { id: "entry_1829344839", entryId: 1829344839, type: "multi_choice", question: "主に使用している制作環境（OS・ハードウェア）は？（複数選択可）", required: false, options: ["Windows 10以前","Windows 11","Copilot+ PC（AIアシスト搭載Windows）","AI PC（Neural Processing Unit搭載PCなど）","Mac","Linux環境","スマートフォン","タブレット","上記に該当しない・使っていない"] },
+    { id: "entry_505387619", entryId: 505387619, type: "dropdown", question: "使用している制作環境（GPU・計算環境）でもっとも強力な設備は？", required: true, options: ["クラウド演算基盤用GPU（L4／A100／H100／B100等）","サーバー用GPU(GB10, GeForce RTX 6000 ada等)","GeForce RTX 5000シリーズ","GeForce RTX 4000シリーズ","GeForce RTX 3000シリーズ","GeForce RTX 2000シリーズ","GPU搭載なし","AMD Radeonシリーズ","Apple Silicon","クラウド環境（Google Colab, AWS, GCP, RunPod など）","上記に該当しない・使っていない"] },
+    { id: "entry_1878680578", entryId: 1878680578, type: "multi_choice", question: "主に使用しているツール・サービスは？\n複数選択可（例はこちら: https://u.aicu.ai/R2602/tools ）", required: true, popularOptions: ["ChatGPT","ComfyUI","Midjourney","Stable Diffusion (SDXL等のオープンモデル)","Google Gemini(App/Web)","Claude","DALL·E","Sora(App)","Runway","Codex"], options: ["A1111","Adobe Photoshop","Adobe Premiere","Adobe After Effects","AICU.jp","CapCut","ChatGPT","Civitai","Claude","Codex","CoeFont","Comfy Cloud","ComfyUI","DALL·E","DaVinci Resolve","Dreamina","FAL","ElevenLabs","Envato","Final Cut Pro","Flux","freepik","Genspark","GitHub","Google Gemini(App/Web)","Google ImageFX","Google Whisk","Google Veo3","Google Nano Banana","Hailuo (MiniMax)","higgsfield.ai","HuggingFace","Kling","krea.ai","dzine.ai","florafauna.ai","filmora","Forge","Leonardo.ai","Midjourney","n8n","NijiJourney","seaart.ai","Sora(App)","Sora2(API)","Stable Diffusion (SDXL等のオープンモデル)","Stability AI","Suno","RunPod","Runway","Topaz Video AI","Udio","vidu","Wan.video","にじボイス"] },
     { id: "entry_230852343", entryId: 230852343, type: "single_choice", question: "サブスク料金の月額合計は？", required: true, options: ["0円（無料の範囲）","有償〜月1,000円未満","月1,000〜5,000円","月5,000〜10,000円","月10,000～20,000円","月20,000円～30,000円","月30,000円～40,000円","月40,000円～50,000円","月50,000円以上"] },
 
     // ── Q13 グリッド（各行が独立 entry ID）──（AI利用者のみ）
@@ -62,22 +62,22 @@ export const R2602_CONFIG: SurveyConfig = {
     { id: "entry_537892144", entryId: 537892144, type: "multi_choice", question: "AIの制作・利用におけるボトルネックを最大3つまで選択してください。", required: true, options: ["技術的な難しさ（学習コスト）","利用コストの高さ（サブスク・クレジット）","進化が速すぎる","学習情報の不足・情報の新陳代謝の速さ","著作権・倫理上の問題","成果物のクオリティ（破綻）の修正コスト","成果物に対する評価（安すぎる、価値が理解されない）","周囲の理解が得られないこと（所属組織の制限や文化）","チームでの利用の難しさ（複数人でのAI協働）","生成時間の長さ・計算リソースの不足（特に動画生成関連）","PCスペック・ハードウェアの費用","法規制・ガイドラインや監査の不明確さ","日本語対応や文化的能力の弱さ","その他"] },
 
     // ── DCAJ 深掘り質問（AI利用者のみ） ──
-    { id: "section_dcaj", type: "section", title: "創作活動とAIの深掘り", description: "一般財団法人デジタルコンテンツ協会（DCAJ）との共同調査項目です。\nhttps://www.dcaj.or.jp/privacy/", skipIf: { questionId: "entry_217192455", equals: "どちらもしていない" } },
+    { id: "section_dcaj", type: "section", title: "創作活動とAIの深掘り（DCAJ共同調査）", skipIf: { questionId: "entry_217192455", equals: "どちらもしていない" } },
     { id: "dcaj_Q1", type: "multi_choice", question: "現在の創作活動において、AIはどの工程で、どのような役割を果たしていますか。", required: true, options: ["企画・アイデア出し","ラフ制作・試作","本制作（成果物の生成）","修正・ブラッシュアップ","納品物の量産・バリエーション展開","クライアント説明・提案資料作成","学習・研究・検証目的","その他"] },
     { id: "dcaj_Q1a", type: "textarea", question: "上記で選んだ工程について、具体的な使い方やAIを使う理由があれば教えてください。", placeholder: "なぜそこにAIを使うのか、どう助かっているのか...", required: false },
-    { id: "dcaj_Q2", type: "textarea", question: "AIを用いた作品について、ご自身はどのようにオリジナリティや作者性を捉えていますか。", placeholder: "AI利用時でも「自分の創作」と感じる根拠は...", required: false },
+    { id: "dcaj_Q2", type: "multi_choice", question: "AIを用いた作品について、ご自身はどのようにオリジナリティや作者性を捉えていますか。", required: false, options: ["「タイトル」を工夫する","プロンプトを工夫する","大量に生成して吟味する","詳細を作り込む","その他（自由記述）"] },
     { id: "dcaj_Q3", type: "multi_choice", question: "ご自身の作品がAIの学習データとして使われることについて、どう感じていますか。", required: true, options: ["非商用であれば許容できる","商用利用なら対価や許諾が必要","学習用途でも事前同意が必要","条件次第で許容できるが現状は不安","原則として望ましくない","よく分からない／判断が難しい"] },
-    { id: "dcaj_Q3a", type: "textarea", question: "どの程度なら利用されてもよいと思いますか。条件があれば教えてください。", placeholder: "例：クレジット表示、オプトアウト、収益分配、用途制限など...", required: false },
-    { id: "dcaj_Q4", type: "textarea", question: "AIの普及によって、仕事の内容や報酬、評価のされ方に変化はありましたか。", placeholder: "仕事の増減・単価・役割変化など具体的なエピソードを...", required: false },
+    { id: "dcaj_Q3a", type: "multi_choice", question: "どの程度なら利用されてもよいと思いますか。条件があれば教えてください。", required: false, options: ["クレジット表示があれば許容","オプトアウトできれば許容","収益分配があれば許容","用途制限があれば許容","どんな条件でも不可","その他（自由記述）"] },
+    { id: "dcaj_Q4", type: "multi_choice", question: "AIの普及によって、仕事の内容や報酬、評価のされ方に変化はありましたか。", required: false, options: ["仕事が速くなった","仕事が多くなった","報酬が増えた","報酬が減った","評価されるようになった","評価されなくなった","特に変化はない","その他（自由記述）"] },
     { id: "section_dcaj_ethics", type: "section", title: "倫理と制度", skipIf: { questionId: "entry_217192455", equals: "どちらもしていない" } },
     { id: "dcaj_Q5", type: "multi_choice", question: "AI生成コンテンツに対して、倫理的・社会的に懸念している点はありますか。", required: true, options: ["著作権・権利侵害","責任の所在が不明確","評価や価格の下落","誤情報・品質問題","炎上・社会的反発","国・業界ルールの未整備","特にない","その他"] },
     { id: "dcaj_Q5a", type: "textarea", question: "懸念点について、具体的な事例や理由があれば教えてください。", placeholder: "経験談や想定ケースなど...", required: false },
     { id: "dcaj_Q6", type: "single_choice", question: "現在の法律や業界ルールについて、十分だと感じますか。", required: true, options: ["十分だと思う","一部は対応できているが不足している","不足していると感じる","分からない"] },
-    { id: "dcaj_Q6a", type: "textarea", question: "どういったルール設計が望ましいと思いますか。", placeholder: "例：表示義務、学習データ透明化、契約標準、報酬分配、監査など...", required: false },
+    { id: "dcaj_Q6a", type: "multi_choice", question: "どういったルール設計が望ましいと思いますか。", required: false, options: ["AI生成物の表示義務","学習データの透明化","契約標準の整備","報酬分配の仕組み","第三者監査制度","その他（自由記述）"] },
     { id: "section_dcaj_future", type: "section", title: "人間クリエイターの価値と支援", skipIf: { questionId: "entry_217192455", equals: "どちらもしていない" } },
-    { id: "dcaj_Q7", type: "textarea", question: "AI時代において、人間のクリエイターにしか担えない価値は何だと思いますか。", placeholder: "AIでは代替しにくい価値とは...", required: false },
-    { id: "dcaj_Q8", type: "textarea", question: "国の支援として、どんなことがあるとあなたの生成AI作品を安心して展開できますか？", placeholder: "制度・ガイドライン・支援策など...", required: false },
-    { id: "dcaj_Q9", type: "textarea", question: "特に、作品や素材を海外展開する際に欲しい支援等はありますか？", placeholder: "法制度差、契約、表示、流通、翻訳など...", required: false },
+    { id: "dcaj_Q7", type: "multi_choice", question: "AI時代において、人間のクリエイターにしか担えない価値は何だと思いますか。", required: false, options: ["意図を持つこと（なぜそれを作るのかという動機・使命）","責任を引き受けること（社会的・倫理的・法的責任）","文脈を読む力（文化・歴史・空気感を踏まえた判断）","身体性に根ざした表現（体験・感情・感覚に裏打ちされた創作）","当事者性（自分の人生や立場から語るリアリティ）","価値判断と編集（何を選び、何を捨てるかを決める力）","問いを立てる力（まだ言語化されていない問題を発見する力）","関係性を築く力（共感・信頼・コミュニティ形成）","越境と統合（異分野・異文化をつなぎ直す構想力）","リスクを取る決断（失敗や批判を引き受ける覚悟）","物語を生きること（創作と人生が接続していること）","未来へのビジョン提示（まだ存在しない社会像を描く力）","その他（自由記述）"] },
+    { id: "dcaj_Q8", type: "multi_choice", question: "国の支援として、どんなことがあるとあなたの生成AI作品を安心して展開できますか？", required: false, options: ["ガイドラインの整備","法的相談窓口の設置","契約書テンプレートの提供","補助金・助成金制度","AI作品の認証制度","教育・研修プログラム","その他（自由記述）"] },
+    { id: "dcaj_Q9", type: "multi_choice", question: "特に、作品や素材を海外展開する際に欲しい支援等はありますか？", required: false, options: ["各国の法制度情報の提供","契約書・ライセンスの多言語化支援","翻訳・ローカライズ支援","海外マーケットプレイスへの出展支援","国際的な権利保護の枠組み","その他（自由記述）"] },
     // Note: DCAJ Q10 (ヒアリング協力) is excluded — R2602 already has entry_1667631330
 
     // ── 教育・証明 ──（AI利用者のみ）
@@ -88,7 +88,7 @@ export const R2602_CONFIG: SurveyConfig = {
 
     // ── 発表・権利 ──（AI利用者のみ）
     { id: "section_publish", type: "section", title: "発表と権利", skipIf: { questionId: "entry_217192455", equals: "どちらもしていない" } },
-    { id: "entry_333973041", entryId: 333973041, type: "multi_choice", question: "AI作品を公開・発表する際の主なプラットフォームは？（複数選択可）", required: true, options: ["X (旧Twitter)","Instagram / TikTok (SNS)","YouTube / Vimeo (動画プラットフォーム)","note / ブログ","Pixiv / ArtStation (イラスト・アート系)","Booth / Coconala (マーケットプレイス・販売サイト)","自分のウェブサイト / ポートフォリオサイト","特定のコミュニティ内のみ","公開していない"] },
+    { id: "entry_333973041", entryId: 333973041, type: "multi_choice", question: "AI作品を公開・発表する際の主なプラットフォームは？（複数選択可）", required: true, options: ["X.com","Instagram / TikTok (SNS)","YouTube / Vimeo (動画プラットフォーム)","note / ブログ","Pixiv / ArtStation (イラスト・アート系)","Booth / Coconala (マーケットプレイス・販売サイト)","自分のウェブサイト / ポートフォリオサイト","特定のコミュニティ内のみ","公開していない"] },
     { id: "entry_259625141", entryId: 259625141, type: "single_choice", question: "AI作家・他者の応援予算は？", required: true, options: ["支払わない","〜1,000円/月","〜3,000円/月","〜5,000円/月","〜10,000円/月","それ以上"] },
     { id: "entry_363161546", entryId: 363161546, type: "multi_choice", question: "作品印刷物にQRコードで動画へリンクがある場合、どの媒体で関心がありますか？", required: true, options: ["名刺","年賀状・ポストカード","ポスター・チラシ・カタログ","履歴書・ポートフォリオ","展示（ギャラリー・即売会・イベント）","使わない"] },
     { id: "entry_448099795", entryId: 448099795, type: "single_choice", question: "AIで作った作品を他者が二次創作として利用する場合、どの条件を望みますか？", required: true, options: ["非商用は許諾（表示・共有OK）、商用は個別許諾","商用も含め個別に契約・許諾したい","加工(リミックス)は許可、再学習（機械学習データ）は不可","加工(リミックス)・再学習（機械学習データ）も無断で許諾可","一切許諾したくない（私的利用の範囲のみ希望）","よく分からない／ルールは未定"] },
@@ -107,6 +107,6 @@ export const R2602_CONFIG: SurveyConfig = {
 
     // ── 報酬受取 ──
     { id: "section_reward", type: "section", title: "報酬の受け取り", description: "ポイント付与やインタビューにご協力いただける方は、メールアドレスをご入力ください。" },
-    { id: "entry_1243761143", entryId: 1243761143, type: "text", question: "メールアドレス（AICU.jp での登録メールアドレス）", placeholder: "you@example.com", required: false },
+    { id: "entry_1243761143", entryId: 1243761143, type: "text", question: "メールアドレス（AICU.jp での登録メールアドレス）\nご登録のアドレスに謝礼を送付します", placeholder: "you@example.com", required: false },
   ],
 }

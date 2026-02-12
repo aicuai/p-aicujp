@@ -246,6 +246,16 @@ function TextInput({ q, onSubmit, initialValue }) {
     onSubmit(v.trim() || "");
   };
 
+  const handleKeyDown = (e) => {
+    if (ta) {
+      // Textarea: Ctrl+Enter to submit, Enter adds newline
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); }
+    } else {
+      // Text input: Enter to submit
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+    }
+  };
+
   const Tag = ta ? "textarea" : "input";
   return (
     <div>
@@ -254,7 +264,7 @@ function TextInput({ q, onSubmit, initialValue }) {
           ref={ref} value={v} rows={ta ? 3 : undefined} type={ta ? undefined : "text"}
           placeholder={q.placeholder || "入力してください..."}
           onChange={(e) => setV(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
+          onKeyDown={handleKeyDown}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           style={{ ...inputBase, ...(ta && { maxHeight: 140 }), ...(focused ? focusStyle : {}) }}
         />
@@ -268,7 +278,7 @@ function TextInput({ q, onSubmit, initialValue }) {
         </button>
       </div>
       <div style={{ fontSize: 12, color: s.textDim, marginTop: 6, paddingLeft: 4 }}>
-        Enter{"\u3067"}送信{!q.required && " / スキップ可"}
+        {ta ? "Ctrl+Enter\u3067送信" : "Enter\u3067送信"}{!q.required && " / スキップ可"}
       </div>
     </div>
   );
@@ -352,7 +362,19 @@ function Dropdown({ q, onSubmit }) {
 
 function MultiChoice({ q, onSubmit }) {
   const [sel, setSel] = useState(new Set());
+  const [otherText, setOtherText] = useState("");
   const toggle = (o) => setSel((p) => { const n = new Set(p); n.has(o) ? n.delete(o) : n.add(o); return n; });
+
+  const otherOption = q.options.find((o) => o.startsWith("その他"));
+  const otherSelected = otherOption && sel.has(otherOption);
+
+  const doSubmit = () => {
+    let result = Array.from(sel);
+    if (otherOption && sel.has(otherOption) && otherText.trim()) {
+      result = result.map((o) => o === otherOption ? `その他: ${otherText.trim()}` : o);
+    }
+    onSubmit(result.length > 0 ? result : []);
+  };
 
   // 2-option: auto-submit on tap
   if (q.options.length <= 2) {
@@ -377,9 +399,20 @@ function MultiChoice({ q, onSubmit }) {
           <button key={o} onClick={() => toggle(o)} className="lgf-choice" style={choiceBtnStyle(sel.has(o))}>{shortLabel(o)}</button>
         ))}
       </div>
+      {otherSelected && (
+        <div style={{ marginTop: 8 }}>
+          <input
+            type="text" value={otherText} placeholder="具体的に記入してください..."
+            onChange={(e) => setOtherText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); doSubmit(); } }}
+            autoFocus
+            style={{ ...inputBase, width: "100%", padding: "10px 14px", borderRadius: 16 }}
+          />
+        </div>
+      )}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
         <button
-          onClick={() => onSubmit(sel.size > 0 ? Array.from(sel) : [])}
+          onClick={doSubmit}
           disabled={q.required && sel.size === 0}
           className="lgf-submit"
           style={{
@@ -398,6 +431,7 @@ function MultiChoice({ q, onSubmit }) {
 
 function SearchableMulti({ q, onSubmit }) {
   const [sel, setSel] = useState(new Set());
+  const [customItems, setCustomItems] = useState([]);
   const [filter, setFilter] = useState("");
   const ref = useRef(null);
 
@@ -409,25 +443,50 @@ function SearchableMulti({ q, onSubmit }) {
     return n;
   });
 
+  const addCustom = (text) => {
+    const trimmed = text.trim();
+    if (!trimmed || sel.has(trimmed) || q.options.includes(trimmed)) return;
+    setCustomItems((p) => [...p, trimmed]);
+    setSel((p) => new Set([...p, trimmed]));
+  };
+
   const lower = filter.toLowerCase();
   const filtered = filter
     ? q.options.filter((o) => o.toLowerCase().includes(lower))
     : [];
   const unselectedFiltered = filtered.filter((o) => !sel.has(o));
 
-  // Popular options (shown as quick-select buttons)
+  // Popular options — always visible, selected items removed
   const popular = q.popularOptions || [];
+  const unselectedPopular = popular.filter((o) => !sel.has(o));
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (unselectedFiltered.length > 0) {
+        // Select the first match
+        toggle(unselectedFiltered[0]);
+        setFilter("");
+        ref.current?.focus();
+      } else if (filter.trim()) {
+        // No match: register as custom entry
+        addCustom(filter);
+        setFilter("");
+        ref.current?.focus();
+      }
+    }
+  };
 
   return (
     <div>
-      {/* Popular quick-select buttons */}
-      {popular.length > 0 && sel.size === 0 && !filter && (
+      {/* Popular quick-select buttons — always visible */}
+      {unselectedPopular.length > 0 && !filter && (
         <div style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 12, color: s.textDim, marginBottom: 6 }}>よく選ばれています</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {popular.map((o) => (
+            {unselectedPopular.map((o) => (
               <button key={o} onClick={() => toggle(o)} className="lgf-choice" style={{
-                ...choiceBtnStyle(sel.has(o)),
+                ...choiceBtnStyle(false),
                 background: "rgba(0,49,216,0.06)",
                 borderColor: "rgba(0,49,216,0.25)",
                 fontWeight: 600,
@@ -441,7 +500,10 @@ function SearchableMulti({ q, onSubmit }) {
       {sel.size > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
           {Array.from(sel).map((o) => (
-            <button key={o} onClick={() => toggle(o)} style={{
+            <button key={o} onClick={() => {
+              toggle(o);
+              setCustomItems((p) => p.filter((c) => c !== o));
+            }} style={{
               padding: "5px 12px", borderRadius: 16,
               background: "rgba(0,49,216,0.1)", border: "1px solid rgba(0,49,216,0.3)",
               color: s.accent, fontSize: 13, fontFamily: "inherit", cursor: "pointer",
@@ -458,8 +520,9 @@ function SearchableMulti({ q, onSubmit }) {
       <input
         ref={ref}
         value={filter}
-        placeholder="サービス名を入力して検索..."
+        placeholder="サービス名を入力（Enterで追加）..."
         onChange={(e) => setFilter(e.target.value)}
+        onKeyDown={handleKeyDown}
         style={{
           ...inputBase, width: "100%", marginBottom: 8,
           padding: "12px 16px", borderRadius: 20,
@@ -480,14 +543,14 @@ function SearchableMulti({ q, onSubmit }) {
             ))
           ) : (
             <div style={{ fontSize: 13, color: s.textDim, padding: "8px 4px" }}>
-              該当なし — 別のキーワードで検索してください
+              該当なし — Enterで「{filter}」を追加
             </div>
           )}
         </div>
       )}
 
       {/* Hint + submit */}
-      {!filter && sel.size === 0 && popular.length === 0 && (
+      {!filter && sel.size === 0 && unselectedPopular.length === 0 && (
         <div style={{ fontSize: 12, color: s.textDim, marginBottom: 8, paddingLeft: 4 }}>
           {q.options.length}件の候補から検索できます
         </div>
@@ -739,13 +802,10 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
       }];
     });
 
-    const newAns = { ...ansRef.current };
-    delete newAns[questions[prevQStep].id];
-    ansRef.current = newAns;
-    setAnswers(newAns);
-
+    // Keep old answer in ansRef so TextInput can use it as initialValue
+    // It will be overwritten when user re-answers
     setStep(prevQStep);
-    saveProgress(surveyId, prevQStep, newAns);
+    saveProgress(surveyId, prevQStep, ansRef.current);
     setShowInput(true);
     scroll();
   }, [prevQStep, questions, surveyId, scroll]);
@@ -859,7 +919,7 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
             }}>
               Powered by{" "}
               <span style={{ fontFamily: "'Outfit', sans-serif", color: s.teal, fontWeight: 700 }}>AICU</span>
-              {" "}LiquidGlassForm
+              {" "}Research
             </div>
           </div>
         ) : (<>
