@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "cdn.discordapp.com" },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/R2602", destination: "/q/R2602", permanent: false },
+    ]
+  },
   async headers() {
     const corsHeaders = [
       { key: "Access-Control-Allow-Origin", value: "https://aicu.jp" },
