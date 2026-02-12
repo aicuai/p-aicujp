@@ -16,11 +16,17 @@ type ResultsData = {
   updatedAt: string
 }
 
-const COLORS = [
-  "#4285F4", "#EA4335", "#FBBC04", "#34A853", "#FF6D01",
-  "#46BDC6", "#7B1FA2", "#C2185B", "#0097A7", "#689F38",
-  "#F4511E", "#6D4C41", "#546E7A", "#D81B60", "#1E88E5",
-]
+// Single-choice: AICU teal base with descending opacity
+function singleColor(rank: number): string {
+  const opacity = Math.max(0.25, 1 - rank * 0.12)
+  return `rgba(65, 201, 180, ${opacity})`
+}
+
+// Multi-choice: AICU blue base with descending opacity
+function multiColor(rank: number): string {
+  const opacity = Math.max(0.25, 1 - rank * 0.1)
+  return `rgba(0, 49, 216, ${opacity})`
+}
 
 export default function ResultsClient() {
   const [data, setData] = useState<ResultsData | null>(null)
@@ -34,11 +40,31 @@ export default function ResultsClient() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Disable right-click
+  useEffect(() => {
+    const prevent = (e: Event) => e.preventDefault()
+    document.addEventListener("contextmenu", prevent)
+    document.addEventListener("copy", prevent)
+    document.addEventListener("cut", prevent)
+    return () => {
+      document.removeEventListener("contextmenu", prevent)
+      document.removeEventListener("copy", prevent)
+      document.removeEventListener("cut", prevent)
+    }
+  }, [])
+
   return (
     <div style={{
       minHeight: "100dvh", background: "#f8f9fa", color: "#1a1a2e",
       fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans JP', sans-serif",
+      WebkitUserSelect: "none", userSelect: "none",
     }}>
+      {/* Print / copy prevention */}
+      <style>{`
+        @media print { body { display: none !important; } }
+        img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
+      `}</style>
+
       {/* Header */}
       <div style={{
         background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)",
@@ -76,8 +102,8 @@ export default function ResultsClient() {
           <div style={{ textAlign: "center", padding: 60, color: "#999" }}>回答データがありません</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {data.questions.map((q, qi) => (
-              <ChartCard key={q.id} q={q} colorOffset={qi} total={data.totalResponses} />
+            {data.questions.map((q) => (
+              <ChartCard key={q.id} q={q} />
             ))}
           </div>
         )}
@@ -88,13 +114,14 @@ export default function ResultsClient() {
         <a href="/q/R2602" style={{ color: "#0031D8", textDecoration: "none", fontWeight: 600 }}>調査に回答する</a>
         {" / "}
         <a href="/q/R2602/policy" style={{ color: "#888", textDecoration: "none" }}>データ利用方針</a>
-        <p style={{ marginTop: 8 }}>&copy; 2026 AICU Japan 株式会社</p>
+        <p style={{ marginTop: 8 }}>&copy; 2026 AICU Japan 株式会社 All rights reserved. 無断複製・転載禁止</p>
       </div>
     </div>
   )
 }
 
-function ChartCard({ q, colorOffset, total }: { q: ChartQuestion; colorOffset: number; total: number }) {
+function ChartCard({ q }: { q: ChartQuestion }) {
+  const isMulti = q.type === "multi_choice"
   const entries = Object.entries(q.counts).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])
   const maxVal = entries.length > 0 ? Math.max(...entries.map(([, v]) => v)) : 1
 
@@ -107,14 +134,14 @@ function ChartCard({ q, colorOffset, total }: { q: ChartQuestion; colorOffset: n
         {q.question}
       </h3>
       <p style={{ fontSize: 12, color: "#999", margin: "0 0 16px" }}>
-        {q.answered}件の回答{q.type === "multi_choice" ? "（複数選択）" : ""}
+        {q.answered}件の回答{isMulti ? "（複数選択可）" : ""}
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {entries.map(([label, count], i) => {
           const pct = q.answered > 0 ? Math.round((count / q.answered) * 100) : 0
           const barWidth = maxVal > 0 ? (count / maxVal) * 100 : 0
-          const color = COLORS[(i + colorOffset) % COLORS.length]
+          const color = isMulti ? multiColor(i) : singleColor(i)
           return (
             <div key={label}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
