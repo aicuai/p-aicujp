@@ -7,8 +7,9 @@ type Props = {
   surveyId?: string
   config: SurveyConfig
   email?: string
+  birthYear?: string
 }
 
-export default function SurveyForm({ surveyId, config, email }: Props) {
-  return <LiquidGlassForm formConfig={config} initialEmail={email} surveyLabel={surveyId} />
+export default function SurveyForm({ surveyId, config, email, birthYear }: Props) {
+  return <LiquidGlassForm formConfig={config} initialEmail={email} initialBirthYear={birthYear} surveyLabel={surveyId} />
 }

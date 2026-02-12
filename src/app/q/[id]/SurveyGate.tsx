@@ -91,8 +91,23 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
     setPhase("survey")
   }
 
+  // Extract birth year from consent data (current form state or saved localStorage)
+  const consentBirthYear = useMemo(() => {
+    // If user just filled the gate form, use that value
+    if (birthYear) return birthYear
+    // Otherwise read from localStorage (returning user)
+    try {
+      const saved = localStorage.getItem(CONSENT_KEY_PREFIX + surveyId)
+      if (saved) {
+        const consent = JSON.parse(saved)
+        if (consent.birthDate) return consent.birthDate.split("-")[0]
+      }
+    } catch { /* ignore */ }
+    return ""
+  }, [birthYear, surveyId])
+
   if (phase === "survey") {
-    return <SurveyForm surveyId={surveyId} config={config} email={email} />
+    return <SurveyForm surveyId={surveyId} config={config} email={email} birthYear={consentBirthYear} />
   }
 
   return (

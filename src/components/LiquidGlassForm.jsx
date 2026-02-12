@@ -627,17 +627,23 @@ function clearProgress(surveyId) {
 }
 
 // ─── Main component ───
-export default function LiquidGlassForm({ formConfig, onComplete = null, initialEmail = "", surveyLabel = "" }) {
+export default function LiquidGlassForm({ formConfig, onComplete = null, initialEmail = "", initialBirthYear = "", surveyLabel = "" }) {
   const surveyId = formConfig.sourceUrl || formConfig.title;
   const saved = useRef(loadProgress(surveyId));
 
-  // If initialEmail provided, pre-fill the reward email question
+  // Pre-fill from props (email, birth year)
   const initialAnswers = (() => {
     const base = saved.current?.answers || {};
     if (initialEmail && formConfig.questions) {
       const emailQ = formConfig.questions.find(q => q.id === "entry_1243761143");
       if (emailQ && !base[emailQ.id]) {
         base[emailQ.id] = initialEmail;
+      }
+    }
+    if (initialBirthYear && formConfig.questions) {
+      const birthQ = formConfig.questions.find(q => q.id === "entry_170746194");
+      if (birthQ && !base[birthQ.id]) {
+        base[birthQ.id] = initialBirthYear;
       }
     }
     return base;
