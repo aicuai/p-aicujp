@@ -80,8 +80,15 @@ export async function GET() {
       }
     })
 
+  // Check if any test data exists (for notice toggle)
+  const { count: testCount } = await db
+    .from("survey_responses")
+    .select("*", { count: "exact", head: true })
+    .eq("survey_id", "R2602")
+    .eq("is_test", true)
+
   return NextResponse.json(
-    { totalResponses, questions: chartQuestions, updatedAt: new Date().toISOString() },
+    { totalResponses, questions: chartQuestions, updatedAt: new Date().toISOString(), hasTestData: (testCount ?? 0) > 0 },
     { headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=300" } },
   )
 }

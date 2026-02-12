@@ -120,22 +120,28 @@ async function submitSurvey(config, answers, email) {
       });
     } catch { /* no-cors — ignore */ }
   }
-  // Custom API submission
+  // Custom API submission (with retry)
   if (config.submitUrl) {
-    // Use form email field as fallback if initialEmail is empty
     const effectiveEmail = email || answers["entry_1243761143"] || undefined;
-    try {
-      await fetch(config.submitUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          surveyId: config.sourceUrl || config.title,
-          answers,
-          submittedAt: new Date().toISOString(),
-          email: effectiveEmail,
-        }),
-      });
-    } catch { /* network error — ignore for now */ }
+    const payload = JSON.stringify({
+      surveyId: config.sourceUrl || config.title,
+      answers,
+      submittedAt: new Date().toISOString(),
+      email: effectiveEmail,
+    });
+    let saved = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(config.submitUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+        });
+        if (res.ok) { saved = true; break; }
+      } catch { /* retry */ }
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+    }
+    if (!saved) throw new Error("SUBMIT_FAILED");
   }
 }
 
@@ -801,7 +807,13 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
 
     if (next >= questions.length) {
       await addMsg("bot", "回答を送信しています...", 400);
-      await submitSurvey(formConfig, newAns, initialEmail);
+      try {
+        await submitSurvey(formConfig, newAns, initialEmail);
+      } catch {
+        await addMsg("bot", "送信に失敗しました。回答データは保存されています。ページを再読み込みして再送信してください。", 0);
+        setShowInput(false);
+        return;
+      }
       clearProgress(surveyId);
       // GTAG: survey complete
       if (typeof window !== "undefined" && window.gtag) {

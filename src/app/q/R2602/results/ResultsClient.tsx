@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
 type ChartQuestion = {
   id: string
@@ -14,6 +14,7 @@ type ResultsData = {
   totalResponses: number
   questions: ChartQuestion[]
   updatedAt: string
+  hasTestData?: boolean
 }
 
 // Single-choice: AICU teal base with descending opacity
@@ -28,9 +29,13 @@ function multiColor(rank: number): string {
   return `rgba(0, 49, 216, ${opacity})`
 }
 
+const SHARE_URL = "https://p.aicu.jp/q/R2602?utm_source=share&utm_medium=social&utm_campaign=R2602"
+const SHARE_TEXT = "生成AI時代の\"つくる人\"調査 R2602 に参加しよう！約5分で完了、10,000 AICUポイント付与"
+
 export default function ResultsClient() {
   const [data, setData] = useState<ResultsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     fetch("/api/surveys/R2602/results")
@@ -53,6 +58,21 @@ export default function ResultsClient() {
       document.removeEventListener("copy", prevent)
       document.removeEventListener("cut", prevent)
     }
+  }, [])
+
+  const handleShare = useCallback(async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "R2602 調査", text: SHARE_TEXT, url: SHARE_URL })
+        return
+      } catch { /* user cancelled or unsupported */ }
+    }
+    // Fallback: copy to clipboard (temporarily allow)
+    try {
+      await navigator.clipboard.writeText(`${SHARE_TEXT}\n${SHARE_URL}`)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { /* ignore */ }
   }, [])
 
   return (
@@ -87,13 +107,32 @@ export default function ResultsClient() {
       </div>
 
       {/* Notice */}
-      <div style={{
-        maxWidth: 720, margin: "16px auto 0", padding: "12px 20px",
-        background: "#FFF8E1", border: "1px solid #FFE082", borderRadius: 8,
-        fontSize: 13, color: "#6D4C00", lineHeight: 1.7,
-      }}>
-        <p style={{ margin: 0, fontWeight: 600 }}>こちらは速報（テスト入力）です</p>
-        <p style={{ margin: "4px 0 0" }}>個人情報に当たるデータは含まれておりません。アンケート参加後は最新のデータをみることができます。</p>
+      {data?.hasTestData !== false && (
+        <div style={{
+          maxWidth: 720, margin: "16px auto 0", padding: "12px 20px",
+          background: "#FFF8E1", border: "1px solid #FFE082", borderRadius: 8,
+          fontSize: 13, color: "#6D4C00", lineHeight: 1.7,
+        }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>こちらは速報（テスト入力を含みます）</p>
+          <p style={{ margin: "4px 0 0" }}>個人情報に当たるデータは含まれておりません。アンケート参加後は最新の本番データをみることができます。</p>
+        </div>
+      )}
+
+      {/* Share bar */}
+      <div style={{ maxWidth: 720, margin: "12px auto 0", textAlign: "center" }}>
+        <button
+          onClick={handleShare}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "10px 20px", borderRadius: 8,
+            border: "1px solid rgba(0,49,216,0.2)", background: "#fff",
+            color: "#0031D8", fontSize: 14, fontWeight: 600,
+            cursor: "pointer", fontFamily: "inherit",
+            transition: "all 0.2s",
+          }}
+        >
+          {copied ? "URL をコピーしました" : "この調査をシェアする"}
+        </button>
       </div>
 
       {/* Content */}
