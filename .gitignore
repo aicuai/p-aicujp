@@ -24,12 +24,20 @@ yarn-error.log*
 # IDE
 .idea/
 .vscode/
+.claude/
+.entire/
 *.swp
 *.swo
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Supabase
+supabase/.temp/
+
+# GAS compiled output
+gas/dist/
 
 # Vercel
 .vercel
