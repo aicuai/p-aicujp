@@ -1,0 +1,15 @@
+{
+  "name": "aicujp-mail-sender",
+  "version": "1.0.0",
+  "description": "AICU Japan メール送信 GAS (info@aicu.jp)",
+  "scripts": {
+    "build": "tsc",
+    "push": "tsc && clasp push",
+    "deploy": "tsc && clasp push && clasp deploy"
+  },
+  "dependencies": {
+    "@google/clasp": "^2.4.2",
+    "@types/google-apps-script": "^1.0.83",
+    "typescript": "^5.3.3"
+  }
+}
