@@ -23,6 +23,8 @@ const nextConfig: NextConfig = {
       { source: "/api/push/:path*", headers: corsHeaders },
       { source: "/api/profile/:path*", headers: corsHeaders },
       { source: "/api/surveys/:path*", headers: corsHeaders },
+      { source: "/api/mail/:path*", headers: corsHeaders },
+      { source: "/api/event/:path*", headers: corsHeaders },
     ]
   },
 }
