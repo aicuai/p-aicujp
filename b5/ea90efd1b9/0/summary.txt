@@ -1,0 +1,51 @@
+Supabase SQL Editor のURL:
+
+**https://supabase.com/dashboard/project/auyqabzjljmcefymxwgn/sql/new**
+
+以下の2つのSQLを順番に貼り付けて実行してください:
+
+---
+
+**1. mail_subscribers テーブル** (`sql/create_mail_subscribers.sql`):
+
+```sql
+CREATE TABLE IF NOT EXISTS mail_subscribers (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  email text NOT NULL,
+  categories text[] NOT NULL DEFAULT '{events}',
+  events text[] NOT NULL DEFAULT '{}',
+  lang text NOT NULL DEFAULT 'ja' CHECK (lang IN ('ja', 'en')),
+  source text,
+  ip_hash text,
+  unsub_token text DEFAULT encode(gen_random_bytes(16), 'hex'),
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'unsubscribed', 'bounced')),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  unsubscribed_at timestamptz,
+  UNIQUE(email)
+);
+ALTER TABLE mail_subscribers ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_mail_subscribers_status ON mail_subscribers(status);
+CREATE INDEX IF NOT EXISTS idx_mail_subscribers_events ON mail_subscribers USING GIN(events);
+CREATE INDEX IF NOT EXISTS idx_mail_subscribers_categories ON mail_subscribers USING GIN(categories);
+CREATE INDEX IF NOT EXISTS idx_mail_subscribers_unsub_token ON mail_subscribers(unsub_token);
+```
+
+**2. event_reactions テーブル** (`sql/create_event_reactions.sql`):
+
+```sql
+CREATE TABLE IF NOT EXISTS event_reactions (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  event_code text NOT NULL,
+  session_id text NOT NULL,
+  action text NOT NULL CHECK (action IN ('like', 'want_video', 'share')),
+  ip_hash text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(event_code, session_id, action, ip_hash)
+);
+ALTER TABLE event_reactions ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_event_reactions_count
+  ON event_reactions(event_code, session_id, action);
+```
+
+作成したら教えてください。テストスクリプトを再実行します。
