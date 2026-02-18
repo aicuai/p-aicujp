@@ -106,6 +106,58 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
     return ""
   }, [birthYear, surveyId])
 
+  // Check if survey is open
+  const now = new Date()
+  const opensAt = config.opensAt ? new Date(config.opensAt) : null
+  const closesAt = config.closesAt ? new Date(config.closesAt) : null
+  const isClosed = (opensAt && now < opensAt) || (closesAt && now > closesAt)
+
+  if (isClosed) {
+    return (
+      <div style={{
+        minHeight: "100dvh", background: "#f8f9fa", color: "#1a1a2e",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", padding: "40px 20px",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans JP', sans-serif",
+      }}>
+        <div style={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 24 }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, color: "var(--aicu-teal, #41C9B4)" }}>
+              AICU
+            </span>
+            <span style={{ fontSize: 17, fontWeight: 600, color: "#1a1a2e" }}>Research</span>
+          </div>
+          <div style={{
+            width: 68, height: 68, borderRadius: 20, margin: "0 auto 20px",
+            background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30,
+          }}>
+            &#128340;
+          </div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: "#1a1a2e" }}>
+            このアンケートは現在、入力を受け付けておりません。
+          </h2>
+          <p style={{ fontSize: 15, color: "#666", lineHeight: 1.7 }}>
+            {opensAt && now < opensAt
+              ? `開始予定: ${opensAt.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+              : "調査期間は終了しました。ご参加ありがとうございました。"
+            }
+          </p>
+          {config.reward && (
+            <p style={{ fontSize: 14, color: "#999", marginTop: 12 }}>
+              報酬: {config.reward}（開始後に回答可能になります）
+            </p>
+          )}
+          <div style={{ marginTop: 32, fontSize: 12, color: "#bbb" }}>
+            Powered by{" "}
+            <span style={{ fontFamily: "'Outfit', sans-serif", color: "var(--aicu-teal, #41C9B4)", fontWeight: 700 }}>AICU</span>
+            {" "}Research
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (phase === "survey") {
     return <SurveyForm surveyId={surveyId} config={config} email={email} birthYear={consentBirthYear} />
   }

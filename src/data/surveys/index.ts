@@ -41,6 +41,8 @@ export type SurveyConfig = {
   submitUrl?: string
   reward?: string
   estimatedMinutes?: number
+  opensAt?: string   // ISO 8601 — survey closed before this time
+  closesAt?: string  // ISO 8601 — survey closed after this time
   questions: SurveyQuestion[]
   mergedQuestions?: MergedQuestionSplit[]  // split merged answers for API submission
 }
