@@ -10,14 +10,19 @@ export default function LoginForm({ signInAction }: { signInAction: SignInAction
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(
     async (_prev: { error: string } | null, formData: FormData) => {
-      const result = await signInAction(formData)
-      if (result && "error" in result) {
-        return { error: result.error }
+      try {
+        const result = await signInAction(formData)
+        if (result && "error" in result) {
+          return { error: result.error || "不明なエラー" }
+        }
+        if (result && "success" in result) {
+          router.push("/auth/verify-request")
+          return null
+        }
+        return null
+      } catch {
+        return { error: "ログイン処理中にエラーが発生しました" }
       }
-      if (result && "success" in result) {
-        router.push("/auth/verify-request")
-      }
-      return null
     },
     null,
   )

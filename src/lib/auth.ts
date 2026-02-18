@@ -32,7 +32,17 @@ export async function signInWithEmail(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    const status = (error as unknown as Record<string, unknown>).status as number | undefined
+    // Supabase AuthRetryableFetchError returns message="{}" on timeout
+    if (error.name === "AuthRetryableFetchError" || status === 504) {
+      return { error: "認証サーバーに接続できませんでした。しばらく待ってから再度お試しください。" }
+    }
+    if (status === 429) {
+      return { error: "送信回数の制限に達しました。しばらく待ってから再度お試しください。" }
+    }
+    // Fallback: ignore "{}" or empty messages
+    const msg = error.message && error.message !== "{}" ? error.message : "認証エラーが発生しました"
+    return { error: msg }
   }
 
   return { success: true as const }
