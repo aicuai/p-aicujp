@@ -1,0 +1,39 @@
+作成完了。まとめます。
+
+---
+
+**作成したもの:**
+
+| ファイル | 用途 |
+|---------|------|
+| `docs/email-R2511-thankyou-and-R2602-announce.md` | メール原案（Wixリンク追加済み） |
+| `scripts/export-survey-data.mjs` | Supabase → CSV エクスポート |
+| `scripts/send-r2511-thankyou.mjs` | テスト送信 + 本番送信スクリプト |
+| `.gitignore` | `tmp/` `*.csv` 追加 |
+
+**送信スクリプトの使い方:**
+```bash
+# テスト送信（aki@aicu.ai）
+node scripts/send-r2511-thankyou.mjs
+
+# テスト送信（指定アドレス）
+node scripts/send-r2511-thankyou.mjs test someone@example.com
+
+# 本番送信（全購読者、確認プロンプトあり）
+node scripts/send-r2511-thankyou.mjs send
+```
+
+**CSVエクスポート:**
+```bash
+node scripts/export-survey-data.mjs        # R2511 + R2602 両方
+node scripts/export-survey-data.mjs R2602   # R2602のみ
+# 出力先: tmp/ (gitignored)
+```
+
+**R2511メールの状況:**
+- 53人中 **39人がメール提供**（GAS側でリダクト済み）
+- 同意文言は「報酬受取・インタビュー調査協力」→ R2602案内は利用目的内と解釈可能
+- 実メールの取得にはGASスプレッドシートへの直接アクセスが必要（API非公開）
+- **代替案**: Wix会員メールリスト経由で送信するのが最も安全かつ実務的
+
+テスト送信してみますか？
