@@ -1,0 +1,5 @@
+dev サーバーが HMR で反映するはずです。http://localhost:3200/q/R2602/results を再読み込みしてください。
+
+変更点:
+- **ラベルに白い縁取り** — SVG `paintOrder="stroke"` で白アウトライン + 黒文字（黄色背景でも読める）
+- **12時方向スタート** — `startAngle={90}` を全円グラフ（Donut/Regional/Age）に追加
