@@ -55,6 +55,12 @@ export default function PolicyPage() {
               <strong>10,000 AICUポイント</strong>を贈呈いたします。
               メールアドレスの入力は任意です。入力がない場合、謝礼の付与はできません。
             </p>
+            <p style={{ marginTop: 8 }}>
+              ポイントのご利用はこちら:{" "}
+              <a href="https://www.aicu.blog/category/all-products" target="_blank" rel="noopener" style={{ color: "#0031D8", textDecoration: "underline", fontWeight: 600 }}>
+                AICUマガジン・Amazonギフト券など
+              </a>
+            </p>
           </Section>
 
           <Section title="4. データの管理">
