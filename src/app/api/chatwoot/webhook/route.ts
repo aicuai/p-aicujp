@@ -47,7 +47,7 @@ async function handleContactSync(
   if (!event.identifier && !event.email) return
 
   try {
-    await linkChatwootContact(event.identifier || "", event.id, event.email || undefined)
+    await linkChatwootContact(event.identifier || "", event.id, event.email || undefined, event.name || undefined)
     console.log(
       `[chatwoot] linked contact ${event.id} → unified_user (identifier=${event.identifier}, email=${event.email})`,
     )

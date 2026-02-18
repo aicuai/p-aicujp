@@ -30,9 +30,14 @@ const SUBJECT = '【AICU】R2511調査へのご参加ありがとうございま
 const CONTENT_HTML = `
 <div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans JP',sans-serif;color:#333;line-height:1.8;">
 
-  <div style="text-align:center;padding:32px 0 24px;">
-    <span style="font-family:'Outfit',sans-serif;font-size:28px;font-weight:800;color:#41C9B4;">AICU</span>
-    <span style="font-size:18px;font-weight:600;color:#1a1a2e;margin-left:8px;">Japan</span>
+  <div style="text-align:center;padding:24px 0 16px;">
+    <a href="https://p.aicu.jp/q/R2602" style="text-decoration:none;">
+      <img src="https://p.aicu.jp/images/email/r2602-banner-600.jpg" alt="生成AIつくる人調査 R2602" style="width:100%;max-width:600px;height:auto;border-radius:12px;" />
+    </a>
+  </div>
+  <div style="text-align:center;padding:0 0 16px;">
+    <span style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;color:#41C9B4;">AICU</span>
+    <span style="font-size:16px;font-weight:600;color:#1a1a2e;margin-left:6px;">Japan</span>
   </div>
 
   <p>{{last_name}} {{first_name}} さま</p>
