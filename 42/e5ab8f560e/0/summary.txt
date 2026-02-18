@@ -1,0 +1,14 @@
+全タスク完了しました。今回実装した内容のまとめ:
+
+**Task #16: Treemap コンポーネント** — `src/components/charts/TreemapChart.tsx` を作成
+- recharts `Treemap` を使用、ツール（46個）のような大量選択肢を面積で可視化
+- カスタムセル描画（ラベル + パーセンテージ）、ツールチップ、「あなたの回答」ハイライト対応
+- ResultsClient に import と `vizType === "treemap"` のレンダリング分岐を追加
+
+**Task #17: ウォーターマーク位置修正**
+- `bottom: 6` → `top: "50%"` + `transform: "translateY(-50%)"` でチャートエリアの垂直中央に配置
+
+**Task #18: Admin 回答数推移チャート** — `src/components/charts/SurveyProgressChart.tsx` を作成
+- recharts `LineChart` で日別回答数（薄い青）と累計（AICU teal）を表示
+- 目標ライン（100, 200, 300）を赤破線の `ReferenceLine` で表示
+- Admin ダッシュボードの「調査回答」セクション内に統合
