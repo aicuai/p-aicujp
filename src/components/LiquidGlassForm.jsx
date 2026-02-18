@@ -970,18 +970,15 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
         <a href="https://aicu.jp" target="_blank" rel="noopener" style={{
           display: "flex", alignItems: "center", gap: 8, textDecoration: "none",
         }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 10,
-            background: "linear-gradient(135deg, #41C9B4, #2BA594)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 2px 8px rgba(65,201,180,0.2)",
-          }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", color: "#fff", fontWeight: 800, fontSize: 16 }}>A</span>
-          </div>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 800, color: "#41C9B4" }}>AICU</span>
           <span style={{ fontSize: 13, fontWeight: 600, color: s.text }}>Research</span>
         </a>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {surveyLabel && (
+            <span style={{ fontSize: 12, fontWeight: 600, color: s.textDim, letterSpacing: "0.03em" }}>
+              {surveyLabel}
+            </span>
+          )}
           <div style={{ width: 60, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.08)", overflow: "hidden" }}>
             <div style={{
               height: "100%", borderRadius: 2, background: s.accent,
@@ -1011,7 +1008,7 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
             {phase === "complete" ? "完了" : (() => {
               const est = formConfig.estimatedMinutes || 5;
               const remaining = Math.max(1, Math.ceil(est * (1 - progress / 100)));
-              return `${surveyLabel || ""} 残り${remaining}分`;
+              return `残り${remaining}分`;
             })()}
           </span>
         </div>
