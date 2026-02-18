@@ -26,3 +26,17 @@ export async function notifySlackDev(text: string) {
     console.error("[slack-dev] notification failed:", err)
   }
 }
+
+export async function notifySlackStaff(text: string) {
+  const url = process.env.SLACK_WEBHOOK_STAFF ?? process.env.SLACK_WEBHOOK_URL
+  if (!url) return
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    })
+  } catch (err) {
+    console.error("[slack-staff] notification failed:", err)
+  }
+}
