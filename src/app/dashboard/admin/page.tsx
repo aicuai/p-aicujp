@@ -5,6 +5,7 @@ import { getAdminSupabase } from "@/lib/supabase"
 import { getTotalContactsCount, getTotalMembersCount, getSubscriptionStats } from "@/lib/wix"
 import Link from "next/link"
 import SurveyProgressChart from "@/components/charts/SurveyProgressChart"
+import WixEmailExport from "@/components/WixEmailExport"
 
 export default async function AdminDashboard() {
   const user = await getUser()
@@ -177,6 +178,12 @@ export default async function AdminDashboard() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Wix Email Export */}
+          <div className="card animate-in-delay-2" style={{ padding: 20 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>メールリスト取得</h2>
+            <WixEmailExport />
           </div>
 
           {/* Subscriptions */}

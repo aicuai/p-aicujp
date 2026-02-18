@@ -148,6 +148,25 @@ export async function getLoyaltyTransactions(accountId: string): Promise<Loyalty
   }
 }
 
+/** 全Wixサイト会員のメールアドレスを取得（cursor pagination） */
+export async function getAllMemberEmails(): Promise<string[]> {
+  const emails: string[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let result: any = await getWixClient().members.queryMembers().limit(100).find()
+
+  while (true) {
+    for (const member of result.items || []) {
+      const email = member.loginEmail
+      if (email) emails.push(email)
+    }
+
+    if (!result.hasNext || !result.hasNext()) break
+    result = await result.next()
+  }
+
+  return [...new Set(emails)]
+}
+
 /** contactId から Loyalty アカウント（ポイント情報）を取得 */
 export async function getLoyaltyByContactId(contactId: string) {
   const result = await getWixClient().accounts.getAccountBySecondaryId({
