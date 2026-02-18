@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "324bed031526",
+  "session_id": "e1f8dfff-1316-491c-baeb-415ddd57faea",
+  "strategy": "auto-commit",
+  "created_at": "2026-02-18T09:28:13.396918Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/q/R2602/results/ResultsClient.tsx",
+    "src/components/LiquidGlassForm.jsx",
+    "src/data/surveys/R2602.ts",
+    "src/lib/use-my-answers.ts"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "5640a2b5-0de3-41d0-9b6d-4ea60869a4dc",
+  "checkpoint_transcript_start": 539,
+  "transcript_lines_at_start": 539,
+  "token_usage": {
+    "input_tokens": 620,
+    "cache_creation_tokens": 17119,
+    "cache_read_tokens": 1837436,
+    "output_tokens": 2186,
+    "api_call_count": 14,
+    "subagent_tokens": {
+      "input_tokens": 5,
+      "cache_creation_tokens": 25942,
+      "cache_read_tokens": 40094,
+      "output_tokens": 5,
+      "api_call_count": 3
+    }
+  }
+}

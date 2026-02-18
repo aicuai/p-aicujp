@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "b5ea90efd1b9",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/gifts/GODIVAギフト券_3,000円_.png"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b5/ea90efd1b9/0/metadata.json",
+      "transcript": "/b5/ea90efd1b9/0/full.jsonl",
+      "context": "",
+      "content_hash": "/b5/ea90efd1b9/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3,
+    "cache_creation_tokens": 46315,
+    "cache_read_tokens": 20227,
+    "output_tokens": 9,
+    "api_call_count": 1
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "3ee9b4fded25",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/call-for-R2602-dcaj-detail.md",
+    "docs/call-for-R2602.md",
+    "src/app/q/R2602/results/ResultsClient.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/3e/e9b4fded25/0/metadata.json",
+      "transcript": "/3e/e9b4fded25/0/full.jsonl",
+      "context": "",
+      "content_hash": "/3e/e9b4fded25/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 14,
+    "cache_creation_tokens": 43515,
+    "cache_read_tokens": 1292007,
+    "output_tokens": 97,
+    "api_call_count": 11
+  }
+}

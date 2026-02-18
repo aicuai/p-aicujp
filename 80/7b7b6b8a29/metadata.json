@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "807b7b6b8a29",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/charts/AgeBucketChart.tsx",
+    "src/components/charts/DonutChart.tsx",
+    "src/components/charts/RegionalPieChart.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/80/7b7b6b8a29/0/metadata.json",
+      "transcript": "/80/7b7b6b8a29/0/full.jsonl",
+      "context": "",
+      "content_hash": "/80/7b7b6b8a29/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 4873,
+    "cache_read_tokens": 588244,
+    "output_tokens": 477,
+    "api_call_count": 5
+  }
+}

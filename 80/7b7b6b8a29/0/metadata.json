@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "807b7b6b8a29",
+  "session_id": "e1f8dfff-1316-491c-baeb-415ddd57faea",
+  "strategy": "auto-commit",
+  "created_at": "2026-02-18T09:18:03.331208Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/charts/AgeBucketChart.tsx",
+    "src/components/charts/DonutChart.tsx",
+    "src/components/charts/RegionalPieChart.tsx"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "94567ab6-fc3e-49b7-b266-0eafcc82e85c",
+  "checkpoint_transcript_start": 517,
+  "transcript_lines_at_start": 517,
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 4873,
+    "cache_read_tokens": 588244,
+    "output_tokens": 477,
+    "api_call_count": 5
+  }
+}

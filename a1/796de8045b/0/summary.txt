@@ -1,0 +1,8 @@
+これでローカルで http://localhost:3200/ にアクセスしてメールアドレスを入力・送信すると、ブラウザのコンソール（DevTools）にログが出ます。
+
+確認ポイント:
+- `[LoginForm] calling signInAction...` — サーバーアクション呼び出し開始
+- `[LoginForm] result: ...` — サーバーアクションの戻り値
+- `[LoginForm] signInAction threw: ...` — 例外が発生した場合
+
+ローカルで試してコンソール出力を教えてください。

@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "daa467dcf6aa",
+  "session_id": "665f2960-9213-4cc9-a019-1106a39e4857",
+  "strategy": "auto-commit",
+  "created_at": "2026-02-18T05:29:10.613003Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/LoginForm.tsx",
+    "src/lib/auth.ts"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "8cc4d77e-645d-4be6-93ee-7d88e87117a9",
+  "checkpoint_transcript_start": 255,
+  "transcript_lines_at_start": 255,
+  "token_usage": {
+    "input_tokens": 22,
+    "cache_creation_tokens": 46370,
+    "cache_read_tokens": 1305966,
+    "output_tokens": 473,
+    "api_call_count": 17
+  }
+}

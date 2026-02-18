@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "82db7a94e104",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "scripts/test-supabase-smtp.mjs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/82/db7a94e104/0/metadata.json",
+      "transcript": "/82/db7a94e104/0/full.jsonl",
+      "context": "",
+      "content_hash": "/82/db7a94e104/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 3691,
+    "cache_read_tokens": 531510,
+    "output_tokens": 2338,
+    "api_call_count": 5
+  }
+}

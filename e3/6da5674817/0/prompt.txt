@@ -1,0 +1,8 @@
+[LoginForm] calling signInAction...
+hot-reloader-app.js:197 [Fast Refresh] rebuilding
+report-hmr-latency.js:14 [Fast Refresh] done in 689ms
+LoginForm.tsx:16 [LoginForm] result: {"error":"{}"}
+--try2
+favicon.ico:1  GET http://localhost:3200/favicon.ico 404 (Not Found)
+LoginForm.tsx:14 [LoginForm] calling signInAction...
+LoginForm.tsx:16 [LoginForm] result: {"error":"{}"}
