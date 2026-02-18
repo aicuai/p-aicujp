@@ -1,30 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminSupabase } from "@/lib/supabase"
+import { timingSafeEqual } from "crypto"
 
 const CALLBACK_SECRET = process.env.WIX_CALLBACK_SECRET || ""
+
+function safeCompare(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b))
+}
 
 /**
  * POST /api/surveys/reward-confirm
  *
  * Called by Wix Automation after reward (AICU points) is distributed.
  * Updates survey_responses.reward_status = 'confirmed'.
- *
- * Payload from Wix:
- * {
- *   "email": "user@example.com",
- *   "research_id": "R2602",
- *   "points": 10000,
- *   "status": "completed" | "failed",
- *   "secret": "<WIX_CALLBACK_SECRET>"
- * }
  */
 export async function POST(req: NextRequest) {
+  // Auth: require secret always (fail if env var is unset)
+  if (!CALLBACK_SECRET) {
+    console.error("WIX_CALLBACK_SECRET is not configured")
+    return NextResponse.json({ error: "server misconfigured" }, { status: 500 })
+  }
+
   const body = await req.json()
   const { email, research_id, points, status, secret } = body
 
-  // Auth: check secret from body or header
   const headerSecret = req.headers.get("x-callback-secret") || ""
-  if (CALLBACK_SECRET && secret !== CALLBACK_SECRET && headerSecret !== CALLBACK_SECRET) {
+  if (!safeCompare(secret || "", CALLBACK_SECRET) && !safeCompare(headerSecret, CALLBACK_SECRET)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 

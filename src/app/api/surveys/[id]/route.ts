@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { getAdminSupabase } from "@/lib/supabase"
 import { createHash } from "crypto"
 import { notifySlackDev } from "@/lib/slack"
+import { ALL_SURVEY_IDS } from "@/data/surveys"
 
 const WIX_REWARD_WEBHOOK_URL = process.env.WIX_REWARD_WEBHOOK_URL || ""
+const MAX_ANSWERS_SIZE = 50_000 // 50KB JSON limit
 
 // Trigger Wix Automation to create account + award points
 async function triggerReward(surveyId: string, email: string, points: number) {
@@ -26,31 +28,49 @@ async function triggerReward(surveyId: string, email: string, points: number) {
   }
 }
 
+// Extract real client IP (Vercel sets x-real-ip; x-forwarded-for can be spoofed)
+function getClientIp(req: NextRequest): string {
+  return req.headers.get("x-real-ip") || req.headers.get("x-forwarded-for")?.split(",").pop()?.trim() || "unknown"
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: surveyId } = await params
-  const body = await req.json()
-  const { answers, submittedAt, email } = body
 
-  if (!answers || typeof answers !== "object") {
-    return NextResponse.json(
-      { error: "answers are required" },
-      { status: 400 },
-    )
+  // Validate survey ID against whitelist
+  if (!ALL_SURVEY_IDS.includes(surveyId)) {
+    return NextResponse.json({ error: "invalid survey" }, { status: 400 })
   }
 
-  // Hash IP for dedup (never store raw IP)
-  const forwarded = req.headers.get("x-forwarded-for")
-  const ip = forwarded?.split(",")[0]?.trim() ?? "unknown"
+  const body = await req.json()
+  const { answers, email } = body
+
+  if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+    return NextResponse.json({ error: "answers are required" }, { status: 400 })
+  }
+
+  // Validate answers size to prevent storage abuse
+  const answersJson = JSON.stringify(answers)
+  if (answersJson.length > MAX_ANSWERS_SIZE) {
+    return NextResponse.json({ error: "answers too large" }, { status: 400 })
+  }
+
+  // Validate email format if provided
+  if (email && (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+    return NextResponse.json({ error: "invalid email" }, { status: 400 })
+  }
+
+  // Hash IP for dedup (use x-real-ip for Vercel, not spoofable x-forwarded-for)
+  const ip = getClientIp(req)
   const ipHash = createHash("sha256").update(ip).digest("hex").slice(0, 16)
 
   const db = getAdminSupabase()
   const { error } = await db.from("survey_responses").insert({
     survey_id: surveyId,
     answers,
-    submitted_at: submittedAt || new Date().toISOString(),
+    submitted_at: new Date().toISOString(), // Always use server time
     ip_hash: ipHash,
     user_agent: req.headers.get("user-agent")?.slice(0, 256) ?? null,
     email: email || null,
@@ -67,11 +87,11 @@ export async function POST(
     triggerReward(surveyId, email, 10000).catch(() => {})
   }
 
-  // Slack dev notification (fire-and-forget)
-  const emailPrefix = email ? email.split("@")[0] : "anonymous"
+  // Slack dev notification (fire-and-forget, hash email for privacy)
+  const emailHash = email ? createHash("sha256").update(email).digest("hex").slice(0, 8) : "anon"
   const questionCount = Object.keys(answers).length
   notifySlackDev(
-    `[Survey] ${surveyId} 回答保存: ${emailPrefix}@*** (${questionCount}問)`
+    `[Survey] ${surveyId} 回答保存: ${emailHash} (${questionCount}問)`
   ).catch(() => {})
 
   return NextResponse.json({ ok: true })

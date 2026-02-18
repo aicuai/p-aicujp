@@ -16,13 +16,18 @@ export async function GET(
     )
   }
 
+  // Basic email format validation to prevent enumeration with junk input
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    return NextResponse.json({ error: "invalid email" }, { status: 400 })
+  }
+
   const db = getAdminSupabase()
 
   // Find which surveys this email has participated in
   const { data, error } = await db
     .from("survey_responses")
     .select("survey_id")
-    .eq("email", email)
+    .eq("email", email.trim())
     .in("survey_id", ALL_SURVEY_IDS)
 
   if (error) {
@@ -36,8 +41,8 @@ export async function GET(
     participated[sid] = participatedIds.has(sid)
   }
 
-  return NextResponse.json({
-    participated,
-    totalSurveys: participatedIds.size,
-  })
+  return NextResponse.json(
+    { participated, totalSurveys: participatedIds.size },
+    { headers: { "Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache" } },
+  )
 }
