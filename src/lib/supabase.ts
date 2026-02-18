@@ -199,11 +199,12 @@ export async function getUserByDiscordId(discordId: string) {
   return (data as UnifiedUser) ?? null
 }
 
-/** Chatwoot Contact ID を紐付け（メールアドレス or Supabase Auth UID） */
+/** Chatwoot Contact ID を紐付け（メールアドレス or Supabase Auth UID、なければ新規作成） */
 export async function linkChatwootContact(
   identifier: string,
   chatwootContactId: number,
   email?: string,
+  name?: string,
 ) {
   const supabase = getAdminSupabase()
   const updateData = {
@@ -223,10 +224,25 @@ export async function linkChatwootContact(
   }
 
   // フォールバック: identifier (Supabase Auth UID) で検索
+  if (identifier) {
+    const { data, error } = await supabase
+      .from("unified_users")
+      .update(updateData)
+      .eq("id", identifier)
+      .select()
+      .single()
+    if (!error && data) return data as UnifiedUser
+  }
+
+  // どちらにも一致しない → 新規作成
   const { data, error } = await supabase
     .from("unified_users")
-    .update(updateData)
-    .eq("id", identifier)
+    .insert({
+      primary_email: email || null,
+      display_name: name || null,
+      chatwoot_contact_id: chatwootContactId,
+      updated_at: new Date().toISOString(),
+    })
     .select()
     .single()
 

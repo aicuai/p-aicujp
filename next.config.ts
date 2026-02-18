@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
       { key: "Access-Control-Allow-Methods", value: "POST, OPTIONS" },
       { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
     ]
+    const corsHeadersMultiOrigin = [
+      { key: "Access-Control-Allow-Origin", value: "*" },
+      { key: "Access-Control-Allow-Methods", value: "POST, OPTIONS" },
+      { key: "Access-Control-Allow-Headers", value: "Content-Type" },
+    ]
     return [
       // Security headers for all pages
       { source: "/:path*", headers: securityHeaders },
@@ -36,6 +41,7 @@ const nextConfig: NextConfig = {
       { source: "/api/surveys/:path*", headers: corsHeaders },
       { source: "/api/mail/:path*", headers: corsHeaders },
       { source: "/api/event/:path*", headers: corsHeaders },
+      { source: "/api/chatwoot/hmac", headers: corsHeadersMultiOrigin },
     ]
   },
 }

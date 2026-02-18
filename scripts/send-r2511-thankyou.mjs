@@ -32,7 +32,7 @@ const CONTENT_HTML = `
 
   <div style="text-align:center;padding:24px 0 16px;">
     <a href="https://p.aicu.jp/q/R2602" style="text-decoration:none;">
-      <img src="https://p.aicu.jp/images/email/r2602-banner-600.jpg" alt="生成AIつくる人調査 R2602" style="width:100%;max-width:600px;height:auto;border-radius:12px;" />
+      <img src="https://cert.aicu.ai/images/email/r2602-banner-600.jpg" alt="生成AIつくる人調査 R2602" style="width:100%;max-width:600px;height:auto;border-radius:12px;" />
     </a>
   </div>
   <div style="text-align:center;padding:0 0 16px;">
