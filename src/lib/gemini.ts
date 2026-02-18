@@ -25,7 +25,7 @@ export async function generateResponse(
 ): Promise<{ text: string; shouldEscalate: boolean }> {
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash-preview-05-20",
+      model: "gemini-2.5-flash",
       systemInstruction: SYSTEM_PROMPT,
     })
     const result = await model.generateContent(message)
