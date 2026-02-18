@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "95ac54a3506f",
+  "session_id": "665f2960-9213-4cc9-a019-1106a39e4857",
+  "strategy": "auto-commit",
+  "created_at": "2026-02-18T07:12:31.724149Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/lib/auth.ts"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "473c0813-aa25-4e37-bd34-8b90161c73b9",
+  "checkpoint_transcript_start": 615,
+  "transcript_lines_at_start": 615,
+  "token_usage": {
+    "input_tokens": 5,
+    "cache_creation_tokens": 3235,
+    "cache_read_tokens": 390643,
+    "output_tokens": 438,
+    "api_call_count": 4
+  }
+}
