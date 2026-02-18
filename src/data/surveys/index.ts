@@ -16,6 +16,8 @@ export type SurveyQuestion = {
   popularOptions?: string[]  // shown as quick-select buttons before search
   entryId?: number      // Google Form entry ID
   skipIf?: SkipCondition  // conditional skip (section skipIf cascades to child questions)
+  autoAnswer?: boolean  // auto-skip if pre-filled value exists in answers
+  virtualEntries?: { entryId: number; deriveFrom: (answer: unknown) => unknown }[]  // derive additional Google Form entries from this answer
 }
 
 export type SurveyConfig = {
@@ -28,6 +30,7 @@ export type SurveyConfig = {
   reward?: string
   estimatedMinutes?: number
   questions: SurveyQuestion[]
+  deriveAnswers?: (answers: Record<string, unknown>) => Record<string, unknown>  // derive additional API answer keys from combined answers
 }
 
 // Registry of all surveys

@@ -87,6 +87,8 @@ function countEffectiveQuestions(questions, answers) {
     }
     if (sectionSkipped) continue;
     if (q.skipIf && evaluateSkipIf(q.skipIf, answers)) continue;
+    // autoAnswer questions with pre-filled values don't count as visible
+    if (q.autoAnswer && answers[q.id]) continue;
     count++;
   }
   return count;
@@ -98,15 +100,36 @@ async function submitSurvey(config, answers, email) {
   if (config.submitToGoogleForm && config.resolvedUrl) {
     const submitUrl = config.resolvedUrl.replace("/viewform", "/formResponse");
     const params = new URLSearchParams();
+    // Track which entryIds have been set (for merging virtualEntries)
+    const entryArrays = {};
     for (const q of config.questions) {
-      if (q.type === "section" || !q.entryId) continue;
+      if (q.type === "section") continue;
       const a = answers[q.id];
-      if (a === undefined || a === null || a === "") continue;
-      if (Array.isArray(a)) {
-        a.forEach((v) => params.append(`entry.${q.entryId}`, v));
-      } else {
-        params.set(`entry.${q.entryId}`, String(a));
+      // Regular entryId mapping
+      if (q.entryId && a !== undefined && a !== null && a !== "") {
+        if (Array.isArray(a)) {
+          a.forEach((v) => params.append(`entry.${q.entryId}`, v));
+        } else {
+          params.set(`entry.${q.entryId}`, String(a));
+        }
       }
+      // virtualEntries: derive additional Google Form entries from this answer
+      if (q.virtualEntries && a !== undefined && a !== null) {
+        for (const ve of q.virtualEntries) {
+          const derived = ve.deriveFrom(a);
+          if (derived === null || derived === undefined) continue;
+          if (Array.isArray(derived)) {
+            if (!entryArrays[ve.entryId]) entryArrays[ve.entryId] = [];
+            entryArrays[ve.entryId].push(...derived);
+          } else {
+            params.set(`entry.${ve.entryId}`, String(derived));
+          }
+        }
+      }
+    }
+    // Append merged array entries
+    for (const [eid, values] of Object.entries(entryArrays)) {
+      values.forEach((v) => params.append(`entry.${eid}`, v));
     }
     const pageCount = config.questions.filter((q) => q.type === "section").length + 1;
     params.set("pageHistory", Array.from({ length: pageCount }, (_, i) => i).join(","));
@@ -123,9 +146,20 @@ async function submitSurvey(config, answers, email) {
   // Custom API submission (with retry)
   if (config.submitUrl) {
     const effectiveEmail = email || answers["entry_1243761143"] || undefined;
+    // Apply deriveAnswers to split merged question answers for API
+    let finalAnswers = { ...answers };
+    if (config.deriveAnswers) {
+      finalAnswers = { ...finalAnswers, ...config.deriveAnswers(answers) };
+    }
+    // Filter out separator options (─────) from array answers
+    for (const [key, val] of Object.entries(finalAnswers)) {
+      if (Array.isArray(val)) {
+        finalAnswers[key] = val.filter((v) => typeof v !== "string" || !v.includes("─────"));
+      }
+    }
     const payload = JSON.stringify({
       surveyId: config.sourceUrl || config.title,
-      answers,
+      answers: finalAnswers,
       submittedAt: new Date().toISOString(),
       email: effectiveEmail,
     });
@@ -396,7 +430,9 @@ function MultiChoice({ q, onSubmit }) {
   const [otherText, setOtherText] = useState("");
   const toggle = (o) => setSel((p) => { const n = new Set(p); n.has(o) ? n.delete(o) : n.add(o); return n; });
 
-  const otherOption = q.options.find((o) => o.startsWith("その他"));
+  const isSeparator = (o) => typeof o === "string" && o.includes("─────");
+  const selectableOptions = q.options.filter((o) => !isSeparator(o));
+  const otherOption = selectableOptions.find((o) => o.startsWith("その他"));
   const otherSelected = otherOption && sel.has(otherOption);
 
   const doSubmit = () => {
@@ -407,11 +443,11 @@ function MultiChoice({ q, onSubmit }) {
     onSubmit(result.length > 0 ? result : []);
   };
 
-  // 2-option: auto-submit on tap
-  if (q.options.length <= 2) {
+  // 2-option: auto-submit on tap (only count selectable options)
+  if (selectableOptions.length <= 2) {
     return (
       <div style={choiceWrap}>
-        {q.options.map((o) => (
+        {selectableOptions.map((o) => (
           <button key={o} onClick={() => onSubmit([o])} className="lgf-choice" style={choiceBtnStyle(false)}>{shortLabel(o)}</button>
         ))}
       </div>
@@ -419,16 +455,25 @@ function MultiChoice({ q, onSubmit }) {
   }
 
   // Large option sets (>15) use searchable UI with optional popularOptions
-  if (q.options.length > 15) {
+  if (selectableOptions.length > 15) {
     return <SearchableMulti q={q} onSubmit={onSubmit} />;
   }
 
   return (
     <div>
       <div style={choiceWrap}>
-        {q.options.map((o) => (
-          <button key={o} onClick={() => toggle(o)} className="lgf-choice" style={choiceBtnStyle(sel.has(o))}>{shortLabel(o)}</button>
-        ))}
+        {q.options.map((o) => {
+          if (isSeparator(o)) {
+            return (
+              <div key={o} style={{ width: "100%", fontSize: 12, color: s.textDim, padding: "6px 4px 2px", fontWeight: 600 }}>
+                {o.replace(/─/g, "").trim()}
+              </div>
+            );
+          }
+          return (
+            <button key={o} onClick={() => toggle(o)} className="lgf-choice" style={choiceBtnStyle(sel.has(o))}>{shortLabel(o)}</button>
+          );
+        })}
       </div>
       {otherSelected && (
         <div style={{ marginTop: 8 }}>
@@ -704,6 +749,8 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
           const q = questions[i];
           // Skip questions that should be skipped based on answers so far
           if (shouldSkip(q, questions, restored.answers)) { i++; continue; }
+          // autoAnswer: silently skip pre-filled questions in replay
+          if (q.autoAnswer && restored.answers[q.id]) { i++; continue; }
           if (q.type === "section") {
             await addMsg("section", q, 100);
           } else {
@@ -721,6 +768,8 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
         // Advance past skipped sections/questions to find the next active question
         while (i < questions.length) {
           if (shouldSkip(questions[i], questions, restored.answers)) { i++; continue; }
+          // autoAnswer: silently skip pre-filled questions
+          if (questions[i].autoAnswer && restored.answers[questions[i].id]) { i++; continue; }
           if (questions[i].type === "section") {
             await addMsg("section", questions[i], 100);
             i++;
@@ -737,7 +786,9 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
       } else {
         let i = 0;
         while (i < questions.length) {
-          if (shouldSkip(questions[i], questions, {})) { i++; continue; }
+          if (shouldSkip(questions[i], questions, initialAnswers)) { i++; continue; }
+          // autoAnswer: silently skip pre-filled questions
+          if (questions[i].autoAnswer && initialAnswers[questions[i].id]) { i++; continue; }
           if (questions[i].type === "section") {
             await addMsg("section", questions[i], 300);
             i++;
@@ -793,10 +844,12 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
       }
     }
 
-    // Advance past sections and skipped questions
+    // Advance past sections, skipped questions, and autoAnswer questions
     while (next < questions.length) {
       const nextQ = questions[next];
       if (shouldSkip(nextQ, questions, newAns)) { next++; continue; }
+      // autoAnswer: silently skip pre-filled questions
+      if (nextQ.autoAnswer && ansRef.current[nextQ.id]) { next++; continue; }
       if (nextQ.type === "section") {
         await addMsg("section", nextQ, 200);
         next++;
