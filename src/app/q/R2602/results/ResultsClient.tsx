@@ -49,11 +49,15 @@ export default function ResultsClient() {
     fetch("/api/surveys/R2602/results")
       .then((r) => r.json())
       .then((d) => {
-        if (d && Array.isArray(d.questions)) setData(d)
+        if (d && Array.isArray(d.questions)) {
+          // Default to scrambled sample data; show real data only after answering
+          setData(myAnswers ? d : scrambleForSample(d))
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myAnswers])
 
   // Disable right-click
   useEffect(() => {
@@ -468,4 +472,59 @@ function getMyAnswer(myAnswers: Record<string, unknown> | null, questionId: stri
   if (v === undefined || v === null) return undefined
   if (Array.isArray(v)) return v.map(String)
   return String(v)
+}
+
+// ── Scramble data for sample/preview display ──
+
+function scrambleForSample(data: ResultsData): ResultsData {
+  // Seeded PRNG for deterministic output
+  let s = 12345
+  const rand = () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff
+    return s / 0x7fffffff
+  }
+
+  const sampleN = 52
+
+  const questions = data.questions.map((q) => {
+    const keys = Object.keys(q.counts)
+    const newCounts: Record<string, number> = {}
+    const answeredRatio = q.answered / (data.totalResponses || 1)
+    const sampleAnswered = Math.max(1, Math.round(sampleN * answeredRatio))
+
+    // Distribute counts with randomized proportions
+    let remaining = sampleAnswered
+    for (let i = 0; i < keys.length; i++) {
+      if (i === keys.length - 1) {
+        newCounts[keys[i]] = Math.max(0, remaining)
+      } else {
+        const portion = Math.min(remaining, Math.max(0, Math.round(rand() * remaining * 0.5)))
+        newCounts[keys[i]] = portion
+        remaining -= portion
+      }
+    }
+
+    return { ...q, counts: newCounts, answered: sampleAnswered }
+  })
+
+  // Scramble birth year counts
+  const birthYearCounts: Record<string, number> = {}
+  for (const k of Object.keys(data.birthYearCounts || {})) {
+    birthYearCounts[k] = Math.max(1, Math.round(rand() * 4))
+  }
+
+  // Scramble pyramid data — take a random subset
+  const pyramidData = (data.pyramidData || [])
+    .map((d) => ({ ...d, sortKey: rand() }))
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .slice(0, sampleN)
+
+  return {
+    totalResponses: sampleN,
+    questions,
+    birthYearCounts,
+    pyramidData,
+    updatedAt: data.updatedAt,
+    hasTestData: false,
+  }
 }

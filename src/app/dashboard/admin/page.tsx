@@ -35,6 +35,7 @@ export default async function AdminDashboard() {
     rewardFailedResult,
     rewardNoneResult,
     rewardWithEmailResult,
+    loyaltyCacheResult,
   ] = await Promise.all([
     admin.from("unified_users").select("id", { count: "exact", head: true }),
     admin.from("unified_users").select("id", { count: "exact", head: true }).not("wix_contact_id", "is", null),
@@ -46,15 +47,17 @@ export default async function AdminDashboard() {
     admin.from("profiles").select("id", { count: "exact", head: true }),
     admin.from("push_subscriptions").select("user_id", { count: "exact", head: true }),
     admin.from("unified_users").select("primary_email, last_login_at, wix_contact_id, discord_id").order("last_login_at", { ascending: false, nullsFirst: false }).limit(10),
-    admin.from("survey_responses").select("id", { count: "exact", head: true }),
-    admin.from("survey_responses").select("survey_id, email, submitted_at, reward_status").order("submitted_at", { ascending: false }).limit(10),
-    admin.from("survey_responses").select("submitted_at").order("submitted_at", { ascending: true }),
-    // Reward status counts
-    admin.from("survey_responses").select("id", { count: "exact", head: true }).eq("reward_status", "confirmed"),
-    admin.from("survey_responses").select("id", { count: "exact", head: true }).eq("reward_status", "pending"),
-    admin.from("survey_responses").select("id", { count: "exact", head: true }).eq("reward_status", "failed"),
-    admin.from("survey_responses").select("id", { count: "exact", head: true }).eq("reward_status", "none"),
-    admin.from("survey_responses").select("id", { count: "exact", head: true }).not("email", "is", null),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true),
+    admin.from("survey_responses").select("survey_id, email, submitted_at, reward_status").neq("is_test", true).order("submitted_at", { ascending: false }).limit(10),
+    admin.from("survey_responses").select("submitted_at").neq("is_test", true).order("submitted_at", { ascending: true }),
+    // Loyalty cache
+    admin.from("admin_cache").select("data, updated_at").eq("key", "loyalty-summary").single(),
+    // Reward status counts (excluding test data)
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).eq("reward_status", "confirmed"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).eq("reward_status", "pending"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).eq("reward_status", "failed"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).eq("reward_status", "none"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).not("email", "is", null),
   ])
 
   const totalUsers = unifiedResult.count ?? 0
@@ -99,6 +102,10 @@ export default async function AdminDashboard() {
   const rewardNone = rewardNoneResult.count ?? 0
   const rewardWithEmail = rewardWithEmailResult.count ?? 0
   const rewardRate = safeRate(rewardConfirmed, rewardWithEmail)
+
+  // Loyalty cache
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const loyaltyCache = (loyaltyCacheResult as any)?.data as { data: { totalAccounts: number; totalEarned: number; totalRedeemed: number; consumptionRate: number }; updated_at: string } | null
 
   // Build daily counts for progress chart
   const surveyTimestamps = (surveyAllTimestampsResult.data ?? []) as { submitted_at: string }[]
@@ -315,6 +322,25 @@ export default async function AdminDashboard() {
               </div>
             )}
           </div>
+
+          {/* Loyalty Summary (cached) */}
+          {loyaltyCache && (
+            <div className="card animate-in-delay-3" style={{ padding: 20 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
+                AICUポイント（Loyalty）
+                <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-tertiary)", marginLeft: 8 }}>
+                  更新: {new Date(loyaltyCache.updated_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <StatRow label="Loyaltyアカウント数" value={`${loyaltyCache.data.totalAccounts}`} />
+                <StatRow label="総発行ポイント" value={`${loyaltyCache.data.totalEarned.toLocaleString()} pt`} />
+                <StatRow label="総消費ポイント" value={`${loyaltyCache.data.totalRedeemed.toLocaleString()} pt`} />
+                <StatRow label="消費率" value={`${loyaltyCache.data.consumptionRate}%`} highlight />
+                <StatRow label="残高合計" value={`${(loyaltyCache.data.totalEarned - loyaltyCache.data.totalRedeemed).toLocaleString()} pt`} />
+              </div>
+            </div>
+          )}
 
           {/* Recent Logins */}
           <div className="card animate-in-delay-3" style={{ padding: 20 }}>

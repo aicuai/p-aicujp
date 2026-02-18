@@ -209,6 +209,69 @@ export async function getAllMemberEmails(): Promise<string[]> {
   return [...new Set(emails)]
 }
 
+/** 全Loyalty取引を取得してサマリーを生成 */
+export async function getLoyaltySummary(): Promise<{
+  totalAccounts: number
+  totalEarned: number
+  totalRedeemed: number
+  accountDetails: { contactId: string; earned: number; redeemed: number; balance: number }[]
+}> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allTx: any[] = []
+  let offset = 0
+
+  // Paginate through all transactions
+  while (true) {
+    try {
+      const result = await getWixClient().transactions.queryLoyaltyTransactions()
+        .descending("_createdDate")
+        .limit(100)
+        .skip(offset)
+        .find()
+
+      const items = result.items || []
+      allTx.push(...items)
+      if (items.length < 100) break
+      offset += 100
+      if (offset >= 5000) break // safety limit
+    } catch (err) {
+      console.error("[wix] getLoyaltySummary pagination error at offset", offset, err)
+      break
+    }
+  }
+
+  console.log("[wix] getLoyaltySummary: total transactions =", allTx.length)
+
+  // Aggregate by account
+  const byAccount: Record<string, { earned: number; redeemed: number }> = {}
+  for (const tx of allTx) {
+    const acctId = tx.accountId || "unknown"
+    if (!byAccount[acctId]) byAccount[acctId] = { earned: 0, redeemed: 0 }
+    const amount = tx.amount ?? 0
+    const type = tx.transactionType ?? ""
+    if (type === "EARN" || type === "ADJUST") {
+      byAccount[acctId].earned += amount
+    } else if (type === "REDEEM" || type === "EXPIRE") {
+      byAccount[acctId].redeemed += Math.abs(amount)
+    }
+  }
+
+  let totalEarned = 0
+  let totalRedeemed = 0
+  const accountDetails = Object.entries(byAccount).map(([contactId, v]) => {
+    totalEarned += v.earned
+    totalRedeemed += v.redeemed
+    return { contactId, earned: v.earned, redeemed: v.redeemed, balance: v.earned - v.redeemed }
+  })
+
+  return {
+    totalAccounts: accountDetails.length,
+    totalEarned,
+    totalRedeemed,
+    accountDetails: accountDetails.sort((a, b) => b.balance - a.balance),
+  }
+}
+
 /** contactId から Loyalty アカウント（ポイント情報）を取得 */
 export async function getLoyaltyByContactId(contactId: string) {
   const result = await getWixClient().accounts.getAccountBySecondaryId({
