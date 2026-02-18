@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "2c2c110dba5b",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/dashboard/admin/page.tsx",
+    "src/lib/wix.ts",
+    "src/middleware.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2c/2c110dba5b/0/metadata.json",
+      "transcript": "/2c/2c110dba5b/0/full.jsonl",
+      "context": "",
+      "content_hash": "/2c/2c110dba5b/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 13,
+    "cache_creation_tokens": 25961,
+    "cache_read_tokens": 1385198,
+    "output_tokens": 1784,
+    "api_call_count": 11
+  }
+}

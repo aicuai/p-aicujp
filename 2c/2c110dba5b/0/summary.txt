@@ -1,0 +1,24 @@
+ビルド成功。まとめます：
+
+**1. Admin二重セキュリティ** (`src/middleware.ts`)
+- `/api/admin/*` をmiddleware matcherに追加
+- 未認証ユーザーは middleware レベルで 401 → さらに各APIルートでSUPERUSER_EMAILSチェック
+- Dashboard ページ: middleware redirect + ページ内 SUPERUSER チェック
+
+**2. Wix全件メール取得** (`src/lib/wix.ts`)
+- offset pagination（skip/limit方式）に変更
+- 初回バッチでサンプルメンバーのキーをログ出力（デバッグ用）
+- `loginEmail` に加え `profile?.email` もフォールバック
+- Members APIが0件の場合、Contacts APIにフォールバック
+- デプロイ後、Vercelログで原因確認できます
+
+**3. ポイント付与状況** (`src/app/dashboard/admin/page.tsx`)
+- 「AICUポイント付与状況」セクション追加:
+  - メール提供者数 / 匿名回答数
+  - 付与済み(confirmed) / 処理中(pending) / 失敗(failed) 
+  - **付与率**: 100%でなければ赤字で警告
+  - プログレスバー（緑=付与済み、黄=処理中、赤=失敗）
+- 最新エントリーに **RewardBadge** 追加: `+10K` / `処理中` / `失敗` / `匿名`
+- エントリー表示を5件→10件に増加
+
+> 消費率については、各ユーザーのWix Loyalty取引を個別にAPIで確認する必要があり、現状では表示していません。必要であればバッチで集計する機能を追加できます。
