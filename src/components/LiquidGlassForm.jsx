@@ -1011,7 +1011,7 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
             {phase === "complete" ? "完了" : (() => {
               const est = formConfig.estimatedMinutes || 5;
               const remaining = Math.max(1, Math.ceil(est * (1 - progress / 100)));
-              return `${surveyLabel || ""}---残り${remaining}分`;
+              return `${surveyLabel || ""} 残り${remaining}分`;
             })()}
           </span>
         </div>
