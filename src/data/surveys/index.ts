@@ -4,6 +4,18 @@ export type SkipCondition = {
   notEquals?: string
 }
 
+// Declarative derive modes for virtualEntries (must be serializable — no functions)
+export type VirtualEntryDerive =
+  | "copy"    // copy answer as-is
+  | "first"   // take first element of array answer
+  | { ifIncludes: string; value: string }  // if answer array includes label, return [value]
+
+// Declarative split config for merged questions (API submission)
+export type MergedQuestionSplit = {
+  questionId: string  // the merged question's id
+  splits: { answerId: string; options: string[] }[]  // split answer into multiple keys by option membership
+}
+
 export type SurveyQuestion = {
   id: string
   type: "section" | "text" | "textarea" | "single_choice" | "multi_choice" | "dropdown"
@@ -17,7 +29,7 @@ export type SurveyQuestion = {
   entryId?: number      // Google Form entry ID
   skipIf?: SkipCondition  // conditional skip (section skipIf cascades to child questions)
   autoAnswer?: boolean  // auto-skip if pre-filled value exists in answers
-  virtualEntries?: { entryId: number; deriveFrom: (answer: unknown) => unknown }[]  // derive additional Google Form entries from this answer
+  virtualEntries?: { entryId: number; derive: VirtualEntryDerive }[]  // derive additional Google Form entries
 }
 
 export type SurveyConfig = {
@@ -30,7 +42,7 @@ export type SurveyConfig = {
   reward?: string
   estimatedMinutes?: number
   questions: SurveyQuestion[]
-  deriveAnswers?: (answers: Record<string, unknown>) => Record<string, unknown>  // derive additional API answer keys from combined answers
+  mergedQuestions?: MergedQuestionSplit[]  // split merged answers for API submission
 }
 
 // Registry of all surveys

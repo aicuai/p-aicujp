@@ -1,7 +1,7 @@
-import type { SurveyConfig } from "./index"
+import type { SurveyConfig, MergedQuestionSplit } from "./index"
 
 // ── Effect question mapping (Q20-Q28 → 2 questions) ──
-const EFFECT_ITEMS = [
+const EFFECT_ITEMS: { label: string; entryId: number }[] = [
   { label: "時間短縮", entryId: 134475126 },
   { label: "品質向上", entryId: 435926259 },
   { label: "新規受注", entryId: 417935927 },
@@ -11,35 +11,9 @@ const EFFECT_ITEMS = [
   { label: "コミュニティ発信", entryId: 1030360033 },
   { label: "キャリア拡張", entryId: 1294685535 },
   { label: "OSS参加", entryId: 1474230686 },
-] as const
+]
 
 const EFFECT_LABELS = EFFECT_ITEMS.map((e) => e.label)
-
-// Build virtualEntries for Q_effect_done: selected items → "現状「できている」" for each entry
-function effectDoneVirtualEntries() {
-  return EFFECT_ITEMS.map((item) => ({
-    entryId: item.entryId,
-    deriveFrom: (answer: unknown) => {
-      if (Array.isArray(answer) && answer.includes(item.label)) {
-        return ['現状「できている」']
-      }
-      return null
-    },
-  }))
-}
-
-// Build virtualEntries for Q_effect_want: selected items → "今後「伸ばしたい・期待したい」" for each entry
-function effectWantVirtualEntries() {
-  return EFFECT_ITEMS.map((item) => ({
-    entryId: item.entryId,
-    deriveFrom: (answer: unknown) => {
-      if (Array.isArray(answer) && answer.includes(item.label)) {
-        return ['今後「伸ばしたい・期待したい」']
-      }
-      return null
-    },
-  }))
-}
 
 // ── Q33/Q33a merge mapping ──
 const Q3_ATTITUDES = [
@@ -75,6 +49,24 @@ const Q6A_RULES = [
   "その他（自由記述）",
 ]
 
+// Declarative merged question splits for API submission
+const MERGED_QUESTIONS: MergedQuestionSplit[] = [
+  {
+    questionId: "dcaj_Q3",
+    splits: [
+      { answerId: "dcaj_Q3", options: Q3_ATTITUDES },
+      { answerId: "dcaj_Q3a", options: Q3A_CONDITIONS },
+    ],
+  },
+  {
+    questionId: "dcaj_Q6",
+    splits: [
+      { answerId: "dcaj_Q6", options: Q6_EVALUATIONS },
+      { answerId: "dcaj_Q6a", options: Q6A_RULES },
+    ],
+  },
+]
+
 export const R2602_CONFIG: SurveyConfig = {
   title: '生成AI時代の"つくる人"調査 2026.02',
   description: "あなたの創造が、AIと社会をつなぐデータになる。",
@@ -84,27 +76,7 @@ export const R2602_CONFIG: SurveyConfig = {
   submitUrl: "/api/surveys/R2602",
   reward: "10,000 AICUポイント",
   estimatedMinutes: 3,
-
-  // Derive split answers for merged dcaj questions (API submission)
-  deriveAnswers: (answers) => {
-    const derived: Record<string, unknown> = {}
-
-    // Q33/Q33a split
-    const q3 = answers["dcaj_Q3"]
-    if (Array.isArray(q3)) {
-      derived["dcaj_Q3"] = q3.filter((a) => Q3_ATTITUDES.includes(a as string))
-      derived["dcaj_Q3a"] = q3.filter((a) => Q3A_CONDITIONS.includes(a as string))
-    }
-
-    // Q36/Q36a split
-    const q6 = answers["dcaj_Q6"]
-    if (Array.isArray(q6)) {
-      derived["dcaj_Q6"] = q6.filter((a) => Q6_EVALUATIONS.includes(a as string))
-      derived["dcaj_Q6a"] = q6.filter((a) => Q6A_RULES.includes(a as string))
-    }
-
-    return derived
-  },
+  mergedQuestions: MERGED_QUESTIONS,
 
   questions: [
     // ── 同意 ──
@@ -132,13 +104,13 @@ export const R2602_CONFIG: SurveyConfig = {
     // [圧縮8] Q11: 有償実績なし → スキップ
     { id: "entry_274138831", entryId: 274138831, type: "single_choice", question: "この1年間のAI制作物に関する概算の売上帯を教えてください。", required: true, options: ["〜10万円未満","〜50万円未満","〜100万円未満","100万円以上","300万円以上","500万円以上"], skipIf: { questionId: "entry_35926345", equals: "有償実績はない" } },
     // [圧縮2] Q12+Q19統合: AIツール＋サブスク利用料を1問に
-    { id: "entry_1024046675", entryId: 1024046675, type: "single_choice", question: "月額のAIツール・サブスク利用料の合計は？", required: true, options: ["0円（無料の範囲）","月1,000円未満","月1,000〜5,000円","月5,000〜10,000円","月10,000～20,000円","月20,000円～30,000円","月30,000円～40,000円","月40,000円～50,000円","月50,000円以上"], virtualEntries: [{ entryId: 230852343, deriveFrom: (a) => a }] },
+    { id: "entry_1024046675", entryId: 1024046675, type: "single_choice", question: "月額のAIツール・サブスク利用料の合計は？", required: true, options: ["0円（無料の範囲）","月1,000円未満","月1,000〜5,000円","月5,000〜10,000円","月10,000～20,000円","月20,000円～30,000円","月30,000円～40,000円","月40,000円～50,000円","月50,000円以上"], virtualEntries: [{ entryId: 230852343, derive: "copy" }] },
 
     // ── 学習・制作環境 ──（AI利用者のみ）
     { id: "section_learning", type: "section", title: "学習・制作環境", skipIf: { questionId: "entry_217192455", equals: "どちらもしていない" } },
     { id: "entry_998532907", entryId: 998532907, type: "single_choice", question: "AIに関する学習・スキルアップのために投資した月額平均は？", required: true, options: ["0円（無料の範囲）","有償〜月1,000円未満","月1,000〜5,000円","月5,000〜10,000円","月10,000～20,000円","月20,000円～30,000円","月30,000円～40,000円","月40,000円～50,000円","月50,000円以上"] },
     // [圧縮3] Q14+Q15統合: 学習方法の複数選択、最初の選択を「最も役立つ」として送信
-    { id: "entry_2000848438", entryId: 2000848438, type: "multi_choice", question: "生成AIに関する知識・スキルを主にどこで学んでいますか？\n複数選択可（最初に選んだものが「最も役立つ」として記録されます）", required: true, options: ["コミュニティ","オンライン動画コンテンツ","Web上の技術記事・ブログ","書籍・電子書籍","独学","特に学んでいない"], virtualEntries: [{ entryId: 653106127, deriveFrom: (a) => Array.isArray(a) && a.length > 0 ? a[0] : null }] },
+    { id: "entry_2000848438", entryId: 2000848438, type: "multi_choice", question: "生成AIに関する知識・スキルを主にどこで学んでいますか？\n複数選択可（最初に選んだものが「最も役立つ」として記録されます）", required: true, options: ["コミュニティ","オンライン動画コンテンツ","Web上の技術記事・ブログ","書籍・電子書籍","独学","特に学んでいない"], virtualEntries: [{ entryId: 653106127, derive: "first" }] },
     { id: "entry_1829344839", entryId: 1829344839, type: "multi_choice", question: "主に使用している制作環境（OS・ハードウェア）は？（複数選択可）", required: false, options: ["Windows 10以前","Windows 11","Copilot+ PC（AIアシスト搭載Windows）","AI PC（Neural Processing Unit搭載PCなど）","Mac","Linux環境","スマートフォン","タブレット","上記に該当しない・使っていない"] },
     { id: "entry_505387619", entryId: 505387619, type: "dropdown", question: "使用している制作環境（GPU・計算環境）でもっとも強力な設備は？", required: true, options: ["クラウド演算基盤用GPU（L4／A100／H100／B100等）","サーバー用GPU(GB10, GeForce RTX 6000 ada等)","GeForce RTX 5000シリーズ","GeForce RTX 4000シリーズ","GeForce RTX 3000シリーズ","GeForce RTX 2000シリーズ","GPU搭載なし","AMD Radeonシリーズ","Apple Silicon","クラウド環境（Google Colab, AWS, GCP, RunPod など）","わからない","上記に該当しない・使っていない"] },
     { id: "entry_1878680578", entryId: 1878680578, type: "multi_choice", question: "主に使用しているツール・サービスは？\n複数選択可（例はこちら: https://u.aicu.ai/R2602/tools ）", required: true, popularOptions: ["ChatGPT","ComfyUI","Midjourney","Stable Diffusion (SDXL等のオープンモデル)","Google Gemini(App/Web)","Claude","DALL·E","Sora(App)","Runway","Codex"], options: ["A1111","Adobe Photoshop","Adobe Premiere","Adobe After Effects","AICU.jp","CapCut","ChatGPT","Civitai","Claude","Codex","CoeFont","Comfy Cloud","ComfyUI","DALL·E","DaVinci Resolve","Dreamina","FAL","ElevenLabs","Envato","Final Cut Pro","Flux","freepik","Genspark","GitHub","Google Gemini(App/Web)","Google ImageFX","Google Whisk","Google Veo3","Google Nano Banana","Hailuo (MiniMax)","higgsfield.ai","HuggingFace","Kling","krea.ai","dzine.ai","florafauna.ai","filmora","Forge","Leonardo.ai","Midjourney","n8n","NijiJourney","seaart.ai","Sora(App)","Sora2(API)","Stable Diffusion (SDXL等のオープンモデル)","Stability AI","Suno","RunPod","Runway","Topaz Video AI","Udio","vidu","Wan.video","にじボイス"] },
@@ -146,8 +118,10 @@ export const R2602_CONFIG: SurveyConfig = {
     // ── AI利用の効果 ──（AI利用者のみ）
     // [圧縮4] Q20-Q28 → 2問に統合
     { id: "section_impact", type: "section", title: "AI利用の効果", skipIf: { questionId: "entry_217192455", equals: "どちらもしていない" } },
-    { id: "Q_effect_done", type: "multi_choice", question: "AI利用で実現できていることを選んでください（複数選択可）", required: false, options: [...EFFECT_LABELS], virtualEntries: effectDoneVirtualEntries() },
-    { id: "Q_effect_want", type: "multi_choice", question: "今後伸ばしたい・期待したいことを選んでください（複数選択可）", required: false, options: [...EFFECT_LABELS], virtualEntries: effectWantVirtualEntries() },
+    { id: "Q_effect_done", type: "multi_choice", question: "AI利用で実現できていることを選んでください（複数選択可）", required: false, options: [...EFFECT_LABELS],
+      virtualEntries: EFFECT_ITEMS.map((item) => ({ entryId: item.entryId, derive: { ifIncludes: item.label, value: '現状「できている」' } })) },
+    { id: "Q_effect_want", type: "multi_choice", question: "今後伸ばしたい・期待したいことを選んでください（複数選択可）", required: false, options: [...EFFECT_LABELS],
+      virtualEntries: EFFECT_ITEMS.map((item) => ({ entryId: item.entryId, derive: { ifIncludes: item.label, value: '今後「伸ばしたい・期待したい」' } })) },
 
     // ── 態度・ボトルネック ──（AI利用者のみ）
     { id: "section_attitude", type: "section", title: "態度と課題", skipIf: { questionId: "entry_217192455", equals: "どちらもしていない" } },

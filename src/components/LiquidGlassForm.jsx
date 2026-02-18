@@ -94,13 +94,23 @@ function countEffectiveQuestions(questions, answers) {
   return count;
 }
 
+// ─── Resolve declarative virtualEntry derive modes ───
+function resolveDerive(derive, answer) {
+  if (derive === "copy") return answer;
+  if (derive === "first") return Array.isArray(answer) && answer.length > 0 ? answer[0] : null;
+  if (typeof derive === "object" && derive.ifIncludes) {
+    return Array.isArray(answer) && answer.includes(derive.ifIncludes) ? [derive.value] : null;
+  }
+  return null;
+}
+
 // ─── Submit helpers ───
 async function submitSurvey(config, answers, email) {
   // Google Form submission
   if (config.submitToGoogleForm && config.resolvedUrl) {
     const submitUrl = config.resolvedUrl.replace("/viewform", "/formResponse");
     const params = new URLSearchParams();
-    // Track which entryIds have been set (for merging virtualEntries)
+    // Track array values per entryId (for merging virtualEntries from multiple questions)
     const entryArrays = {};
     for (const q of config.questions) {
       if (q.type === "section") continue;
@@ -113,10 +123,10 @@ async function submitSurvey(config, answers, email) {
           params.set(`entry.${q.entryId}`, String(a));
         }
       }
-      // virtualEntries: derive additional Google Form entries from this answer
+      // virtualEntries: derive additional Google Form entries
       if (q.virtualEntries && a !== undefined && a !== null) {
         for (const ve of q.virtualEntries) {
-          const derived = ve.deriveFrom(a);
+          const derived = resolveDerive(ve.derive, a);
           if (derived === null || derived === undefined) continue;
           if (Array.isArray(derived)) {
             if (!entryArrays[ve.entryId]) entryArrays[ve.entryId] = [];
@@ -146,10 +156,17 @@ async function submitSurvey(config, answers, email) {
   // Custom API submission (with retry)
   if (config.submitUrl) {
     const effectiveEmail = email || answers["entry_1243761143"] || undefined;
-    // Apply deriveAnswers to split merged question answers for API
     let finalAnswers = { ...answers };
-    if (config.deriveAnswers) {
-      finalAnswers = { ...finalAnswers, ...config.deriveAnswers(answers) };
+    // Apply mergedQuestions splits (declarative answer derivation for API)
+    if (config.mergedQuestions) {
+      for (const mq of config.mergedQuestions) {
+        const combined = finalAnswers[mq.questionId];
+        if (Array.isArray(combined)) {
+          for (const split of mq.splits) {
+            finalAnswers[split.answerId] = combined.filter((v) => split.options.includes(v));
+          }
+        }
+      }
     }
     // Filter out separator options (─────) from array answers
     for (const [key, val] of Object.entries(finalAnswers)) {
