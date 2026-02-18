@@ -1,7 +1,7 @@
 # R2511参加者向けメール原案
 
 送信元: info@aicu.jp (GAS aicujp-mail-sender)
-送信先: R2511回答者（survey_responses で survey_id='R2511' かつ email IS NOT NULL）
+送信先: Wixサイト会員（R2511参加者を含む）※R2511のメールはGAS側でリダクト済みのためSupabaseにはない
 送信時期: 2026年2月19日〜（R2602公開と同時）
 
 ---
@@ -48,12 +48,21 @@ https://u.aicu.jp/r/R2511
 - 人間のクリエイターにしかできないこと
 
 **参加特典:**
-- **10,000 AICUポイント** を回答完了後に自動付与（月刊AICU・Amazonギフト券等と交換可能）
+- **10,000 AICUポイント** を回答完了後に自動付与
 - **回答者限定の結果速報ページ** をリアルタイムで閲覧可能
 
 所要時間は約5分。AIチャット形式でサクサク回答できます。
 
 ▶ **いますぐ参加する: https://p.aicu.jp/R2602**
+
+---
+
+### AICUポイントについて
+
+AICUポイントは「月刊AICU」やAmazonギフト券などと交換可能です。
+
+- **現在の獲得ポイント確認**: https://www.aicu.blog/rewards
+- **ストア商品一覧**: https://www.aicu.blog/category/all-products
 
 ---
 
@@ -69,14 +78,9 @@ https://aicu.jp
 
 ## 送信方法メモ
 
-### 送信対象リストの取得（Supabase）
-```sql
-SELECT DISTINCT email
-FROM survey_responses
-WHERE survey_id = 'R2511'
-  AND email IS NOT NULL
-  AND is_test IS NOT TRUE;
-```
+### 送信対象リストの取得
+R2511のメールはGAS側でリダクト済み（Supabaseには `null`）。
+送信先はWixサイト会員メールリスト（admin画面のWixEmailExportまたは `getAllMemberEmails()`）を使用。
 
 ### GAS送信（aicujp-mail-sender）
 - WebApp: `AKfycbzRFmxG_epgOQVyVMktfTIrDOYSuYvpdl4D_QqE-KFFusw_5U3zDGDK8-rS7xckktPo`

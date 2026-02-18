@@ -33,6 +33,10 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Temporary data exports (never commit)
+tmp/
+*.csv
+
 # Supabase
 supabase/.temp/
 
