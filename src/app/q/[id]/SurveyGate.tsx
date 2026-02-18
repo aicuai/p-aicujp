@@ -121,12 +121,23 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans JP', sans-serif",
       }}>
         <div style={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 24 }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, color: "var(--aicu-teal, #41C9B4)" }}>
+          <a href="https://aicu.jp" target="_blank" rel="noopener" style={{
+            display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 24,
+            textDecoration: "none",
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 12,
+              background: "linear-gradient(135deg, #41C9B4, #2BA594)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 3px 10px rgba(65, 201, 180, 0.25)",
+            }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", color: "#fff", fontWeight: 800, fontSize: 20 }}>A</span>
+            </div>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 800, color: "#41C9B4" }}>
               AICU
             </span>
-            <span style={{ fontSize: 17, fontWeight: 600, color: "#1a1a2e" }}>Research</span>
-          </div>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a2e" }}>Research</span>
+          </a>
           <div style={{
             width: 68, height: 68, borderRadius: 20, margin: "0 auto 20px",
             background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)",
@@ -174,12 +185,23 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
       <div style={{ maxWidth: 440, width: "100%", position: "relative", zIndex: 1 }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, color: "var(--aicu-teal, #41C9B4)" }}>
+          <a href="https://aicu.jp" target="_blank" rel="noopener" style={{
+            display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 16,
+            textDecoration: "none",
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 12,
+              background: "linear-gradient(135deg, #41C9B4, #2BA594)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 3px 10px rgba(65, 201, 180, 0.25)",
+            }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", color: "#fff", fontWeight: 800, fontSize: 20 }}>A</span>
+            </div>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 800, color: "#41C9B4" }}>
               AICU
             </span>
-            <span style={{ fontSize: 17, fontWeight: 600, color: "#1a1a2e" }}>Research</span>
-          </div>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a2e" }}>Research</span>
+          </a>
           <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.4, marginBottom: 8, color: "#1a1a2e" }}>
             {config.title}
           </h2>
