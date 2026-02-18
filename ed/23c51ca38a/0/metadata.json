@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "ed23c51ca38a",
+  "session_id": "0a9df89c-7edf-4220-ad9a-2f459194827c",
+  "strategy": "auto-commit",
+  "created_at": "2026-02-18T18:20:56.787773Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".env.check",
+    "docs/email-R2511-thankyou-and-R2602-announce.md"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "3524f9a9-3948-4032-9e86-01fda1bf03de",
+  "checkpoint_transcript_start": 2539,
+  "transcript_lines_at_start": 2539,
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 34002,
+    "cache_read_tokens": 429525,
+    "output_tokens": 27,
+    "api_call_count": 5
+  }
+}
