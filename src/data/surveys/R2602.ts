@@ -76,7 +76,7 @@ export const R2602_CONFIG: SurveyConfig = {
   submitUrl: "/api/surveys/R2602",
   reward: "10,000 AICUポイント",
   estimatedMinutes: 3,
-  opensAt: "2026-02-19T00:00:00+09:00",
+  opensAt: "2026-02-18T23:50:00+09:00",
   mergedQuestions: MERGED_QUESTIONS,
 
   questions: [

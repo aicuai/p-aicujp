@@ -337,22 +337,35 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
 function TweetEmbed({ tweetUrl }: { tweetUrl: string }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const w = window as unknown as { twttr?: { widgets: { load: (el?: HTMLElement) => void } } }
-    const load = () => { if (w.twttr?.widgets && ref.current) w.twttr.widgets.load(ref.current) }
-    if (w.twttr) { load(); return }
-    const s = document.createElement("script")
-    s.src = "https://platform.twitter.com/widgets.js"
-    s.async = true
-    s.onload = load
-    document.head.appendChild(s)
+    // Extract tweet ID from URL
+    const match = tweetUrl.match(/status\/(\d+)/)
+    if (!match || !ref.current) return
+    const tweetId = match[1]
+
+    type Twttr = { widgets: { createTweet: (id: string, el: HTMLElement, opts?: Record<string, unknown>) => Promise<HTMLElement> } }
+    const w = window as unknown as { twttr?: Twttr }
+
+    const render = () => {
+      if (!w.twttr?.widgets || !ref.current) return
+      ref.current.innerHTML = ""
+      w.twttr.widgets.createTweet(tweetId, ref.current, { lang: "ja", theme: "light" })
+    }
+
+    if (w.twttr?.widgets) { render(); return }
+    // Load Twitter widgets.js
+    if (!document.querySelector('script[src*="platform.twitter.com/widgets.js"]')) {
+      const s = document.createElement("script")
+      s.src = "https://platform.twitter.com/widgets.js"
+      s.async = true
+      document.head.appendChild(s)
+    }
+    // Wait for twttr to be ready
+    const interval = setInterval(() => {
+      if (w.twttr?.widgets) { clearInterval(interval); render() }
+    }, 200)
+    return () => clearInterval(interval)
   }, [tweetUrl])
-  return (
-    <div ref={ref} style={{ marginTop: 24, maxWidth: 400, margin: "24px auto 0" }}>
-      <blockquote className="twitter-tweet" data-lang="ja" data-theme="light">
-        <a href={tweetUrl}>Loading...</a>
-      </blockquote>
-    </div>
-  )
+  return <div ref={ref} style={{ maxWidth: 400, margin: "24px auto 0" }} />
 }
 
 const selectStyle: React.CSSProperties = {
