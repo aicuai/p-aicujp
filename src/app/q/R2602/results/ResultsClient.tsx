@@ -5,7 +5,8 @@ import dynamic from "next/dynamic"
 import { VIZ_MAP, PAIRED_BAR_IDS } from "@/lib/survey-viz-config"
 import type { VizType } from "@/lib/survey-viz-config"
 import { useMyAnswers } from "@/lib/use-my-answers"
-import { computeStats } from "@/lib/survey-stats"
+import { computeStats, computeGapAnalysis } from "@/lib/survey-stats"
+import { getQuestionCommentary, getPairedBarCommentary, getPyramidCommentary } from "@/lib/survey-commentary"
 
 // Dynamic imports to avoid SSR issues with recharts
 const StackedBar = dynamic(() => import("@/components/charts/StackedBar"), { ssr: false })
@@ -284,6 +285,7 @@ function ChartCard({ item, data, myAnswers }: {
 }) {
   if (item.kind === "pyramid") {
     const total = data.pyramidData?.length || 0
+    const pyramidComment = getPyramidCommentary({ crossData: data.pyramidData || [] })
     return (
       <CardWrapper title="回答者の年代×性別（人口ピラミッド）" subtitle={`${total}件の回答`}>
         <PopulationPyramid
@@ -292,11 +294,14 @@ function ChartCard({ item, data, myAnswers }: {
           crossData={data.pyramidData || []}
           answered={total}
         />
+        <Commentary text={pyramidComment} />
       </CardWrapper>
     )
   }
 
   if (item.kind === "paired") {
+    const gapItems = computeGapAnalysis(item.done.counts, item.want.counts, item.done.answered, item.want.answered)
+    const pairedComment = getPairedBarCommentary({ gapItems, doneAnswered: item.done.answered, wantAnswered: item.want.answered })
     return (
       <CardWrapper
         title="AI利用の効果（実現 vs 期待）"
@@ -310,12 +315,18 @@ function ChartCard({ item, data, myAnswers }: {
           myDone={getMyAnswer(myAnswers, PAIRED_BAR_IDS.done)}
           myWant={getMyAnswer(myAnswers, PAIRED_BAR_IDS.want)}
         />
+        <Commentary text={pairedComment} />
       </CardWrapper>
     )
   }
 
   if (item.kind === "age-pie") {
     const q = item.question
+    const ageStats = computeStats(q.counts, q.answered, data.totalResponses)
+    const ageComment = getQuestionCommentary({
+      id: q.id, counts: q.counts, answered: q.answered,
+      totalResponses: data.totalResponses, stats: ageStats,
+    })
     return (
       <CardWrapper title={q.question} subtitle={`${q.answered}件の回答`}>
         <AgeBucketChart
@@ -323,6 +334,8 @@ function ChartCard({ item, data, myAnswers }: {
           answered={q.answered}
           myAnswer={getMyAnswer(myAnswers, q.id)}
         />
+        <Commentary text={ageComment} />
+        <StatsFooter stats={ageStats} />
       </CardWrapper>
     )
   }
@@ -332,6 +345,10 @@ function ChartCard({ item, data, myAnswers }: {
   const isMulti = q.type === "multi_choice"
   const my = getMyAnswer(myAnswers, q.id)
   const stats = computeStats(q.counts, q.answered, data.totalResponses)
+  const comment = getQuestionCommentary({
+    id: q.id, counts: q.counts, answered: q.answered,
+    totalResponses: data.totalResponses, stats,
+  })
 
   return (
     <CardWrapper
@@ -362,6 +379,7 @@ function ChartCard({ item, data, myAnswers }: {
       {item.vizType === "horizontal-bar" && (
         <HorizontalBarChart counts={q.counts} answered={q.answered} isMulti={isMulti} myAnswer={my} />
       )}
+      <Commentary text={comment} />
       <StatsFooter stats={stats} />
     </CardWrapper>
   )
@@ -393,6 +411,20 @@ function CardWrapper({ title, subtitle, children }: {
       }}>
         p.aicu.jp/R2602
       </span>
+    </div>
+  )
+}
+
+function Commentary({ text }: { text: string | null }) {
+  if (!text) return null
+  return (
+    <div style={{
+      marginTop: 12, padding: "10px 14px",
+      background: "#f5f6f7", borderLeft: "3px solid #41C9B4",
+      borderRadius: "0 6px 6px 0",
+      fontSize: 12, lineHeight: 1.8, color: "#444",
+    }}>
+      {text}
     </div>
   )
 }
