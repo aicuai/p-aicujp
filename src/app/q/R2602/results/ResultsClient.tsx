@@ -413,17 +413,17 @@ function CardWrapper({ title, subtitle, isSample, children }: {
         <span style={{
           position: "absolute", top: "50%", left: "50%",
           transform: "translate(-50%, -50%) rotate(-20deg)",
-          fontSize: 18, color: "rgba(0,0,0,0.18)", fontWeight: 800,
+          fontSize: 18, color: "rgba(0,0,0,0.8)", fontWeight: 800,
           pointerEvents: "none", userSelect: "none",
           whiteSpace: "nowrap", letterSpacing: "0.02em",
         }}>
-          [Sample Data] 調査依頼は info@aicu.jp まで
+          [Sample Data] 調査依頼は r2602@aicu.jp まで
         </span>
       ) : (
         <span style={{
           position: "absolute", top: "50%", right: 12,
           transform: "translateY(-50%)",
-          fontSize: 9, color: "rgba(0,0,0,0.08)", fontWeight: 600,
+          fontSize: 9, color: "rgba(0,0,0,0.2)", fontWeight: 600,
           pointerEvents: "none", userSelect: "none",
         }}>
           p.aicu.jp/R2602
