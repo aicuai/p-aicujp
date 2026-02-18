@@ -15,6 +15,7 @@ const AgeBucketChart = dynamic(() => import("@/components/charts/AgeBucketChart"
 const TagCloud = dynamic(() => import("@/components/charts/TagCloud"), { ssr: false })
 const PairedBarChart = dynamic(() => import("@/components/charts/PairedBarChart"), { ssr: false })
 const HorizontalBarChart = dynamic(() => import("@/components/charts/HorizontalBarChart"), { ssr: false })
+const TreemapChart = dynamic(() => import("@/components/charts/TreemapChart"), { ssr: false })
 const PopulationPyramid = dynamic(() => import("@/components/charts/PopulationPyramid"), { ssr: false })
 
 type ChartQuestion = {
@@ -349,6 +350,9 @@ function ChartCard({ item, data, myAnswers }: {
       {item.vizType === "tag-cloud" && (
         <TagCloud counts={q.counts} answered={q.answered} myAnswer={my} />
       )}
+      {item.vizType === "treemap" && (
+        <TreemapChart counts={q.counts} answered={q.answered} myAnswer={my} />
+      )}
       {item.vizType === "horizontal-bar" && (
         <HorizontalBarChart counts={q.counts} answered={q.answered} isMulti={isMulti} myAnswer={my} />
       )}
@@ -374,9 +378,10 @@ function CardWrapper({ title, subtitle, children }: {
         {subtitle}
       </p>
       {children}
-      {/* Watermark */}
+      {/* Watermark — vertically centered */}
       <span style={{
-        position: "absolute", bottom: 6, right: 12,
+        position: "absolute", top: "50%", right: 12,
+        transform: "translateY(-50%)",
         fontSize: 9, color: "rgba(0,0,0,0.08)", fontWeight: 600,
         pointerEvents: "none", userSelect: "none",
       }}>

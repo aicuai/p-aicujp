@@ -4,6 +4,7 @@ import { SUPERUSER_EMAILS } from "@/lib/constants"
 import { getAdminSupabase } from "@/lib/supabase"
 import { getTotalContactsCount, getTotalMembersCount, getSubscriptionStats } from "@/lib/wix"
 import Link from "next/link"
+import SurveyProgressChart from "@/components/charts/SurveyProgressChart"
 
 export default async function AdminDashboard() {
   const user = await getUser()
@@ -27,6 +28,7 @@ export default async function AdminDashboard() {
     recentLoginsResult,
     surveyCountResult,
     surveyLatestResult,
+    surveyAllTimestampsResult,
   ] = await Promise.all([
     admin.from("unified_users").select("id", { count: "exact", head: true }),
     admin.from("unified_users").select("id", { count: "exact", head: true }).not("wix_contact_id", "is", null),
@@ -40,6 +42,7 @@ export default async function AdminDashboard() {
     admin.from("unified_users").select("primary_email, last_login_at, wix_contact_id, discord_id").order("last_login_at", { ascending: false, nullsFirst: false }).limit(10),
     admin.from("survey_responses").select("id", { count: "exact", head: true }),
     admin.from("survey_responses").select("survey_id, email, submitted_at").order("submitted_at", { ascending: false }).limit(5),
+    admin.from("survey_responses").select("submitted_at").order("submitted_at", { ascending: true }),
   ])
 
   const totalUsers = unifiedResult.count ?? 0
@@ -76,6 +79,18 @@ export default async function AdminDashboard() {
   const recentLogins = recentLoginsResult.data ?? []
   const surveyCount = surveyCountResult.count ?? 0
   const surveyLatest = (surveyLatestResult.data ?? []) as { survey_id: string; email: string | null; submitted_at: string }[]
+
+  // Build daily counts for progress chart
+  const surveyTimestamps = (surveyAllTimestampsResult.data ?? []) as { submitted_at: string }[]
+  const dailyMap: Record<string, number> = {}
+  for (const row of surveyTimestamps) {
+    if (!row.submitted_at) continue
+    const date = row.submitted_at.slice(0, 10) // "2026-02-01"
+    dailyMap[date] = (dailyMap[date] || 0) + 1
+  }
+  const dailyCounts = Object.entries(dailyMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }))
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -202,6 +217,13 @@ export default async function AdminDashboard() {
               <span style={{ color: "var(--text-secondary)" }}>総回答数</span>
               <span style={{ fontWeight: 700, fontSize: 20, color: "var(--text-primary)" }}>{surveyCount}</span>
             </div>
+            {/* Cumulative progress chart */}
+            {dailyCounts.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>回答数推移（累計）</div>
+                <SurveyProgressChart dailyCounts={dailyCounts} goals={[100, 200, 300]} />
+              </div>
+            )}
             {surveyLatest.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 2 }}>最新のエントリー</div>

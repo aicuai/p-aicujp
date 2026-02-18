@@ -6,6 +6,7 @@ export type VizType =
   | "regional-pie"
   | "age-pie"
   | "tag-cloud"
+  | "treemap"
   | "paired-bar"
   | "horizontal-bar"
 
@@ -38,9 +39,11 @@ export const VIZ_MAP: Record<string, VizType> = {
   // Age Bucket Pie
   entry_170746194: "age-pie",  // 生まれた年
 
-  // Tag Cloud (多数選択肢)
-  entry_1878680578: "tag-cloud",  // ツール (46個)
-  dcaj_Q7: "tag-cloud",          // クリエイター価値 (13個)
+  // Treemap (大量選択肢)
+  entry_1878680578: "treemap",  // ツール (46個)
+
+  // Horizontal Bar (クリエイター価値 — 13個は横バー向き)
+  dcaj_Q7: "horizontal-bar",   // クリエイター価値 (13個)
 
   // Paired Bar (効果対比)
   Q_effect_done: "paired-bar",
