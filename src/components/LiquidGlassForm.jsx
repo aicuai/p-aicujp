@@ -1047,7 +1047,7 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
               </p>
               <button
                 onClick={() => {
-                  const text = "生成AI時代の\"つくる人\"調査に参加しました。チャットで答える新感覚アンケート、約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AI #つくる人調査";
+                  const text = "生成AI時代の\"つくる人\"調査(R2602)を開始しました。\nチャットで答える新感覚アンケート！\n約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AIつくる人調査";
                   if (navigator.share) {
                     navigator.share({ text }).catch(() => {});
                   } else {
@@ -1068,7 +1068,7 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
                 シェアする
               </button>
               <a
-                href={"https://x.com/intent/tweet?text=" + encodeURIComponent("生成AI時代の\"つくる人\"調査に参加しました。チャットで答える新感覚アンケート、約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AI #つくる人調査")}
+                href={"https://x.com/intent/tweet?text=" + encodeURIComponent("生成AI時代の\"つくる人\"調査(R2602)を開始しました。\nチャットで答える新感覚アンケート！\n約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AIつくる人調査")}
                 target="_blank" rel="noopener"
                 style={{ display: "block", textAlign: "center", marginTop: 8, fontSize: 13, color: s.textDim, textDecoration: "underline" }}
               >
