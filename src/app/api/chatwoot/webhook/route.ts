@@ -59,12 +59,17 @@ async function handleContactSync(
 // ─── Route handler ───
 
 export async function POST(request: NextRequest) {
-  // Optional secret check (query param)
+  // Secret check: prefer header, fall back to query param for backward compat
   if (WEBHOOK_SECRET) {
-    const secret = request.nextUrl.searchParams.get("secret")
-    if (secret !== WEBHOOK_SECRET) {
+    const headerSecret = request.headers.get("x-webhook-secret") || ""
+    const querySecret = request.nextUrl.searchParams.get("secret") || ""
+    if (headerSecret !== WEBHOOK_SECRET && querySecret !== WEBHOOK_SECRET) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 })
     }
+  } else {
+    // Fail closed: reject if secret is not configured
+    console.error("CHATWOOT_WEBHOOK_SECRET is not configured")
+    return NextResponse.json({ error: "server misconfigured" }, { status: 500 })
   }
 
   let body: Record<string, unknown>
