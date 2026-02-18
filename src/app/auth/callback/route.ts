@@ -7,7 +7,17 @@ import { notifySlack } from "@/lib/slack"
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
+  const error = searchParams.get("error")
+  const errorDescription = searchParams.get("error_description")
   const redirectTo = new URL("/dashboard", request.url)
+
+  // Supabase がエラー付きでリダイレクトしてきた場合（OTP期限切れ等）
+  if (error) {
+    const msg = errorDescription || error
+    return NextResponse.redirect(
+      new URL(`/auth/error?error=${encodeURIComponent(msg)}`, request.url),
+    )
+  }
 
   if (code) {
     const response = NextResponse.redirect(redirectTo)
