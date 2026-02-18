@@ -351,7 +351,13 @@ function ChartCard({ item, data, myAnswers }: {
         <TagCloud counts={q.counts} answered={q.answered} myAnswer={my} />
       )}
       {item.vizType === "treemap" && (
-        <TreemapChart counts={q.counts} answered={q.answered} myAnswer={my} />
+        <TreemapChart
+          counts={q.counts}
+          answered={q.answered}
+          myAnswer={my}
+          maxSelections={10}
+          description="参加者に最大10件の使用ツールを列挙させた。全体スコアを参加者×10ポイントとした場合の投票獲得率。"
+        />
       )}
       {item.vizType === "horizontal-bar" && (
         <HorizontalBarChart counts={q.counts} answered={q.answered} isMulti={isMulti} myAnswer={my} />

@@ -8,6 +8,10 @@ type Props = {
   counts: Record<string, number>
   answered: number
   myAnswer?: string | string[]
+  /** Maximum selections per respondent (e.g. 10 for tools question) */
+  maxSelections?: number
+  /** Description shown below the chart */
+  description?: string
 }
 
 type TreeNode = {
@@ -65,17 +69,19 @@ function CustomCell(props: Record<string, unknown>) {
   )
 }
 
-export default function TreemapChart({ counts, answered, myAnswer }: Props) {
+export default function TreemapChart({ counts, answered, myAnswer, maxSelections, description }: Props) {
   const entries = Object.entries(counts)
     .filter(([, v]) => v > 0)
     .sort((a, b) => b[1] - a[1])
 
   if (entries.length === 0) return <div style={{ fontSize: 13, color: "#ccc" }}>回答なし</div>
 
+  // When maxSelections is set, total pool = answered × maxSelections
+  const totalPool = maxSelections ? answered * maxSelections : answered
   const treeData: TreeNode[] = entries.map(([label, count]) => ({
     name: label,
     size: count,
-    pct: answered > 0 ? Math.round((count / answered) * 100) : 0,
+    pct: totalPool > 0 ? Math.round((count / totalPool) * 1000) / 10 : 0,
     mine: isMyAnswer(myAnswer, label),
   }))
 
@@ -99,7 +105,7 @@ export default function TreemapChart({ counts, answered, myAnswer }: Props) {
                     padding: "8px 12px", fontSize: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                   }}>
                     <div style={{ fontWeight: 600, marginBottom: 2 }}>{d.name}</div>
-                    <div style={{ color: "#666" }}>{d.size}件 ({d.pct}%)</div>
+                    <div style={{ color: "#666" }}>{d.size}票 ({d.pct}%)</div>
                   </div>
                 )
               }}
@@ -114,6 +120,12 @@ export default function TreemapChart({ counts, answered, myAnswer }: Props) {
           <MyAnswerBadge />
           <span>= あなたが選択した項目</span>
         </div>
+      )}
+      {/* Description */}
+      {description && (
+        <p style={{ marginTop: 8, fontSize: 11, color: "#999", lineHeight: 1.6 }}>
+          {description}
+        </p>
       )}
     </div>
   )
