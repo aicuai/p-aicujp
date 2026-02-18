@@ -4,7 +4,7 @@ declare global {
   interface Window { gtag?: (...args: unknown[]) => void }
 }
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import type { SurveyConfig } from "@/data/surveys"
 import SurveyForm from "./SurveyForm"
 
@@ -148,6 +148,8 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
               報酬: {config.reward}（開始後に回答可能になります）
             </p>
           )}
+          {/* Embedded tweet */}
+          <TweetEmbed tweetUrl="https://x.com/AICUai/status/2024119075144978928" />
           <div style={{ marginTop: 32, fontSize: 12, color: "#bbb" }}>
             Powered by{" "}
             <span style={{ fontFamily: "'Outfit', sans-serif", color: "var(--aicu-teal, #41C9B4)", fontWeight: 700 }}>AICU</span>
@@ -328,6 +330,27 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
           {" "}Research
         </div>
       </div>
+    </div>
+  )
+}
+
+function TweetEmbed({ tweetUrl }: { tweetUrl: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const w = window as unknown as { twttr?: { widgets: { load: (el?: HTMLElement) => void } } }
+    const load = () => { if (w.twttr?.widgets && ref.current) w.twttr.widgets.load(ref.current) }
+    if (w.twttr) { load(); return }
+    const s = document.createElement("script")
+    s.src = "https://platform.twitter.com/widgets.js"
+    s.async = true
+    s.onload = load
+    document.head.appendChild(s)
+  }, [tweetUrl])
+  return (
+    <div ref={ref} style={{ marginTop: 24, maxWidth: 400, margin: "24px auto 0" }}>
+      <blockquote className="twitter-tweet" data-lang="ja" data-theme="light">
+        <a href={tweetUrl}>Loading...</a>
+      </blockquote>
     </div>
   )
 }
