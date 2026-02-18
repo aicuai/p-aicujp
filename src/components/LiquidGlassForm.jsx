@@ -884,9 +884,11 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
         setShowInput(false);
         return;
       }
-      // Persist completed answers for results page highlighting
+      // Persist completed answers for results page highlighting (strip PII)
       try {
-        localStorage.setItem(`lgf_completed_${surveyId}`, JSON.stringify({ answers: newAns, completedAt: new Date().toISOString() }));
+        const PII_KEYS = ["entry_1243761143", "entry_1127213393", "entry_388832134", "entry_1784426158", "entry_611811208", "dcaj_Q1a", "dcaj_Q5a"];
+        const safeAns = Object.fromEntries(Object.entries(newAns).filter(([k]) => !PII_KEYS.includes(k)));
+        localStorage.setItem(`lgf_completed_${surveyId}`, JSON.stringify({ answers: safeAns, completedAt: new Date().toISOString() }));
       } catch { /* quota exceeded — ignore */ }
       clearProgress(surveyId);
       // GTAG: survey complete

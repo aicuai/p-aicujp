@@ -315,7 +315,7 @@ function CardWrapper({ title, subtitle, children }: {
   return (
     <div style={{
       background: "#fff", borderRadius: 12, padding: "20px 24px",
-      border: "1px solid rgba(0,0,0,0.08)",
+      border: "1px solid rgba(0,0,0,0.08)", position: "relative",
     }}>
       <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e", margin: "0 0 4px", lineHeight: 1.5 }}>
         {title}
@@ -324,6 +324,14 @@ function CardWrapper({ title, subtitle, children }: {
         {subtitle}
       </p>
       {children}
+      {/* Watermark */}
+      <span style={{
+        position: "absolute", bottom: 6, right: 12,
+        fontSize: 9, color: "rgba(0,0,0,0.08)", fontWeight: 600,
+        pointerEvents: "none", userSelect: "none",
+      }}>
+        p.aicu.jp/R2602
+      </span>
     </div>
   )
 }
