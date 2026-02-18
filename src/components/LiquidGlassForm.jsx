@@ -954,6 +954,7 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
   };
 
   const reward = formConfig.reward || "10,000 AICUポイント";
+  const [copyToast, setCopyToast] = useState(false);
 
   return (
     <div style={{
@@ -1057,35 +1058,64 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
               <p style={{ fontSize: 13, color: s.textSub, lineHeight: 1.7, marginBottom: 12 }}>
                 一人でも多くの声が、より良い政策提言につながります
               </p>
-              <button
-                onClick={() => {
-                  const text = "生成AI時代の\"つくる人\"調査(R2602)を開始しました。\nチャットで答える新感覚アンケート！\n約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AIつくる人調査";
-                  if (navigator.share) {
-                    navigator.share({ text }).catch(() => {});
-                  } else {
-                    navigator.clipboard.writeText(text).then(() => {
-                      alert("シェア用テキストをコピーしました");
-                    }).catch(() => {
-                      window.open("https://x.com/intent/tweet?text=" + encodeURIComponent(text), "_blank");
-                    });
-                  }
-                }}
-                style={{
-                  width: "100%", padding: "12px 16px", borderRadius: 12,
-                  border: "none", fontSize: 15, fontWeight: 700, fontFamily: "inherit",
-                  cursor: "pointer", background: "#0031D8", color: "#fff",
-                  boxShadow: "0 2px 12px rgba(0,49,216,0.2)",
-                }}
-              >
-                シェアする
-              </button>
-              <a
-                href={"https://x.com/intent/tweet?text=" + encodeURIComponent("生成AI時代の\"つくる人\"調査(R2602)を開始しました。\nチャットで答える新感覚アンケート！\n約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AIつくる人調査")}
-                target="_blank" rel="noopener"
-                style={{ display: "block", textAlign: "center", marginTop: 8, fontSize: 13, color: s.textDim, textDecoration: "underline" }}
-              >
-                X (Twitter) で投稿
-              </a>
+              {(() => {
+                const shareText = "生成AI時代の\"つくる人\"調査(R2602)に参加しました。\nチャットで答える新感覚アンケート！\n約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AIつくる人調査";
+                const shareUrl = "https://p.aicu.jp/R2602";
+                const copyAndToast = () => {
+                  navigator.clipboard.writeText(shareText).then(() => {
+                    setCopyToast(true);
+                    setTimeout(() => setCopyToast(false), 2000);
+                  }).catch(() => {});
+                };
+                return (<>
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({ text: shareText, url: shareUrl }).catch(() => {});
+                      } else {
+                        copyAndToast();
+                      }
+                    }}
+                    style={{
+                      width: "100%", padding: "12px 16px", borderRadius: 12,
+                      border: "none", fontSize: 15, fontWeight: 700, fontFamily: "inherit",
+                      cursor: "pointer", background: "#0031D8", color: "#fff",
+                      boxShadow: "0 2px 12px rgba(0,49,216,0.2)",
+                    }}
+                  >
+                    シェアする
+                  </button>
+                  {copyToast && (
+                    <div style={{
+                      marginTop: 8, padding: "8px 16px", borderRadius: 10, textAlign: "center",
+                      background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)",
+                      color: "#059669", fontSize: 13, fontWeight: 600,
+                      animation: "lgf-fi 0.2s ease both",
+                    }}>
+                      URLをコピーしました
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 8, marginTop: 8, justifyContent: "center" }}>
+                    <a
+                      href={"https://x.com/intent/tweet?text=" + encodeURIComponent(shareText)}
+                      target="_blank" rel="noopener"
+                      style={{ fontSize: 13, color: s.textDim, textDecoration: "underline" }}
+                    >
+                      X (Twitter)
+                    </a>
+                    <span style={{ color: s.textDim, fontSize: 13 }}>|</span>
+                    <button
+                      onClick={copyAndToast}
+                      style={{
+                        background: "none", border: "none", padding: 0, fontSize: 13,
+                        color: s.textDim, textDecoration: "underline", cursor: "pointer", fontFamily: "inherit",
+                      }}
+                    >
+                      URLをコピー
+                    </button>
+                  </div>
+                </>);
+              })()}
             </div>
 
             <div style={{ marginTop: 20, fontSize: 13, color: s.textDim, lineHeight: 1.6 }}>
