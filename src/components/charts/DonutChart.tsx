@@ -30,6 +30,13 @@ export default function DonutChart({ counts, answered, myAnswer }: Props) {
               dataKey="value"
               stroke="rgba(255,255,255,0.6)"
               strokeWidth={2}
+              label={({ name, percent }: { name?: string; percent?: number }) => {
+                const p = percent ?? 0
+                if (p < 0.06) return ""
+                const short = (name ?? "").length > 8 ? (name ?? "").slice(0, 7) + "…" : (name ?? "")
+                return `${short} ${Math.round(p * 100)}%`
+              }}
+              labelLine={false}
             >
               {data.map((_, i) => (
                 <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />

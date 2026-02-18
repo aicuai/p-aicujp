@@ -245,17 +245,27 @@ export default async function Dashboard() {
             <div className="card animate-in-delay-2" style={{ padding: 20 }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>アンケート回答履歴</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {surveyResponses.map((r) => (
-                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                      <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{r.survey_id}</span>
-                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
-                        {new Date(r.submitted_at).toLocaleDateString("ja-JP", { year: "numeric", month: "short", day: "numeric" })}
-                      </span>
-                    </div>
-                    <RewardBadge status={r.reward_status} />
-                  </div>
-                ))}
+                {(() => {
+                  const seenSurveys = new Set<string>()
+                  return surveyResponses.map((r) => {
+                    const isDuplicate = seenSurveys.has(r.survey_id)
+                    seenSurveys.add(r.survey_id)
+                    return (
+                      <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                          <a href={`/q/${r.survey_id}/results`} style={{ color: "var(--aicu-teal)", fontWeight: 500, textDecoration: "none" }}>{r.survey_id} 結果を見る</a>
+                          <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                            {new Date(r.submitted_at).toLocaleDateString("ja-JP", { year: "numeric", month: "short", day: "numeric" })}
+                          </span>
+                        </div>
+                        {isDuplicate
+                          ? <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: "rgba(0,0,0,0.04)", color: "var(--text-tertiary)", whiteSpace: "nowrap" }}>謝礼は初回のみ</span>
+                          : <RewardBadge status={r.reward_status} />
+                        }
+                      </div>
+                    )
+                  })
+                })()}
               </div>
             </div>
           )}
