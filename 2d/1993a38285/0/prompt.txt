@@ -1,0 +1,20 @@
+いい感じです
+https://p.aicu.jp/R2602 です（さらに短くなった)
+表は使えません
+
+学術研究や政策研究にお使いいただけます（お問い合わせは R2602@aicu.jp まで)
+
+チャートの画像を入れたいのですが、/Users/aki/git.local/p-aicujp/public/images あたりに生成できる？もしくは このディレクトリか 
+/Users/aki/git.local/u-aicujp/public/r/R2511
+
+---
+
+[Image: source: /Users/aki/git.local/u-aicujp/public/r/R2511/R2511-7.png]
+
+---
+
+はい、お願いしときました。
+
+では次は、アンケートのキャンベーんとWixとの連携に戻ります。
+
+まずサイトトップの文字が小さい、みやすくしたい。バナー画像はこちらhttps://assets.st-note.REDACTED.png?fit=bounds&quality=85&width=1280にあるのでいったんローカルでプレビューさせて。

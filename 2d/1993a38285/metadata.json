@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "2d1993a38285",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/call-for-R2602.md",
+    "public/images/r2602-banner.png",
+    "src/app/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2d/1993a38285/0/metadata.json",
+      "transcript": "/2d/1993a38285/0/full.jsonl",
+      "context": "",
+      "content_hash": "/2d/1993a38285/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 28,
+    "cache_creation_tokens": 33280,
+    "cache_read_tokens": 1580790,
+    "output_tokens": 4372,
+    "api_call_count": 22
+  }
+}
