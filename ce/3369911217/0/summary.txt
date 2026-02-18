@@ -1,0 +1,9 @@
+Build successful. Dev server is running at http://localhost:3200/q/R2602 — ready for testing.
+
+The fix was converting all function-based config (`deriveFrom`, `deriveAnswers`) to **declarative, serializable** formats:
+- `deriveFrom: (a) => a` → `derive: "copy"`
+- `deriveFrom: (a) => a[0]` → `derive: "first"`
+- `deriveFrom: (a) => includes check` → `derive: { ifIncludes: "label", value: "val" }`
+- `deriveAnswers: (answers) => ...` → `mergedQuestions: [{ questionId, splits }]`
+
+The resolution logic (`resolveDerive`) now lives in `LiquidGlassForm.jsx` (client-side), keeping the config purely data.

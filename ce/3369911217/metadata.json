@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "ce3369911217",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/components/LiquidGlassForm.jsx",
+    "src/data/surveys/R2602.ts",
+    "src/data/surveys/index.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ce/3369911217/0/metadata.json",
+      "transcript": "/ce/3369911217/0/full.jsonl",
+      "context": "",
+      "content_hash": "/ce/3369911217/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 11,
+    "cache_creation_tokens": 38873,
+    "cache_read_tokens": 1204208,
+    "output_tokens": 104,
+    "api_call_count": 10
+  }
+}
