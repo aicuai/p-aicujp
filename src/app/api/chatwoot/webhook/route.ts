@@ -43,13 +43,13 @@ async function handleMessage(event: ChatwootMessageEvent) {
 async function handleContactSync(
   event: ChatwootContactEvent,
 ) {
-  // identifier = Supabase Auth UID (setUser で設定される)
-  if (!event.identifier) return
+  // identifier or email が必要
+  if (!event.identifier && !event.email) return
 
   try {
-    await linkChatwootContact(event.identifier, event.id)
+    await linkChatwootContact(event.identifier || "", event.id, event.email || undefined)
     console.log(
-      `[chatwoot] linked contact ${event.id} → unified_user ${event.identifier}`,
+      `[chatwoot] linked contact ${event.id} → unified_user (identifier=${event.identifier}, email=${event.email})`,
     )
   } catch (err) {
     console.error("[chatwoot] contact sync failed:", err)

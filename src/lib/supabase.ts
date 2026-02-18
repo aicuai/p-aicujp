@@ -199,18 +199,34 @@ export async function getUserByDiscordId(discordId: string) {
   return (data as UnifiedUser) ?? null
 }
 
-/** Chatwoot Contact ID を Supabase Auth UID ベースで紐付け */
+/** Chatwoot Contact ID を紐付け（メールアドレス or Supabase Auth UID） */
 export async function linkChatwootContact(
-  supabaseUid: string,
+  identifier: string,
   chatwootContactId: number,
+  email?: string,
 ) {
-  const { data, error } = await getAdminSupabase()
+  const supabase = getAdminSupabase()
+  const updateData = {
+    chatwoot_contact_id: chatwootContactId,
+    updated_at: new Date().toISOString(),
+  }
+
+  // まずメールアドレスで検索（より確実）
+  if (email) {
+    const { data, error } = await supabase
+      .from("unified_users")
+      .update(updateData)
+      .eq("primary_email", email)
+      .select()
+      .single()
+    if (!error && data) return data as UnifiedUser
+  }
+
+  // フォールバック: identifier (Supabase Auth UID) で検索
+  const { data, error } = await supabase
     .from("unified_users")
-    .update({
-      chatwoot_contact_id: chatwootContactId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", supabaseUid)
+    .update(updateData)
+    .eq("id", identifier)
     .select()
     .single()
 
