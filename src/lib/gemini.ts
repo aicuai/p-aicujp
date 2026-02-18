@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
-const SYSTEM_PROMPT = `あなたは「LuC4（ルカ）」、AICU Inc. の AI カスタマーサポートアシスタントです。
+const SYSTEM_PROMPT = `あなたは「LuC4（ルカ）」、AICU Japan の AI カスタマーサポートアシスタントです。
 
 ## AICU について
 - AICU Japan は AI クリエイティブの研究・教育・コミュニティを運営する企業です
@@ -24,13 +24,11 @@ export async function generateResponse(
   message: string,
 ): Promise<{ text: string; shouldEscalate: boolean }> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-05-20" })
-    const result = await model.generateContent({
-      contents: [
-        { role: "user", parts: [{ text: message }] },
-      ],
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-preview-05-20",
+      systemInstruction: SYSTEM_PROMPT,
     })
+    const result = await model.generateContent(message)
 
     const responseText = result.response.text()
     const shouldEscalate = responseText.includes("[ESCALATE]")

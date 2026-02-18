@@ -51,6 +51,7 @@ export type UnifiedUser = {
   wix_contact_id: string | null
   wix_member_id: string | null
   stripe_customer_id: string | null
+  chatwoot_contact_id: number | null
   primary_email: string | null
   display_name: string | null
   created_at: string
@@ -196,4 +197,23 @@ export async function getUserByDiscordId(discordId: string) {
 
   if (error && error.code !== "PGRST116") throw error
   return (data as UnifiedUser) ?? null
+}
+
+/** Chatwoot Contact ID を Supabase Auth UID ベースで紐付け */
+export async function linkChatwootContact(
+  supabaseUid: string,
+  chatwootContactId: number,
+) {
+  const { data, error } = await getAdminSupabase()
+    .from("unified_users")
+    .update({
+      chatwoot_contact_id: chatwootContactId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", supabaseUid)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as UnifiedUser
 }
