@@ -9,15 +9,15 @@ type Props = {
   myAnswer?: string | string[]
 }
 
-// Single-choice: AICU teal base with descending opacity
+// Single-choice: AICU teal — subtle gradient, never too faint
 function singleColor(rank: number): string {
-  const opacity = Math.max(0.25, 1 - rank * 0.12)
+  const opacity = Math.max(0.55, 1 - rank * 0.07)
   return `rgba(65, 201, 180, ${opacity})`
 }
 
-// Multi-choice: AICU blue base with descending opacity
+// Multi-choice: AICU blue — subtle gradient, never too faint
 function multiColor(rank: number): string {
-  const opacity = Math.max(0.25, 1 - rank * 0.1)
+  const opacity = Math.max(0.55, 1 - rank * 0.06)
   return `rgba(0, 49, 216, ${opacity})`
 }
 

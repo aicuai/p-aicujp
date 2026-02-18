@@ -15,6 +15,7 @@ const EXCLUDE_IDS = new Set([
 
 const CHOICE_TYPES = new Set(["single_choice", "multi_choice", "dropdown"])
 const BIRTH_YEAR_ID = "entry_170746194"
+const GENDER_ID = "entry_1821980007"
 
 export async function GET() {
   const db = getAdminSupabase()
@@ -93,6 +94,19 @@ export async function GET() {
     }
   }
 
+  // Cross-tabulation: birth year × gender for population pyramid
+  const pyramidData: { birthYear: string; gender: string }[] = []
+  for (const row of rows ?? []) {
+    const by = row.answers?.[BIRTH_YEAR_ID]
+    const g = row.answers?.[GENDER_ID]
+    if (!by || !g) continue
+    const yearStr = String(by).trim()
+    const year = parseInt(yearStr, 10)
+    if (!isNaN(year) && year >= 1920 && year <= 2020 && typeof g === "string") {
+      pyramidData.push({ birthYear: yearStr, gender: g })
+    }
+  }
+
   // Check if any test data exists (for notice toggle)
   const { count: testCount } = await db
     .from("survey_responses")
@@ -101,7 +115,7 @@ export async function GET() {
     .eq("is_test", true)
 
   return NextResponse.json(
-    { totalResponses, questions: chartQuestions, birthYearCounts, updatedAt: new Date().toISOString(), hasTestData: (testCount ?? 0) > 0 },
+    { totalResponses, questions: chartQuestions, birthYearCounts, pyramidData, updatedAt: new Date().toISOString(), hasTestData: (testCount ?? 0) > 0 },
     { headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=300" } },
   )
 }

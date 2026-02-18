@@ -100,7 +100,7 @@ export const R2602_CONFIG: SurveyConfig = {
 
     // ── AI制作活動の実態 ──（AI利用者のみ）
     { id: "section_creation", type: "section", title: "AI制作活動の実態", skipIf: { questionId: "entry_217192455", equals: "全く関わっていない" } },
-    { id: "entry_2077750738", entryId: 2077750738, type: "multi_choice", question: "主に関わっている生成AIの領域をすべて教えてください。（複数選択可）", required: true, options: ["画像生成（例：Midjourney, DALL·E, Stable Diffusion, ComfyUIなど）","音楽生成（例：Suno, Udio, Mubertなど）","テキスト生成（例：ChatGPT, Geminiなど）","動画生成（例：Runway, Pika, Sora, HiggsFieldなど）","コーディング支援（例：GitHub Copilotなど）","使用していないが興味がある"] },
+    { id: "entry_2077750738", entryId: 2077750738, type: "multi_choice", question: "使用している・関わっている生成AIの領域（複数選択可）", required: true, options: ["画像生成（例：Midjourney, DALL·E, Stable Diffusion, ComfyUIなど）","音楽生成（例：Suno, Udio, Mubertなど）","テキスト生成（例：ChatGPT, Geminiなど）","動画生成（例：Runway, Pika, Sora, HiggsFieldなど）","コーディング支援（例：GitHub Copilotなど）","使用していないが興味がある"] },
     { id: "entry_35926345", entryId: 35926345, type: "single_choice", question: "この1年間で有償の実績（販売、受託、報酬の発生）がありましたか？", required: true, options: ["毎月（継続的な収益）","数ヶ月に1回（不定期な収益）","1回のみ（単発の収益）","有償実績はない"] },
     // [圧縮8] Q11: 有償実績なし → スキップ
     { id: "entry_274138831", entryId: 274138831, type: "single_choice", question: "この1年間のAI制作物に関する概算の売上帯を教えてください。", required: true, options: ["〜10万円未満","〜50万円未満","〜100万円未満","100万円以上","300万円以上","500万円以上"], skipIf: { questionId: "entry_35926345", equals: "有償実績はない" } },

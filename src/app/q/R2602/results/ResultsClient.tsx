@@ -15,6 +15,7 @@ const AgeBucketChart = dynamic(() => import("@/components/charts/AgeBucketChart"
 const TagCloud = dynamic(() => import("@/components/charts/TagCloud"), { ssr: false })
 const PairedBarChart = dynamic(() => import("@/components/charts/PairedBarChart"), { ssr: false })
 const HorizontalBarChart = dynamic(() => import("@/components/charts/HorizontalBarChart"), { ssr: false })
+const PopulationPyramid = dynamic(() => import("@/components/charts/PopulationPyramid"), { ssr: false })
 
 type ChartQuestion = {
   id: string
@@ -28,6 +29,7 @@ type ResultsData = {
   totalResponses: number
   questions: ChartQuestion[]
   birthYearCounts?: Record<string, number>
+  pyramidData?: { birthYear: string; gender: string }[]
   updatedAt: string
   hasTestData?: boolean
 }
@@ -169,6 +171,21 @@ export default function ResultsClient() {
         )}
       </div>
 
+      {/* Metrics explanation */}
+      {data && data.totalResponses > 0 && (
+        <div style={{
+          maxWidth: 720, margin: "0 auto", padding: "0 16px 20px",
+          fontSize: 11, color: "#aaa", lineHeight: 1.8,
+        }}>
+          <p style={{ margin: 0 }}>
+            <strong>統計指標について</strong> ― 回答率 = その質問への回答数 ÷ 全回答者数。
+            多様性 = Shannon エントロピー H = −Σ p(x) log₂ p(x)。
+            値が大きいほど回答が分散（多様）、0に近いほど一択に集中。
+            最大値は log₂(選択肢数) で、全選択肢が均等なときに到達します。
+          </p>
+        </div>
+      )}
+
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "20px 16px", fontSize: 12, color: "#bbb", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
         <a href="/q/R2602" style={{ color: "#0031D8", textDecoration: "none", fontWeight: 600 }}>調査に回答する</a>
@@ -204,14 +221,28 @@ type AgePieItem = {
   question: ChartQuestion
 }
 
-type RenderItem = SingleItem | PairedItem | AgePieItem
+type PyramidItem = {
+  key: string
+  kind: "pyramid"
+  vizType: "pyramid"
+  genderQ: ChartQuestion
+  ageQ: ChartQuestion
+}
+
+type RenderItem = SingleItem | PairedItem | AgePieItem | PyramidItem
+
+const GENDER_ID = "entry_1821980007"
+const AGE_ID = "entry_170746194"
 
 function buildRenderItems(data: ResultsData | null): RenderItem[] {
   if (!data) return []
   const items: RenderItem[] = []
   const pairedDone = data.questions.find((q) => q.id === PAIRED_BAR_IDS.done)
   const pairedWant = data.questions.find((q) => q.id === PAIRED_BAR_IDS.want)
+  const genderQ = data.questions.find((q) => q.id === GENDER_ID)
+  const ageQ = data.questions.find((q) => q.id === AGE_ID)
   let pairedInserted = false
+  let pyramidInserted = false
 
   for (const q of data.questions) {
     // Skip the "want" question — it's merged into the paired bar
@@ -229,7 +260,12 @@ function buildRenderItems(data: ResultsData | null): RenderItem[] {
     const vizType = VIZ_MAP[q.id] || "horizontal-bar"
 
     if (vizType === "age-pie") {
+      // Insert age-pie first, then pyramid right after
       items.push({ key: q.id, kind: "age-pie", vizType: "age-pie", question: q })
+      if (!pyramidInserted && genderQ && ageQ && data.pyramidData?.length) {
+        items.push({ key: "pyramid", kind: "pyramid", vizType: "pyramid", genderQ, ageQ })
+        pyramidInserted = true
+      }
     } else {
       items.push({ key: q.id, kind: "single", vizType, question: q })
     }
@@ -245,6 +281,20 @@ function ChartCard({ item, data, myAnswers }: {
   data: ResultsData
   myAnswers: Record<string, unknown> | null
 }) {
+  if (item.kind === "pyramid") {
+    const total = data.pyramidData?.length || 0
+    return (
+      <CardWrapper title="回答者の年代×性別（人口ピラミッド）" subtitle={`${total}件の回答`}>
+        <PopulationPyramid
+          birthYearCounts={data.birthYearCounts || {}}
+          genderCounts={item.genderQ.counts}
+          crossData={data.pyramidData || []}
+          answered={total}
+        />
+      </CardWrapper>
+    )
+  }
+
   if (item.kind === "paired") {
     return (
       <CardWrapper

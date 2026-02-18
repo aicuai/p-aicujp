@@ -24,7 +24,7 @@ export const VIZ_MAP: Record<string, VizType> = {
   entry_998532907: "donut",   // 学習投資 (9択)
   entry_505387619: "donut",   // GPU (12択)
   entry_34298640: "donut",    // AI態度 (5択)
-  entry_2077750738: "donut",  // AI領域 (6択)
+  entry_2077750738: "horizontal-bar",  // AI領域 (6択, 複数選択可)
   entry_1228619554: "donut",  // AI関係性 (10択)
   entry_2000848438: "donut",  // 学習方法 (6択)
   entry_282284746: "donut",   // 教育サービス (5択)
