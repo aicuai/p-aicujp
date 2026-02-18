@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "966d48d7af96",
+  "session_id": "0a9df89c-7edf-4220-ad9a-2f459194827c",
+  "strategy": "auto-commit",
+  "created_at": "2026-02-18T11:28:52.971667Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/api/chatwoot/webhook/route.ts",
+    "src/lib/chatwoot.ts",
+    "src/lib/gemini.ts"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "df207250-78d7-4db7-961d-373607ec9557",
+  "checkpoint_transcript_start": 254,
+  "transcript_lines_at_start": 254,
+  "token_usage": {
+    "input_tokens": 11,
+    "cache_creation_tokens": 32976,
+    "cache_read_tokens": 1104620,
+    "output_tokens": 100,
+    "api_call_count": 9,
+    "subagent_tokens": {
+      "input_tokens": 19,
+      "cache_creation_tokens": 51693,
+      "cache_read_tokens": 528314,
+      "output_tokens": 198,
+      "api_call_count": 17
+    }
+  }
+}
