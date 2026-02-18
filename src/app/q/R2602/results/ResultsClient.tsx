@@ -108,7 +108,7 @@ export default function ResultsClient() {
           <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a2e" }}>Research</span>
         </div>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, letterSpacing: "-0.02em" }}>
-          R2602 調査結果（速報）
+          R2602 調査結果（速報・プレビュー）
         </h1>
         {data && (
           <p style={{ fontSize: 13, color: "#888", marginTop: 6 }}>
@@ -414,7 +414,7 @@ function CardWrapper({ title, subtitle, isSample, children }: {
         <span style={{
           position: "absolute", top: "50%", left: "50%",
           transform: "translate(-50%, -50%) rotate(-20deg)",
-          fontSize: 18, color: "rgba(0,0,0,0.8)", fontWeight: 800,
+          fontSize: 18, color: "rgba(0,0,0,0.2)", fontWeight: 800,
           pointerEvents: "none", userSelect: "none",
           whiteSpace: "nowrap", letterSpacing: "0.02em",
         }}>
