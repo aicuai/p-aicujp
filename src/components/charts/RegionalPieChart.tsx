@@ -47,9 +47,21 @@ export default function RegionalPieChart({ counts, answered, myAnswer }: Props) 
               innerRadius="40%"
               outerRadius="80%"
               dataKey="value"
+              startAngle={90}
+              endAngle={-270}
               stroke="rgba(255,255,255,0.6)"
               strokeWidth={2}
-              label={({ name, percent }: { name?: string; percent?: number }) => (percent ?? 0) > 0.05 ? (name ?? "") : ""}
+              label={({ x, y, name, percent }: { x?: number; y?: number; name?: string; percent?: number }) => {
+                const p = percent ?? 0
+                if (p < 0.05) return null
+                const text = `${name ?? ""} ${Math.round(p * 100)}%`
+                return (
+                  <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+                    <tspan stroke="#fff" strokeWidth={3} paintOrder="stroke">{text}</tspan>
+                    <tspan x={x} fill="#333">{text}</tspan>
+                  </text>
+                )
+              }}
               labelLine={false}
             >
               {data.map((d, i) => (
