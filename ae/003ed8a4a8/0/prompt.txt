@@ -1,0 +1,12 @@
+[DEBUG] {"message":"{}","status":504,"name":"AuthRetryableFetchError","full":"{\"__isAuthError\":true,\"name\":\"AuthRetryableFetchError\",\"status\":504}","siteUrl":"http://localhost:3200"}
+
+
+[LoginForm] calling signInAction...
+LoginForm.tsx:16 [LoginForm] result: {"error":"[DEBUG] {\"message\":\"{}\",\"status\":504,\"name\":\"AuthRetryableFetchError\",\"full\":\"{\\\"__isAuthError\\\":true,\\\"name\\\":\\\"AuthRetryableFetchError\\\",\\\"status\\\":504}\",\"siteUrl\":\"http://localhost:3200\"}"}
+LoginForm.tsx:14 [LoginForm] calling signInAction...
+
+[DEBUG] {"message":"email rate limit exceeded","status":429,"name":"AuthApiError","full":"{\"__isAuthError\":true,\"name\":\"AuthApiError\",\"status\":429,\"code\":\"over_email_send_rate_limit\"}","siteUrl":"http://localhost:3200"}
+
+
+
+[LoginForm] result: {"error":"[DEBUG] {\"message\":\"email rate limit exceeded\",\"status\":429,\"name\":\"AuthApiError\",\"full\":\"{\\\"__isAuthError\\\":true,\\\"name\\\":\\\"AuthApiError\\\",\\\"status\\\":429,\\\"code\\\":\\\"over_email_send_rate_limit\\\"}\",\"siteUrl\":\"http://localhost:3200\"}"}

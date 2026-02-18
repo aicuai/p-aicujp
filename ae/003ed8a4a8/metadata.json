@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "ae003ed8a4a8",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/LoginForm.tsx",
+    "src/lib/auth.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ae/003ed8a4a8/0/metadata.json",
+      "transcript": "/ae/003ed8a4a8/0/full.jsonl",
+      "context": "",
+      "content_hash": "/ae/003ed8a4a8/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 5,
+    "cache_creation_tokens": 1930,
+    "cache_read_tokens": 300766,
+    "output_tokens": 3,
+    "api_call_count": 3
+  }
+}
