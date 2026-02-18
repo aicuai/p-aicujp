@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "358fbb70cf24",
+  "session_id": "e1f8dfff-1316-491c-baeb-415ddd57faea",
+  "strategy": "auto-commit",
+  "created_at": "2026-02-18T08:24:55.729337Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/api/surveys/R2602/results/route.ts",
+    "src/app/q/R2602/results/ResultsClient.tsx",
+    "src/components/LiquidGlassForm.jsx",
+    "src/components/charts/AgeBucketChart.tsx",
+    "src/components/charts/DonutChart.tsx",
+    "src/components/charts/HorizontalBarChart.tsx",
+    "src/components/charts/MyAnswerBadge.tsx",
+    "src/components/charts/PairedBarChart.tsx",
+    "src/components/charts/RegionalPieChart.tsx",
+    "src/components/charts/StackedBar.tsx",
+    "src/components/charts/TagCloud.tsx",
+    "src/components/charts/index.ts",
+    "src/lib/survey-stats.ts",
+    "src/lib/survey-viz-config.ts",
+    "src/lib/use-my-answers.ts"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 53,
+    "cache_creation_tokens": 67844,
+    "cache_read_tokens": 3082517,
+    "output_tokens": 8914,
+    "api_call_count": 51,
+    "subagent_tokens": {
+      "input_tokens": 487,
+      "cache_creation_tokens": 48788,
+      "cache_read_tokens": 594302,
+      "output_tokens": 26,
+      "api_call_count": 14
+    }
+  }
+}

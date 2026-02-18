@@ -1,0 +1,32 @@
+Here's a summary of everything implemented:
+
+## Phase 1: Chart Library + Component Separation
+
+**New dependency:** `recharts` (dynamic import, ~45KB gzip)
+
+**New files:**
+- `src/lib/survey-viz-config.ts` — Question → chart type mapping (7 viz types), regional blocks (47 prefectures → 9 regions), age bucket conversion, color palettes
+- `src/components/charts/StackedBar.tsx` — Single stacked bar with legend (gender, yes/no, 2-5 choices)
+- `src/components/charts/DonutChart.tsx` — Recharts PieChart donut (occupation, attitudes, costs)
+- `src/components/charts/RegionalPieChart.tsx` — Prefecture → 9-region aggregated pie chart
+- `src/components/charts/AgeBucketChart.tsx` — Birth year → age decade pie chart
+- `src/components/charts/TagCloud.tsx` — CSS-based tag cloud with font-size proportional to selection rate (tools, creator values)
+- `src/components/charts/PairedBarChart.tsx` — Side-by-side horizontal bar (done vs want) with automatic gap analysis text
+- `src/components/charts/HorizontalBarChart.tsx` — Improved horizontal bars (bottlenecks, DCAJ, etc.)
+- `src/components/charts/MyAnswerBadge.tsx` — "★ あなた" badge component
+- `src/components/charts/index.ts` — Barrel export
+
+**Modified files:**
+- `ResultsClient.tsx` — Complete refactor: viz-config routing, dynamic imports, paired bar merging, stats footer
+- `route.ts` — Added `birthYearCounts` aggregation for age-pie chart
+
+## Phase 2: "My Answer" Highlight
+
+- `src/lib/use-my-answers.ts` — Hook that reads `lgf_completed_<surveyId>` then `lgf_<surveyId>` from localStorage
+- `LiquidGlassForm.jsx` — Persists completed answers to `lgf_completed_<surveyId>` before clearing progress
+- All chart components accept `myAnswer` prop and highlight matching segments with orange border + "★ あなた" badge
+
+## Phase 3: Statistics
+
+- `src/lib/survey-stats.ts` — `computeStats()` (response rate, mode, entropy), `computeOrderedStats()` (mean position, stddev), `computeGapAnalysis()` (done vs want gap)
+- `StatsFooter` in ResultsClient shows response rate, mode, and diversity index below each chart

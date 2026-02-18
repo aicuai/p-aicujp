@@ -1,0 +1,214 @@
+# Session Context
+
+**Session ID:** e1f8dfff-1316-491c-baeb-415ddd57faea
+
+**Commit Message:** Implement the following plan:
+
+# R2602 結果ビジュアライゼーション強化プラン
+
+## Context
+R2
+
+## Prompt
+
+Implement the following plan:
+
+# R2602 結果ビジュアライゼーション強化プラン
+
+## Context
+R2602 速報ページ (`/q/R2602/results`) は現在、全質問を同じ水平バーチャートで表示。
+要件: 質問タイプ別の最適なチャート + 「自分の回答」ハイライト + 統計評価 + LLMコメント。
+
+## Phase 1: 基盤 (チャートライブラリ + コンポーネント分離)
+
+### 依存追加
+- `recharts` — React ネイティブのチャートライブラリ (PieChart, BarChart 対応、~45KB gzip)
+
+### 新規ファイル
+
+**`src/lib/survey-viz-config.ts`** — 質問→チャートタイプのマッピング + 地域ブロック定義 + 年齢バケット
+```
+vizType: "stacked-bar" | "donut" | "regional-pie" | "age-pie" | "tag-cloud" | "paired-bar" | "horizontal-bar"
+```
+
+**`src/components/charts/`**:
+| コンポーネント | 用途 | 対象質問 |
+|---|---|---|
+| `StackedBar.tsx` | 2〜5択の1本バー | 性別, Yes/No, 著作権, インタビュー協力 |
+| `DonutChart.tsx` | 円グラフ(ドーナツ) | 職業, AI態度, 月額費用, GPU, 各single_choice |
+| `RegionalPieChart.tsx` | 都道府県→9ブロック円グラフ | 居住地域 |
+| `AgeBucketChart.tsx` | 生年→10歳刻み円グラフ | 生まれた年 |
+| `TagCloud.tsx` | タグクラウド (CSS, ライブラリ不要) | ツール(46個), クリエイター価値(13個) |
+| `PairedBarChart.tsx` | 対比縦バー (done vs want) | Q_effect_done / Q_effect_want |
+| `HorizontalBarChart.tsx` | 既存CSS水平バーの改良版 | ボトルネック, DCAJ系 etc |
+| `MyAnswerBadge.tsx` | 「あなたの回答」マーカー | 全チャート共通 |
+
+### 修正ファイル
+- **`ResultsClient.tsx`** — チャートコンポーネントへの分岐ロジック追加 (viz-config 参照)
+- **`/api/surveys/R2602/results/route.ts`** — `birthYearCounts` (テキスト型の生年データ) を追加返却
+
+## Phase 2: 「自分の回答」ハイライト
+
+### 課題
+`LiquidGlassForm.jsx` の `clearProgress()` が送信完了時に localStorage を削除するため、
+完了済みユーザーの回答が取れない。
+
+### 解決策
+**`LiquidGlassForm.jsx`**: `clearProgress()` の直前に完了データを別キーで永続保存:
+```js
+localStorage.setItem(`lgf_completed_${surveyId}`, JSON.stringify({ answers, completedAt: new Date().toISOString() }))
+```
+
+**`src/lib/use-my-answers.ts`** (カスタムフック):
+1. `lgf_<sourceUrl>` (回答中) をチェック
+2. `lgf_completed_<sourceUrl>` (完了済み) をチェック
+3. なければ null (ログインユーザーは将来的に Supabase からも取得可能)
+
+### チャートへの反映
+各チャートコンポーネントに `myAnswer?: string | string[]` prop を渡し、
+該当セグメント/タグに `MyAnswerBadge` + 視覚的ハイライト(枠線、色変更)を付与。
+
+## Phase 3: 統計評価
+
+**`src/lib/survey-stats.ts`**:
+- `computeStats(counts, answered)` → 回答率, 最頻値, エントロピー(多様性指数)
+- `computeOrderedStats(counts, labels)` → 順序尺度の平均位置, 標準偏差
+- `computeGapAnalysis(done, want)` → 「実現」vs「期待」のギャップ (% 差分)
+
+各チャート下部にコンパクトな統計情報テキストを表示。
+
+## Phase 4: LLM コメンタリー (将来)
+
+**`/api/surveys/R2602/commentary/route.ts`** (新規):
+- 集計データを Claude API に送信 → 質問ごとに2〜3文の日本語インサイト生成
+- Supabase `survey_commentary` テーブルに1時間キャッシュ
+- クライアント: チャート描画後に遅延ロード、「AI分析」ラベル付きテキストブロック
+
+## 質問→チャートタイプ マッピング
+
+### Stacked Bar (2〜5択)
+- `entry_217192455` AI関与 (5択)
+- `entry_1821980007` 性別 (3択)
+- `entry_35926345` 有償実績 (4択)
+- `entry_454206106` 著作権 (3択)
+- `entry_1667631330` インタビュー協力 (2択)
+
+### Donut (single_choice / 中規模選択肢)
+- `entry_1957471882` 職業 (10択)
+- `entry_274138831` 売上帯 (6択)
+- `entry_1024046675` AI月額費用 (9択, 順序)
+- `entry_998532907` 学習投資 (9択, 順序)
+- `entry_505387619` GPU (12択)
+- `entry_34298640` AI態度 (5択)
+- `entry_2077750738` AI領域 (6択)
+- `entry_1228619554` AI関係性 (10択)
+- `entry_2000848438` 学習方法 (6択)
+- `entry_282284746` 教育サービス (5択)
+- `entry_1533319614` 証明書 (5択)
+- `entry_448099795` 二次創作条件 (6択)
+- `dcaj_Q2` オリジナリティ (5択)
+
+### Regional Pie (都道府県→ブロック)
+- `entry_1357554301` 居住地域 → 北海道/東北/関東/中部/近畿/中国/四国/九州沖縄/海外
+
+### Age Bucket Pie (生年→年齢層)
+- `entry_170746194` 生まれた年 → ~19/20代/30代/40代/50代/60+
+
+### Tag Cloud (多数選択肢)
+- `entry_1878680578` ツール (46個, %表示)
+- `dcaj_Q7` クリエイター価値 (13個)
+
+### Paired Bar (効果対比)
+- `Q_effect_done` + `Q_effect_want` — 9項目 × 2本 (実現 vs 期待)
+
+### Horizontal Bar (残り全て)
+- `entry_885269464` セクター (14択)
+- `entry_1829344839` OS/ハード (9択)
+- `entry_537892144` ボトルネック (14択)
+- `dcaj_Q1` ワークフロー (8択)
+- `dcaj_Q3` 学習データ態度 (12択, 分割表示)
+- `dcaj_Q4` 仕事変化 (8択)
+- `dcaj_Q5` 倫理懸念 (8択)
+- `dcaj_Q6` 法制度評価 (10択, 分割表示)
+- `dcaj_Q8` 国の支援 (7択)
+- `dcaj_Q9` 海外展開 (6択)
+- `entry_722928489` 証明価値 (10択)
+- `entry_333973041` 公開プラットフォーム (16択)
+- `entry_953637123` 非利用理由 (6択)
+
+## 複数選択可の表示方針
+- 「回答者のうち何%が選択したか」を基準 (合計は100%を超える)
+- 少数選択肢 (〜13個): 水平バー (降順ソート)
+- 多数選択肢 (14個〜): タグクラウド (フォントサイズ∝選択率)
+
+## テキスト回答の表示方針
+- Phase 1: 結果から除外 (現状維持)
+- Phase 4: LLM で分類・要約して表示
+
+## 実装順序
+1. **Phase 1**: recharts 導入 + 6チャートコンポーネント + ResultsClient リファクタ + API強化
+2. **Phase 2**: 「自分の回答」localStorage 永続化 + useMyAnswers フック + ハイライト
+3. **Phase 3**: 統計関数 + チャート下部に表示
+4. **Phase 4**: LLM コメンタリー API + キャッシュ + 遅延ロード
+
+## 検証方法
+```bash
+npm install recharts
+npm run dev
+# http://localhost:3200/q/R2602/results
+# 1. 各チャートタイプが正しく表示されること
+# 2. アンケート回答後、結果ページで「あなたの回答」がハイライトされること
+# 3. モバイルレスポンシブ確認
+# 4. npm run build — ビルド成功
+```
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/aki/.REDACTED.jsonl
+
+## Summary
+
+Here's a summary of everything implemented:
+
+## Phase 1: Chart Library + Component Separation
+
+**New dependency:** `recharts` (dynamic import, ~45KB gzip)
+
+**New files:**
+- `src/lib/survey-viz-config.ts` — Question → chart type mapping (7 viz types), regional blocks (47 prefectures → 9 regions), age bucket conversion, color palettes
+- `src/components/charts/StackedBar.tsx` — Single stacked bar with legend (gender, yes/no, 2-5 choices)
+- `src/components/charts/DonutChart.tsx` — Recharts PieChart donut (occupation, attitudes, costs)
+- `src/components/charts/RegionalPieChart.tsx` — Prefecture → 9-region aggregated pie chart
+- `src/components/charts/AgeBucketChart.tsx` — Birth year → age decade pie chart
+- `src/components/charts/TagCloud.tsx` — CSS-based tag cloud with font-size proportional to selection rate (tools, creator values)
+- `src/components/charts/PairedBarChart.tsx` — Side-by-side horizontal bar (done vs want) with automatic gap analysis text
+- `src/components/charts/HorizontalBarChart.tsx` — Improved horizontal bars (bottlenecks, DCAJ, etc.)
+- `src/components/charts/MyAnswerBadge.tsx` — "★ あなた" badge component
+- `src/components/charts/index.ts` — Barrel export
+
+**Modified files:**
+- `ResultsClient.tsx` — Complete refactor: viz-config routing, dynamic imports, paired bar merging, stats footer
+- `route.ts` — Added `birthYearCounts` aggregation for age-pie chart
+
+## Phase 2: "My Answer" Highlight
+
+- `src/lib/use-my-answers.ts` — Hook that reads `lgf_completed_<surveyId>` then `lgf_<surveyId>` from localStorage
+- `LiquidGlassForm.jsx` — Persists completed answers to `lgf_completed_<surveyId>` before clearing progress
+- All chart components accept `myAnswer` prop and highlight matching segments with orange border + "★ あなた" badge
+
+## Phase 3: Statistics
+
+- `src/lib/survey-stats.ts` — `computeStats()` (response rate, mode, entropy), `computeOrderedStats()` (mean position, stddev), `computeGapAnalysis()` (done vs want gap)
+- `StatsFooter` in ResultsClient shows response rate, mode, and diversity index below each chart
+
+## Key Actions
+
+- - **Task**: Explore survey results codebase
+- - **Read**: /Users/aki/git.local/p-aicujp/src/app/q/R2602/results/ResultsClient.tsx
+- - **Read**: /Users/aki/git.local/p-aicujp/src/app/api/surveys/R2602/results/route.ts
+- - **Read**: /Users/aki/git.local/p-aicujp/src/data/surveys/R2602.ts
+- - **Grep**: clearProgress
+- - **Glob**: src/components/charts/**/*
+- - **Read**: /Users/aki/git.local/p-aicujp/src/components/LiquidGlassForm.jsx
+- - **TaskCreate**: npm install recharts for chart components
+- - **TaskCreate**: Question → chart type mapping, regional blocks, age buckets
+- - **TaskCreate**: StackedBar, DonutChart, RegionalPieChart, AgeBucketChart, TagCloud, PairedBarChart, HorizontalBarChart, MyAnswerBadge
