@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "324bed031526",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/q/R2602/results/ResultsClient.tsx",
+    "src/components/LiquidGlassForm.jsx",
+    "src/data/surveys/R2602.ts",
+    "src/lib/use-my-answers.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/32/4bed031526/0/metadata.json",
+      "transcript": "/32/4bed031526/0/full.jsonl",
+      "context": "",
+      "content_hash": "/32/4bed031526/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 620,
+    "cache_creation_tokens": 17119,
+    "cache_read_tokens": 1837436,
+    "output_tokens": 2186,
+    "api_call_count": 14
+  }
+}
