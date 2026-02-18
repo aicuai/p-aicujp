@@ -1,0 +1,13 @@
+
+
+No diagnostics. The fix is clean.
+
+**Summary of the login `{}` fix:**
+
+- **Root cause**: `signInWithEmail` in `auth.ts` called `redirect("/auth/verify-request")` which throws `NEXT_REDIRECT`. When invoked through `useActionState`'s client-side wrapper with a `try-catch`, the redirect throw was swallowed, leaving the user on the login page with `{}` displayed (the serialized empty redirect response).
+
+- **Fix**:
+  - `src/lib/auth.ts`: Changed `signInWithEmail` to return `{ success: true }` instead of calling `redirect()`
+  - `src/app/LoginForm.tsx`: Added `useRouter` and `router.push("/auth/verify-request")` on success. Removed the `try-catch` that was swallowing the redirect error.
+
+The build passes and there are no TypeScript errors. These changes need to be pushed/deployed to fix p.aicu.jp.
