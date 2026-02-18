@@ -1,22 +1,23 @@
 "use client"
 
 import { useActionState } from "react"
+import { useRouter } from "next/navigation"
+import type { SignInResult } from "@/lib/auth"
 
-type SignInAction = (formData: FormData) => Promise<{ error: string } | void>
+type SignInAction = (formData: FormData) => Promise<SignInResult>
 
 export default function LoginForm({ signInAction }: { signInAction: SignInAction }) {
+  const router = useRouter()
   const [state, formAction, isPending] = useActionState(
     async (_prev: { error: string } | null, formData: FormData) => {
-      try {
-        const result = await signInAction(formData)
-        if (result && typeof result === "object" && "error" in result && result.error) {
-          return { error: String(result.error) }
-        }
-        return null
-      } catch {
-        // redirect() throws — let it propagate by returning null
-        return null
+      const result = await signInAction(formData)
+      if (result && "error" in result) {
+        return { error: result.error }
       }
+      if (result && "success" in result) {
+        router.push("/auth/verify-request")
+      }
+      return null
     },
     null,
   )

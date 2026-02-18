@@ -4,6 +4,8 @@ import { createServerSupabase } from "@/lib/supabase"
 import { redirect } from "next/navigation"
 import { headers } from "next/headers"
 
+export type SignInResult = { error: string } | { success: true } | null
+
 /** サーバーコンポーネント用: 認証ユーザー取得 */
 export async function getUser() {
   const supabase = await createServerSupabase()
@@ -33,7 +35,7 @@ export async function signInWithEmail(formData: FormData) {
     return { error: error.message }
   }
 
-  redirect("/auth/verify-request")
+  return { success: true as const }
 }
 
 /** サーバーアクション: サインアウト */
