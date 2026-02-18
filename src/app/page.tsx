@@ -7,116 +7,242 @@ export default async function Home() {
   if (user) redirect("/dashboard")
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 16px" }}>
-      <div style={{ maxWidth: 480, width: "100%" }}>
-        {/* Logo */}
-        <div className="animate-in" style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-            <div style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              background: "linear-gradient(135deg, var(--aicu-teal), var(--aicu-teal-dark))",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(65, 201, 180, 0.25)",
-            }}>
-              <span className="font-outfit" style={{ color: "#fff", fontWeight: 800, fontSize: 24 }}>A</span>
-            </div>
-          </div>
-          <h1 style={{ margin: 0 }}>
-            <span className="font-outfit" style={{ fontSize: 32, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-              AICU.jp
-            </span>{" "}
-            <span className="font-outfit" style={{ fontSize: 32, fontWeight: 600, color: "var(--aicu-teal)" }}>
-              Portal
-            </span>
-          </h1>
-          <p style={{ marginTop: 8, fontSize: 16, color: "var(--text-secondary)" }}>
-            Point &middot; Profile &middot; Privacy
-          </p>
-        </div>
-
-        {/* R2602 Survey Banner */}
-        <a href="/R2602" className="card animate-in-delay" style={{
-          display: "block", textDecoration: "none", marginBottom: 24, overflow: "hidden",
-          background: "linear-gradient(135deg, rgba(0,49,216,0.04), rgba(65,201,180,0.06))",
-          border: "1px solid rgba(0,49,216,0.12)",
+    <div style={{ minHeight: "100vh" }}>
+      {/* Sticky Header — matches aicu.jp */}
+      <header className="glass-nav" style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
+      }}>
+        <div style={{
+          maxWidth: 640,
+          margin: "0 auto",
+          padding: "14px 16px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
         }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/r2602-banner.png"
-            alt="生成AI時代のつくる人調査 2026.02"
-            style={{ width: "100%", height: "auto", display: "block" }}
-          />
-          <div style={{ padding: "16px 20px" }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.5, margin: "0 0 8px" }}>
-              生成AI時代の&quot;つくる人&quot;調査 2026.02
-            </h2>
-            <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.7, margin: "0 0 10px" }}>
-              あなたの創造が、AIと社会をつなぐデータになる。<br />
-              所要時間：約5分 / 匿名回答 / <strong>10,000 AICUポイント贈呈</strong>
-            </p>
-            <div style={{ fontSize: 13, color: "var(--text-tertiary)", lineHeight: 1.8 }}>
-              <span style={{ color: "#0031D8", fontWeight: 600 }}>回答する &rarr;</span>
-              {" / "}
-              調査協力: 一般財団法人デジタルコンテンツ協会（DCAJ）
+          <span className="font-outfit" style={{
+            fontSize: 22,
+            fontWeight: 800,
+            color: "var(--aicu-teal)",
+            letterSpacing: "-0.02em",
+          }}>
+            AICU Japan
+          </span>
+          <span style={{
+            fontSize: 10,
+            color: "var(--text-tertiary)",
+            lineHeight: 1.3,
+            marginLeft: 2,
+          }}>
+            クリエイティブAI時代に<br />つくる人をつくる
+          </span>
+        </div>
+      </header>
+
+      <main style={{
+        maxWidth: 640,
+        margin: "0 auto",
+        padding: 16,
+      }}>
+        {/* Hero Banner — R2602 Survey */}
+        <a href="/R2602" className="animate-in" style={{ display: "block", marginBottom: 16, textDecoration: "none" }}>
+          <div style={{
+            position: "relative",
+            borderRadius: "var(--radius)",
+            overflow: "hidden",
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/r2602-banner.png"
+              alt="生成AI時代の「つくる人」調査 R2602"
+              width={640}
+              height={357}
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: "var(--radius)",
+              }}
+            />
+            <div style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: "24px 14px 10px",
+              background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+              borderRadius: "0 0 var(--radius) var(--radius)",
+            }}>
+              <div style={{
+                display: "inline-block",
+                padding: "3px 10px",
+                borderRadius: 12,
+                background: "linear-gradient(135deg, #41C9B4, #6C63FF)",
+                color: "#fff",
+                fontSize: 10,
+                fontWeight: 700,
+                marginBottom: 4,
+              }}>
+                AICU Research
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
+                生成AI「つくる人」調査 R2602
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>
+                あなたの声が、AIクリエイターの未来を形づくる
+              </div>
             </div>
           </div>
         </a>
 
-        {/* Login Card */}
-        <div className="card animate-in-delay" style={{ padding: 28 }}>
-          <div style={{ textAlign: "center", marginBottom: 24 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-              ログイン
-            </h2>
-            <p style={{ marginTop: 6, fontSize: 15, color: "var(--text-secondary)" }}>
-              メールアドレスでログイン
-            </p>
-          </div>
-
-          <LoginForm signInAction={signInWithEmail} />
-
-          <p style={{ textAlign: "center", fontSize: 13, color: "var(--text-tertiary)", marginTop: 16 }}>
-            パスワード不要 &mdash; メールでログインリンクを送信します
-          </p>
+        {/* 2x2 Main Cards */}
+        <div className="animate-in-delay" style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: 10,
+          marginBottom: 20,
+        }}>
+          {mainCards.map((card) => (
+            <a
+              key={card.name}
+              href={card.url}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                padding: "18px 14px",
+                borderRadius: "var(--radius)",
+                background: "linear-gradient(135deg, var(--aicu-teal-light), var(--bg-card))",
+                border: "1px solid var(--aicu-teal)",
+                textDecoration: "none",
+                boxShadow: "var(--shadow-sm)",
+                transition: "transform 0.15s",
+              }}
+            >
+              <span style={{ fontSize: 28 }}>{card.icon}</span>
+              <span className="font-outfit" style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: "var(--aicu-teal-dark)",
+              }}>
+                {card.name}
+              </span>
+              <span style={{
+                fontSize: 11,
+                color: "var(--text-secondary)",
+                lineHeight: 1.4,
+              }}>
+                {card.label}
+              </span>
+            </a>
+          ))}
         </div>
 
-        {/* Features */}
-        <div className="animate-in-delay-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 28 }}>
-          {[
-            { icon: "\uD83C\uDFAF", title: "Point", desc: "ポイント確認" },
-            { icon: "\uD83D\uDC64", title: "Profile", desc: "アンケート" },
-            { icon: "\u2764\uFE0F", title: "Privacy", desc: "会員情報" },
-          ].map((f) => (
-            <div
-              key={f.title}
-              className="card"
-              style={{ padding: 16, textAlign: "center" }}
+        {/* Login Card */}
+        <div className="card animate-in-delay" style={{ padding: 24, marginBottom: 20 }}>
+          <div style={{ textAlign: "center", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+              ログイン
+            </h2>
+            <p style={{ marginTop: 4, fontSize: 13, color: "var(--text-secondary)" }}>
+              メールアドレスでログイン &mdash; パスワード不要
+            </p>
+          </div>
+          <LoginForm signInAction={signInWithEmail} />
+        </div>
+
+        {/* 3-column Service Grid */}
+        <div className="animate-in-delay-2" style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 10,
+          marginBottom: 20,
+        }}>
+          {serviceLinks.map((s) => (
+            <a
+              key={s.label}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 8,
+                padding: "16px 8px",
+                borderRadius: 14,
+                background: "var(--bg-card)",
+                textDecoration: "none",
+                boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
+                transition: "transform 0.15s",
+              }}
             >
-              <div style={{ fontSize: 24, marginBottom: 6 }}>{f.icon}</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>
-                {f.title}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 3 }}>
-                {f.desc}
-              </div>
-            </div>
+              <span style={{ fontSize: 28 }}>{s.icon}</span>
+              <span style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--text-secondary)",
+                textAlign: "center",
+                lineHeight: 1.3,
+              }}>
+                {s.label}
+              </span>
+            </a>
           ))}
         </div>
 
         {/* Footer */}
-        <footer className="animate-in-delay-3" style={{ textAlign: "center", fontSize: 12, color: "var(--text-tertiary)", marginTop: 36, display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
-            <a href="https://corp.aicu.ai/ja/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>プライバシーポリシー</a>
-            <a href="https://www.aicu.blog/terms/plan-free" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>利用規約</a>
-            <a href="https://www.aicu.blog/terms/legal" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>法的免責事項</a>
+        <footer className="animate-in-delay-3" style={{
+          padding: "28px 0 16px",
+          textAlign: "center",
+          fontSize: 11,
+          color: "var(--text-tertiary)",
+        }}>
+          <div style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: "4px 14px",
+            marginBottom: 14,
+          }}>
+            {footerLinks.map((f) => (
+              <a
+                key={f.label}
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "var(--text-tertiary)", textDecoration: "none" }}
+              >
+                {f.label}
+              </a>
+            ))}
           </div>
-          <p>&copy; 2026 AICU Japan 株式会社</p>
+          <p>Powered by <a href="https://aicu.ai" target="_blank" rel="noopener" style={{ color: "var(--aicu-teal)", textDecoration: "none" }}>AICU Inc.</a></p>
         </footer>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }
+
+const mainCards = [
+  { icon: "\uD83D\uDCCB", name: "\u30A2\u30F3\u30B1\u30FC\u30C8\u53C2\u52A0", label: "R2602 \u3064\u304F\u308B\u4EBA\u8ABF\u67FB\u306B\u56DE\u7B54", url: "/R2602" },
+  { icon: "\uD83D\uDCCA", name: "\u7D50\u679C\u901F\u5831", label: "\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0\u96C6\u8A08\u7D50\u679C", url: "/q/R2602/results" },
+  { icon: "\uD83C\uDFAF", name: "\u30DD\u30A4\u30F3\u30C8", label: "AICU\u30DD\u30A4\u30F3\u30C8\u6B8B\u9AD8\u30FB\u5C65\u6B74", url: "/dashboard" },
+  { icon: "\uD83D\uDC64", name: "\u30D7\u30ED\u30D5\u30A3\u30FC\u30EB", label: "\u4F1A\u54E1\u60C5\u5831\u30FB\u30B5\u30D6\u30B9\u30AF\u7BA1\u7406", url: "/dashboard" },
+]
+
+const serviceLinks = [
+  { icon: "\uD83C\uDFE0", label: "aicu.jp", url: "https://aicu.jp" },
+  { icon: "\uD83D\uDCC8", label: "u.aicu.jp", url: "https://u.aicu.jp" },
+  { icon: "\uD83C\uDFC6", label: "\u30B3\u30F3\u30C6\u30B9\u30C8", url: "https://c.aicu.jp" },
+]
+
+const footerLinks = [
+  { label: "\u5229\u7528\u898F\u7D04", url: "https://www.aicu.blog/terms/plan-free" },
+  { label: "\u30D7\u30E9\u30A4\u30D0\u30B7\u30FC", url: "https://corp.aicu.ai/ja/privacy" },
+  { label: "\u6CD5\u7684\u514D\u8CAC", url: "https://www.aicu.blog/terms/legal" },
+  { label: "\u7279\u5B9A\u5546\u53D6\u5F15\u6CD5", url: "https://www.aicu.blog/commercial-act" },
+  { label: "\u304A\u554F\u3044\u5408\u308F\u305B", url: "https://www.aicu.blog/contact" },
+]
