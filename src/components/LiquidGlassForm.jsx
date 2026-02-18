@@ -967,36 +967,51 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
         padding: "16px 20px", borderBottom: `1px solid ${s.border}`, zIndex: 2,
         background: "#fff",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em",
-            color: s.teal,
+        <a href="https://aicu.jp" target="_blank" rel="noopener" style={{
+          display: "flex", alignItems: "center", gap: 8, textDecoration: "none",
+        }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 10,
+            background: "linear-gradient(135deg, #41C9B4, #2BA594)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(65,201,180,0.2)",
           }}>
-            AICU
-          </span>
-          <span style={{ fontSize: 15, fontWeight: 600, color: s.text }}>
-            Research
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {surveyLabel && (
-            <span style={{ fontSize: 12, fontWeight: 600, color: s.textDim, letterSpacing: "0.03em" }}>
-              {surveyLabel}
-            </span>
-          )}
-          <div style={{ width: 80, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.08)", overflow: "hidden" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", color: "#fff", fontWeight: 800, fontSize: 16 }}>A</span>
+          </div>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 800, color: "#41C9B4" }}>AICU</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: s.text }}>Research</span>
+        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 60, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.08)", overflow: "hidden" }}>
             <div style={{
               height: "100%", borderRadius: 2, background: s.accent,
               width: `${phase === "complete" ? 100 : progress}%`,
               transition: "width 0.4s cubic-bezier(0.4,0,0.2,1)",
             }} />
           </div>
-          <span style={{ fontSize: 12, color: s.textDim, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+          <span
+            onClick={() => {
+              if (phase === "complete") return;
+              const pct = phase === "complete" ? 100 : progress;
+              const confirmed = window.confirm(
+                `現在 ${answeredCount}/${totalQ}件 (${pct}%) 完了しています。\nすべての回答をリセットして最初からやり直しますか？`
+              );
+              if (confirmed) {
+                clearProgress(surveyId);
+                try { localStorage.removeItem("consent_q_" + (surveyLabel || "")); } catch {}
+                window.location.reload();
+              }
+            }}
+            style={{
+              fontSize: 12, color: s.textDim, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
+              cursor: phase === "complete" ? "default" : "pointer",
+              userSelect: "none", WebkitUserSelect: "none",
+            }}
+          >
             {phase === "complete" ? "完了" : (() => {
               const est = formConfig.estimatedMinutes || 5;
               const remaining = Math.max(1, Math.ceil(est * (1 - progress / 100)));
-              return `残り約${remaining}分`;
+              return `${surveyLabel || ""}---残り${remaining}分`;
             })()}
           </span>
         </div>
