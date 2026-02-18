@@ -30,6 +30,11 @@ export default async function AdminDashboard() {
     surveyCountResult,
     surveyLatestResult,
     surveyAllTimestampsResult,
+    rewardConfirmedResult,
+    rewardPendingResult,
+    rewardFailedResult,
+    rewardNoneResult,
+    rewardWithEmailResult,
   ] = await Promise.all([
     admin.from("unified_users").select("id", { count: "exact", head: true }),
     admin.from("unified_users").select("id", { count: "exact", head: true }).not("wix_contact_id", "is", null),
@@ -42,8 +47,14 @@ export default async function AdminDashboard() {
     admin.from("push_subscriptions").select("user_id", { count: "exact", head: true }),
     admin.from("unified_users").select("primary_email, last_login_at, wix_contact_id, discord_id").order("last_login_at", { ascending: false, nullsFirst: false }).limit(10),
     admin.from("survey_responses").select("id", { count: "exact", head: true }),
-    admin.from("survey_responses").select("survey_id, email, submitted_at").order("submitted_at", { ascending: false }).limit(5),
+    admin.from("survey_responses").select("survey_id, email, submitted_at, reward_status").order("submitted_at", { ascending: false }).limit(10),
     admin.from("survey_responses").select("submitted_at").order("submitted_at", { ascending: true }),
+    // Reward status counts
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).eq("reward_status", "confirmed"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).eq("reward_status", "pending"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).eq("reward_status", "failed"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).eq("reward_status", "none"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).not("email", "is", null),
   ])
 
   const totalUsers = unifiedResult.count ?? 0
@@ -79,7 +90,15 @@ export default async function AdminDashboard() {
 
   const recentLogins = recentLoginsResult.data ?? []
   const surveyCount = surveyCountResult.count ?? 0
-  const surveyLatest = (surveyLatestResult.data ?? []) as { survey_id: string; email: string | null; submitted_at: string }[]
+  const surveyLatest = (surveyLatestResult.data ?? []) as { survey_id: string; email: string | null; submitted_at: string; reward_status: string | null }[]
+
+  // Reward stats
+  const rewardConfirmed = rewardConfirmedResult.count ?? 0
+  const rewardPending = rewardPendingResult.count ?? 0
+  const rewardFailed = rewardFailedResult.count ?? 0
+  const rewardNone = rewardNoneResult.count ?? 0
+  const rewardWithEmail = rewardWithEmailResult.count ?? 0
+  const rewardRate = safeRate(rewardConfirmed, rewardWithEmail)
 
   // Build daily counts for progress chart
   const surveyTimestamps = (surveyAllTimestampsResult.data ?? []) as { submitted_at: string }[]
@@ -231,6 +250,50 @@ export default async function AdminDashboard() {
                 <SurveyProgressChart dailyCounts={dailyCounts} goals={[100, 200, 300]} />
               </div>
             )}
+
+            {/* Reward Status Summary */}
+            <div style={{ marginBottom: 16, padding: 12, background: "rgba(0,0,0,0.02)", borderRadius: "var(--radius-sm)" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>
+                AICUポイント付与状況 <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-tertiary)" }}>+10,000pt/件</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 12, marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>メール提供者</span>
+                  <span style={{ fontWeight: 600 }}>{rewardWithEmail}人</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>匿名回答</span>
+                  <span style={{ color: "var(--text-tertiary)" }}>{rewardNone}人</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--aicu-teal)" }}>付与済み</span>
+                  <span style={{ fontWeight: 600, color: "var(--aicu-teal)" }}>{rewardConfirmed}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#f59e0b" }}>処理中</span>
+                  <span style={{ fontWeight: 600, color: "#f59e0b" }}>{rewardPending}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#ef4444" }}>失敗</span>
+                  <span style={{ fontWeight: 600, color: "#ef4444" }}>{rewardFailed}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontWeight: 600 }}>付与率</span>
+                  <span style={{ fontWeight: 700, color: rewardRate >= 100 ? "var(--aicu-teal)" : "#ef4444" }}>{rewardRate}%</span>
+                </div>
+              </div>
+              {/* Reward rate bar */}
+              <div style={{ height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden", display: "flex" }}>
+                <div style={{ width: `${rewardRate}%`, background: "var(--aicu-teal)", borderRadius: 3 }} />
+                {rewardPending > 0 && (
+                  <div style={{ width: `${safeRate(rewardPending, rewardWithEmail)}%`, background: "#f59e0b" }} />
+                )}
+                {rewardFailed > 0 && (
+                  <div style={{ width: `${safeRate(rewardFailed, rewardWithEmail)}%`, background: "#ef4444" }} />
+                )}
+              </div>
+            </div>
+
             {surveyLatest.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 2 }}>最新のエントリー</div>
@@ -238,11 +301,12 @@ export default async function AdminDashboard() {
                   const emailPrefix = row.email ? row.email.split("@")[0] : "—"
                   return (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, padding: "4px 0", borderBottom: i < surveyLatest.length - 1 ? "1px solid var(--border)" : "none" }}>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(0,49,216,0.08)", color: "#0031D8" }}>{row.survey_id}</span>
-                        <span style={{ fontFamily: "monospace", color: "var(--text-primary)" }}>{emailPrefix}@***</span>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", minWidth: 0, flex: 1 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(0,49,216,0.08)", color: "#0031D8", flexShrink: 0 }}>{row.survey_id}</span>
+                        <span style={{ fontFamily: "monospace", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{emailPrefix}@***</span>
+                        <RewardBadge status={row.reward_status} />
                       </div>
-                      <span style={{ color: "var(--text-tertiary)", fontSize: 11 }}>
+                      <span style={{ color: "var(--text-tertiary)", fontSize: 11, flexShrink: 0, marginLeft: 4 }}>
                         {row.submitted_at ? new Date(row.submitted_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
                       </span>
                     </div>
@@ -325,6 +389,30 @@ function StatusBadge({ label, active }: { label: string; active: boolean }) {
       color: active ? "var(--aicu-teal)" : "var(--text-tertiary)",
     }}>
       {label}
+    </span>
+  )
+}
+
+function RewardBadge({ status }: { status: string | null }) {
+  const config: Record<string, { label: string; bg: string; color: string }> = {
+    confirmed: { label: "+10K", bg: "rgba(65, 201, 180, 0.12)", color: "var(--aicu-teal)" },
+    pending: { label: "処理中", bg: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" },
+    failed: { label: "失敗", bg: "rgba(239, 68, 68, 0.12)", color: "#ef4444" },
+    none: { label: "匿名", bg: "rgba(0, 0, 0, 0.04)", color: "var(--text-tertiary)" },
+  }
+  const c = config[status ?? "none"] ?? config.none
+  return (
+    <span style={{
+      fontSize: 9,
+      fontWeight: 600,
+      padding: "1px 5px",
+      borderRadius: 3,
+      background: c.bg,
+      color: c.color,
+      flexShrink: 0,
+      whiteSpace: "nowrap",
+    }}>
+      {c.label}
     </span>
   )
 }

@@ -31,13 +31,19 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Protect /dashboard/* pages — redirect to login
   if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
     return NextResponse.redirect(new URL("/", request.url))
+  }
+
+  // Protect /api/admin/* — return 401 JSON
+  if (!user && request.nextUrl.pathname.startsWith("/api/admin")) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
   return response
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/api/admin/:path*"],
 }

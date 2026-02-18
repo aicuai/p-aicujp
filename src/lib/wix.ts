@@ -148,22 +148,64 @@ export async function getLoyaltyTransactions(accountId: string): Promise<Loyalty
   }
 }
 
-/** 全Wixサイト会員のメールアドレスを取得（cursor pagination） */
+/** 全Wixサイト会員のメールアドレスを取得（offset pagination） */
 export async function getAllMemberEmails(): Promise<string[]> {
   const emails: string[] = []
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let result: any = await getWixClient().members.queryMembers().limit(100).find()
+  let offset = 0
+  const limit = 100
 
   while (true) {
-    for (const member of result.items || []) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result: any = await getWixClient().members.queryMembers()
+      .limit(limit)
+      .skip(offset)
+      .find()
+
+    const items = result.items || []
+
+    // Debug: log structure on first batch
+    if (offset === 0) {
+      console.log("[wix] getAllMemberEmails: totalCount =", result.totalCount, "first batch =", items.length)
+      if (items.length > 0) {
+        console.log("[wix] Sample member keys:", Object.keys(items[0]))
+      }
+    }
+
+    for (const member of items) {
+      // Try multiple possible email fields
       const email = member.loginEmail
+        || member.profile?.email
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        || (member as any).contactDetails?.emails?.[0]
       if (email) emails.push(email)
     }
 
-    if (!result.hasNext || !result.hasNext()) break
-    result = await result.next()
+    if (items.length < limit) break
+    offset += limit
+    if (offset >= 10000) break // safety limit
   }
 
+  // Fallback: try Contacts API if Members returned nothing
+  if (emails.length === 0) {
+    console.log("[wix] Members returned 0 emails, falling back to Contacts API")
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = await getWixClient().contacts.queryContacts({
+        paging: { limit: 1000 },
+      })
+      const contacts = result.contacts ?? []
+      console.log("[wix] Contacts fallback: got", contacts.length, "contacts")
+      for (const c of contacts) {
+        const email = c.primaryInfo?.email
+          || c.info?.emails?.[0]?.email
+        if (email) emails.push(email)
+      }
+    } catch (err) {
+      console.error("[wix] Contacts fallback failed:", err)
+    }
+  }
+
+  console.log("[wix] getAllMemberEmails: final count =", emails.length)
   return [...new Set(emails)]
 }
 
