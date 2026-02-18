@@ -11,8 +11,10 @@ const SYSTEM_PROMPT = `あなたは「LuC4（ルカ）」、AICU Japan のカス
 - AICU Japan は AI クリエイティブの研究・教育・コミュニティを運営する企業です
 - 主なサービス: AI 画像生成の教育コンテンツ、Discord コミュニティ、デジタルコンテンツ販売
 - Web サイト: https://aicu.jp（モバイルポータル）、https://ja.aicu.jp（メディア）
-- 過去記事: https://note.com/aicu も参照
+- 一次ソース (記事・画像): https://note.com/aicu (AICU media)
+- サービスページ: https://aicu.blog (Wix)
 - 技術書典やイベントにも出展しています
+- Google Search で検索結果が得られた場合、その URL をソースとして提示する
 
 ## 対応ルール
 - お客様を愛し、全力で肯定する
@@ -32,6 +34,7 @@ export async function generateResponse(
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       systemInstruction: SYSTEM_PROMPT,
+      tools: [{ googleSearch: {} } as never],
     })
     const result = await model.generateContent(message)
 
