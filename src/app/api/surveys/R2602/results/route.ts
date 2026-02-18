@@ -14,6 +14,7 @@ const EXCLUDE_IDS = new Set([
 ])
 
 const CHOICE_TYPES = new Set(["single_choice", "multi_choice", "dropdown"])
+const BIRTH_YEAR_ID = "entry_170746194"
 
 export async function GET() {
   const db = getAdminSupabase()
@@ -80,6 +81,18 @@ export async function GET() {
       }
     })
 
+  // Aggregate birth year text answers into counts
+  const birthYearCounts: Record<string, number> = {}
+  for (const row of rows ?? []) {
+    const ans = row.answers?.[BIRTH_YEAR_ID]
+    if (!ans) continue
+    const yearStr = String(ans).trim()
+    const year = parseInt(yearStr, 10)
+    if (!isNaN(year) && year >= 1920 && year <= 2020) {
+      birthYearCounts[yearStr] = (birthYearCounts[yearStr] || 0) + 1
+    }
+  }
+
   // Check if any test data exists (for notice toggle)
   const { count: testCount } = await db
     .from("survey_responses")
@@ -88,7 +101,7 @@ export async function GET() {
     .eq("is_test", true)
 
   return NextResponse.json(
-    { totalResponses, questions: chartQuestions, updatedAt: new Date().toISOString(), hasTestData: (testCount ?? 0) > 0 },
+    { totalResponses, questions: chartQuestions, birthYearCounts, updatedAt: new Date().toISOString(), hasTestData: (testCount ?? 0) > 0 },
     { headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=300" } },
   )
 }

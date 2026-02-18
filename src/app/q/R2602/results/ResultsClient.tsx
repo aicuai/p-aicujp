@@ -1,6 +1,20 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import dynamic from "next/dynamic"
+import { VIZ_MAP, PAIRED_BAR_IDS } from "@/lib/survey-viz-config"
+import type { VizType } from "@/lib/survey-viz-config"
+import { useMyAnswers } from "@/lib/use-my-answers"
+import { computeStats } from "@/lib/survey-stats"
+
+// Dynamic imports to avoid SSR issues with recharts
+const StackedBar = dynamic(() => import("@/components/charts/StackedBar"), { ssr: false })
+const DonutChart = dynamic(() => import("@/components/charts/DonutChart"), { ssr: false })
+const RegionalPieChart = dynamic(() => import("@/components/charts/RegionalPieChart"), { ssr: false })
+const AgeBucketChart = dynamic(() => import("@/components/charts/AgeBucketChart"), { ssr: false })
+const TagCloud = dynamic(() => import("@/components/charts/TagCloud"), { ssr: false })
+const PairedBarChart = dynamic(() => import("@/components/charts/PairedBarChart"), { ssr: false })
+const HorizontalBarChart = dynamic(() => import("@/components/charts/HorizontalBarChart"), { ssr: false })
 
 type ChartQuestion = {
   id: string
@@ -13,20 +27,9 @@ type ChartQuestion = {
 type ResultsData = {
   totalResponses: number
   questions: ChartQuestion[]
+  birthYearCounts?: Record<string, number>
   updatedAt: string
   hasTestData?: boolean
-}
-
-// Single-choice: AICU teal base with descending opacity
-function singleColor(rank: number): string {
-  const opacity = Math.max(0.25, 1 - rank * 0.12)
-  return `rgba(65, 201, 180, ${opacity})`
-}
-
-// Multi-choice: AICU blue base with descending opacity
-function multiColor(rank: number): string {
-  const opacity = Math.max(0.25, 1 - rank * 0.1)
-  return `rgba(0, 49, 216, ${opacity})`
 }
 
 const SHARE_URL = "https://p.aicu.jp/q/R2602?utm_source=share&utm_medium=social&utm_campaign=R2602"
@@ -36,6 +39,7 @@ export default function ResultsClient() {
   const [data, setData] = useState<ResultsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const myAnswers = useMyAnswers("https://j.aicu.ai/R2602")
 
   useEffect(() => {
     fetch("/api/surveys/R2602/results")
@@ -74,6 +78,9 @@ export default function ResultsClient() {
       setTimeout(() => setCopied(false), 2000)
     } catch { /* ignore */ }
   }, [])
+
+  // Build renderable items — merge paired bar questions into one card
+  const renderItems = buildRenderItems(data)
 
   return (
     <div style={{
@@ -119,6 +126,17 @@ export default function ResultsClient() {
         </p>
       </div>
 
+      {/* My answers indicator */}
+      {myAnswers && (
+        <div style={{
+          maxWidth: 720, margin: "8px auto 0", padding: "8px 20px",
+          background: "#FFF3E0", border: "1px solid #FFB74D", borderRadius: 8,
+          fontSize: 13, color: "#E65100", fontWeight: 600,
+        }}>
+          ★ あなたの回答がハイライト表示されています
+        </div>
+      )}
+
       {/* Share bar */}
       <div style={{ maxWidth: 720, margin: "12px auto 0", textAlign: "center" }}>
         <button
@@ -144,8 +162,8 @@ export default function ResultsClient() {
           <div style={{ textAlign: "center", padding: 60, color: "#999" }}>回答データがありません</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {data.questions.map((q) => (
-              <ChartCard key={q.id} q={q} />
+            {renderItems.map((item) => (
+              <ChartCard key={item.key} item={item} data={data} myAnswers={myAnswers} />
             ))}
           </div>
         )}
@@ -162,50 +180,172 @@ export default function ResultsClient() {
   )
 }
 
-function ChartCard({ q }: { q: ChartQuestion }) {
-  const isMulti = q.type === "multi_choice"
-  const entries = Object.entries(q.counts).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])
-  const maxVal = entries.length > 0 ? Math.max(...entries.map(([, v]) => v)) : 1
+// ── Render item types ──
 
+type SingleItem = {
+  key: string
+  kind: "single"
+  vizType: VizType
+  question: ChartQuestion
+}
+
+type PairedItem = {
+  key: string
+  kind: "paired"
+  vizType: "paired-bar"
+  done: ChartQuestion
+  want: ChartQuestion
+}
+
+type AgePieItem = {
+  key: string
+  kind: "age-pie"
+  vizType: "age-pie"
+  question: ChartQuestion
+}
+
+type RenderItem = SingleItem | PairedItem | AgePieItem
+
+function buildRenderItems(data: ResultsData | null): RenderItem[] {
+  if (!data) return []
+  const items: RenderItem[] = []
+  const pairedDone = data.questions.find((q) => q.id === PAIRED_BAR_IDS.done)
+  const pairedWant = data.questions.find((q) => q.id === PAIRED_BAR_IDS.want)
+  let pairedInserted = false
+
+  for (const q of data.questions) {
+    // Skip the "want" question — it's merged into the paired bar
+    if (q.id === PAIRED_BAR_IDS.want) continue
+
+    // Paired bar: merge done + want into one card
+    if (q.id === PAIRED_BAR_IDS.done && pairedDone && pairedWant) {
+      if (!pairedInserted) {
+        items.push({ key: "paired-effect", kind: "paired", vizType: "paired-bar", done: pairedDone, want: pairedWant })
+        pairedInserted = true
+      }
+      continue
+    }
+
+    const vizType = VIZ_MAP[q.id] || "horizontal-bar"
+
+    if (vizType === "age-pie") {
+      items.push({ key: q.id, kind: "age-pie", vizType: "age-pie", question: q })
+    } else {
+      items.push({ key: q.id, kind: "single", vizType, question: q })
+    }
+  }
+
+  return items
+}
+
+// ── Chart card wrapper ──
+
+function ChartCard({ item, data, myAnswers }: {
+  item: RenderItem
+  data: ResultsData
+  myAnswers: Record<string, unknown> | null
+}) {
+  if (item.kind === "paired") {
+    return (
+      <CardWrapper
+        title="AI利用の効果（実現 vs 期待）"
+        subtitle={`実現: ${item.done.answered}件 / 期待: ${item.want.answered}件の回答（複数選択可）`}
+      >
+        <PairedBarChart
+          doneCounts={item.done.counts}
+          wantCounts={item.want.counts}
+          doneAnswered={item.done.answered}
+          wantAnswered={item.want.answered}
+          myDone={getMyAnswer(myAnswers, PAIRED_BAR_IDS.done)}
+          myWant={getMyAnswer(myAnswers, PAIRED_BAR_IDS.want)}
+        />
+      </CardWrapper>
+    )
+  }
+
+  if (item.kind === "age-pie") {
+    const q = item.question
+    return (
+      <CardWrapper title={q.question} subtitle={`${q.answered}件の回答`}>
+        <AgeBucketChart
+          birthYearCounts={data.birthYearCounts || {}}
+          answered={q.answered}
+          myAnswer={getMyAnswer(myAnswers, q.id)}
+        />
+      </CardWrapper>
+    )
+  }
+
+  // Single chart
+  const q = item.question
+  const isMulti = q.type === "multi_choice"
+  const my = getMyAnswer(myAnswers, q.id)
+  const stats = computeStats(q.counts, q.answered, data.totalResponses)
+
+  return (
+    <CardWrapper
+      title={q.question}
+      subtitle={`${q.answered}件の回答${isMulti ? "（複数選択可）" : ""}`}
+    >
+      {item.vizType === "stacked-bar" && (
+        <StackedBar counts={q.counts} answered={q.answered} myAnswer={my} />
+      )}
+      {item.vizType === "donut" && (
+        <DonutChart counts={q.counts} answered={q.answered} myAnswer={my} />
+      )}
+      {item.vizType === "regional-pie" && (
+        <RegionalPieChart counts={q.counts} answered={q.answered} myAnswer={my} />
+      )}
+      {item.vizType === "tag-cloud" && (
+        <TagCloud counts={q.counts} answered={q.answered} myAnswer={my} />
+      )}
+      {item.vizType === "horizontal-bar" && (
+        <HorizontalBarChart counts={q.counts} answered={q.answered} isMulti={isMulti} myAnswer={my} />
+      )}
+      <StatsFooter stats={stats} />
+    </CardWrapper>
+  )
+}
+
+function CardWrapper({ title, subtitle, children }: {
+  title: string
+  subtitle: string
+  children: React.ReactNode
+}) {
   return (
     <div style={{
       background: "#fff", borderRadius: 12, padding: "20px 24px",
       border: "1px solid rgba(0,0,0,0.08)",
     }}>
       <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e", margin: "0 0 4px", lineHeight: 1.5 }}>
-        {q.question}
+        {title}
       </h3>
       <p style={{ fontSize: 12, color: "#999", margin: "0 0 16px" }}>
-        {q.answered}件の回答{isMulti ? "（複数選択可）" : ""}
+        {subtitle}
       </p>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {entries.map(([label, count], i) => {
-          const pct = q.answered > 0 ? Math.round((count / q.answered) * 100) : 0
-          const barWidth = maxVal > 0 ? (count / maxVal) * 100 : 0
-          const color = isMulti ? multiColor(i) : singleColor(i)
-          return (
-            <div key={label}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                <span style={{ color: "#333", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
-                <span style={{ color: "#666", fontWeight: 600, marginLeft: 8, whiteSpace: "nowrap" }}>{count} ({pct}%)</span>
-              </div>
-              <div style={{ height: 20, background: "rgba(0,0,0,0.04)", borderRadius: 4, overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", borderRadius: 4,
-                  background: color,
-                  width: `${barWidth}%`,
-                  transition: "width 0.5s ease",
-                  minWidth: count > 0 ? 2 : 0,
-                }} />
-              </div>
-            </div>
-          )
-        })}
-        {entries.length === 0 && (
-          <div style={{ fontSize: 13, color: "#ccc" }}>回答なし</div>
-        )}
-      </div>
+      {children}
     </div>
   )
+}
+
+function StatsFooter({ stats }: { stats: { responseRate: number; mode: string; modePct: number; entropy: number } }) {
+  return (
+    <div style={{
+      marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(0,0,0,0.05)",
+      display: "flex", flexWrap: "wrap", gap: "4px 16px",
+      fontSize: 11, color: "#999",
+    }}>
+      <span>回答率 {stats.responseRate}%</span>
+      <span>最多: {stats.mode.length > 15 ? stats.mode.slice(0, 15) + "…" : stats.mode} ({stats.modePct}%)</span>
+      <span>多様性 {stats.entropy.toFixed(2)}</span>
+    </div>
+  )
+}
+
+function getMyAnswer(myAnswers: Record<string, unknown> | null, questionId: string): string | string[] | undefined {
+  if (!myAnswers) return undefined
+  const v = myAnswers[questionId]
+  if (v === undefined || v === null) return undefined
+  if (Array.isArray(v)) return v.map(String)
+  return String(v)
 }

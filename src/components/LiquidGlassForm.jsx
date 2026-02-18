@@ -884,6 +884,10 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
         setShowInput(false);
         return;
       }
+      // Persist completed answers for results page highlighting
+      try {
+        localStorage.setItem(`lgf_completed_${surveyId}`, JSON.stringify({ answers: newAns, completedAt: new Date().toISOString() }));
+      } catch { /* quota exceeded — ignore */ }
       clearProgress(surveyId);
       // GTAG: survey complete
       if (typeof window !== "undefined" && window.gtag) {
