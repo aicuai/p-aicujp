@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "d96630e59c60",
+  "strategy": "auto-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/api/admin/wix-emails/route.ts",
+    "src/app/dashboard/admin/page.tsx",
+    "src/app/page.tsx",
+    "src/components/WixEmailExport.tsx",
+    "src/lib/wix.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d9/6630e59c60/0/metadata.json",
+      "transcript": "/d9/6630e59c60/0/full.jsonl",
+      "context": "",
+      "content_hash": "/d9/6630e59c60/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 12884,
+    "cache_creation_tokens": 105579,
+    "cache_read_tokens": 2576390,
+    "output_tokens": 8275,
+    "api_call_count": 26
+  }
+}

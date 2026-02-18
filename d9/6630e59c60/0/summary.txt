@@ -1,0 +1,21 @@
+ビルド成功。実装完了しました：
+
+**p.aicu.jp トップページ リデザイン** (`src/app/page.tsx`)
+- aicu.jp と同じレイアウト構造に変更
+- Sticky header（AICU Japan + tagline）
+- Hero banner（R2602、オーバーレイテキスト付き）
+- 2x2 grid（アンケート参加、結果速報、ポイント、プロフィール）
+- ログインカード
+- 3ブロック（aicu.jp、u.aicu.jp、c.aicu.jp）
+- フッター（利用規約等）
+
+**管理者ダッシュボード - Wixメールリスト取得**
+- `src/lib/wix.ts` — `getAllMemberEmails()` 関数追加（cursor pagination で全件取得）
+- `src/app/api/admin/wix-emails/route.ts` — GET（取得）/ POST（Slack送信）
+- `src/components/WixEmailExport.tsx` — クライアントUI
+  - 「Wix全会員メール取得」ボタン → 件数表示 + プレビュー
+  - 「コピー」ボタン → クリップボードにコピー
+  - 「CSV」ボタン → CSVダウンロード
+  - 「Slack送信」ボタン → SLACK_WEBHOOK_STAFF に全リスト送信
+
+Slack送信で aki@aicu.ai に直接メール送信はしていませんが、Slack経由でリストが見られます。CSV ダウンロードも可能です。直接メール送信が必要であれば GAS 経由で追加できます。
