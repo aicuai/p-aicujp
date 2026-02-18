@@ -1030,9 +1030,52 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
               {" "}で確認できます
             </p>
             <p style={{ fontSize: 14, color: s.textDim, lineHeight: 1.7, maxWidth: 340, marginTop: 10 }}>
-              AICUマガジンやAmazonギフト券など商品交換は
-              <a href="https://www.aicu.blog/category/all-products" target="_blank" rel="noopener" style={{ color: s.accent, textDecoration: "underline" }}>こちら</a>
+              AICUポイントのご利用はこちら:{" "}
+              <a href="https://www.aicu.blog/category/all-products" target="_blank" rel="noopener" style={{ color: s.accent, textDecoration: "underline", fontWeight: 600 }}>AICUマガジン・Amazonギフト券など</a>
             </p>
+
+            {/* Share CTA */}
+            <div style={{
+              marginTop: 24, padding: "16px 20px", borderRadius: 16, width: "100%", maxWidth: 340,
+              background: "rgba(0,49,216,0.04)", border: "1px solid rgba(0,49,216,0.12)",
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: s.text, marginBottom: 10 }}>
+                この調査をシェアする
+              </div>
+              <p style={{ fontSize: 13, color: s.textSub, lineHeight: 1.7, marginBottom: 12 }}>
+                一人でも多くの声が、より良い政策提言につながります
+              </p>
+              <button
+                onClick={() => {
+                  const text = "生成AI時代の\"つくる人\"調査に参加しました。チャットで答える新感覚アンケート、約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AI #つくる人調査";
+                  if (navigator.share) {
+                    navigator.share({ text }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(text).then(() => {
+                      alert("シェア用テキストをコピーしました");
+                    }).catch(() => {
+                      window.open("https://x.com/intent/tweet?text=" + encodeURIComponent(text), "_blank");
+                    });
+                  }
+                }}
+                style={{
+                  width: "100%", padding: "12px 16px", borderRadius: 12,
+                  border: "none", fontSize: 15, fontWeight: 700, fontFamily: "inherit",
+                  cursor: "pointer", background: "#0031D8", color: "#fff",
+                  boxShadow: "0 2px 12px rgba(0,49,216,0.2)",
+                }}
+              >
+                シェアする
+              </button>
+              <a
+                href={"https://x.com/intent/tweet?text=" + encodeURIComponent("生成AI時代の\"つくる人\"調査に参加しました。チャットで答える新感覚アンケート、約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AI #つくる人調査")}
+                target="_blank" rel="noopener"
+                style={{ display: "block", textAlign: "center", marginTop: 8, fontSize: 13, color: s.textDim, textDecoration: "underline" }}
+              >
+                X (Twitter) で投稿
+              </a>
+            </div>
+
             <div style={{ marginTop: 20, fontSize: 13, color: s.textDim, lineHeight: 1.6 }}>
               <a href="https://corp.aicu.ai/ja/privacy" target="_blank" rel="noopener" style={{ color: s.textDim, textDecoration: "underline" }}>プライバシーポリシー</a>
               {" / "}

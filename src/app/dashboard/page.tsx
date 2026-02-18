@@ -158,6 +158,18 @@ export default async function Dashboard() {
               {points !== null ? points.toLocaleString() : "---"}
               <span style={{ fontSize: 15, fontWeight: 400, marginLeft: 4, opacity: 0.8 }}>pt</span>
             </p>
+            <a
+              href="https://www.aicu.blog/category/all-products"
+              target="_blank"
+              rel="noopener"
+              style={{
+                display: "inline-block", marginTop: 10, padding: "6px 14px",
+                borderRadius: 8, background: "rgba(255,255,255,0.2)",
+                color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+              }}
+            >
+              ポイントを使う &rarr;
+            </a>
           </div>
 
           {/* Profile */}

@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/R2602", destination: "/q/R2602", permanent: false },
+      { source: "/R2602/:path*", destination: "/q/R2602/:path*", permanent: false },
     ]
   },
   async headers() {
