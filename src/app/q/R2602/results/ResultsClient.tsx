@@ -166,8 +166,8 @@ export default function ResultsClient() {
           <div style={{ textAlign: "center", padding: 60, color: "#999" }}>回答データがありません</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {renderItems.map((item) => (
-              <ChartCard key={item.key} item={item} data={data} myAnswers={myAnswers} />
+            {renderItems.map((item, idx) => (
+              <ChartCard key={item.key} item={item} data={data} myAnswers={myAnswers} qNum={idx + 1} />
             ))}
           </div>
         )}
@@ -278,10 +278,11 @@ function buildRenderItems(data: ResultsData | null): RenderItem[] {
 
 // ── Chart card wrapper ──
 
-function ChartCard({ item, data, myAnswers }: {
+function ChartCard({ item, data, myAnswers, qNum }: {
   item: RenderItem
   data: ResultsData
   myAnswers: Record<string, unknown> | null
+  qNum: number
 }) {
   const isSample = !myAnswers
 
@@ -289,7 +290,7 @@ function ChartCard({ item, data, myAnswers }: {
     const total = data.pyramidData?.length || 0
     const pyramidComment = getPyramidCommentary({ crossData: data.pyramidData || [] })
     return (
-      <CardWrapper title="回答者の年代×性別（人口ピラミッド）" subtitle={`${total}件の回答`} isSample={isSample}>
+      <CardWrapper title={`Q${qNum}. 回答者の年代×性別（人口ピラミッド）`} subtitle={`${total}件の回答`} isSample={isSample}>
         <PopulationPyramid
           birthYearCounts={data.birthYearCounts || {}}
           genderCounts={item.genderQ.counts}
@@ -306,7 +307,7 @@ function ChartCard({ item, data, myAnswers }: {
     const pairedComment = getPairedBarCommentary({ gapItems, doneAnswered: item.done.answered, wantAnswered: item.want.answered })
     return (
       <CardWrapper
-        title="AI利用の効果（実現 vs 期待）"
+        title={`Q${qNum}. AI利用の効果（実現 vs 期待）`}
         subtitle={`実現: ${item.done.answered}件 / 期待: ${item.want.answered}件の回答（複数選択可）`}
         isSample={isSample}
       >
@@ -331,7 +332,7 @@ function ChartCard({ item, data, myAnswers }: {
       totalResponses: data.totalResponses, stats: ageStats,
     })
     return (
-      <CardWrapper title={q.question} subtitle={`${q.answered}件の回答`} isSample={isSample}>
+      <CardWrapper title={`Q${qNum}. ${q.question}`} subtitle={`${q.answered}件の回答`} isSample={isSample}>
         <AgeBucketChart
           birthYearCounts={data.birthYearCounts || {}}
           answered={q.answered}
@@ -355,7 +356,7 @@ function ChartCard({ item, data, myAnswers }: {
 
   return (
     <CardWrapper
-      title={q.question}
+      title={`Q${qNum}. ${q.question}`}
       subtitle={`${q.answered}件の回答${isMulti ? "（複数選択可）" : ""}`}
       isSample={isSample}
     >
