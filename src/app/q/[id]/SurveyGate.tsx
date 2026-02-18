@@ -273,7 +273,7 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
         <div style={{ textAlign: "center", marginTop: 24, fontSize: 12, color: "#bbb" }}>
           Powered by{" "}
           <span style={{ fontFamily: "'Outfit', sans-serif", color: "var(--aicu-teal, #41C9B4)", fontWeight: 700 }}>AICU</span>
-          {" "}LiquidGlassForm
+          {" "}Research
         </div>
       </div>
     </div>
