@@ -283,11 +283,13 @@ function ChartCard({ item, data, myAnswers }: {
   data: ResultsData
   myAnswers: Record<string, unknown> | null
 }) {
+  const isSample = !myAnswers
+
   if (item.kind === "pyramid") {
     const total = data.pyramidData?.length || 0
     const pyramidComment = getPyramidCommentary({ crossData: data.pyramidData || [] })
     return (
-      <CardWrapper title="回答者の年代×性別（人口ピラミッド）" subtitle={`${total}件の回答`}>
+      <CardWrapper title="回答者の年代×性別（人口ピラミッド）" subtitle={`${total}件の回答`} isSample={isSample}>
         <PopulationPyramid
           birthYearCounts={data.birthYearCounts || {}}
           genderCounts={item.genderQ.counts}
@@ -306,6 +308,7 @@ function ChartCard({ item, data, myAnswers }: {
       <CardWrapper
         title="AI利用の効果（実現 vs 期待）"
         subtitle={`実現: ${item.done.answered}件 / 期待: ${item.want.answered}件の回答（複数選択可）`}
+        isSample={isSample}
       >
         <PairedBarChart
           doneCounts={item.done.counts}
@@ -328,7 +331,7 @@ function ChartCard({ item, data, myAnswers }: {
       totalResponses: data.totalResponses, stats: ageStats,
     })
     return (
-      <CardWrapper title={q.question} subtitle={`${q.answered}件の回答`}>
+      <CardWrapper title={q.question} subtitle={`${q.answered}件の回答`} isSample={isSample}>
         <AgeBucketChart
           birthYearCounts={data.birthYearCounts || {}}
           answered={q.answered}
@@ -354,6 +357,7 @@ function ChartCard({ item, data, myAnswers }: {
     <CardWrapper
       title={q.question}
       subtitle={`${q.answered}件の回答${isMulti ? "（複数選択可）" : ""}`}
+      isSample={isSample}
     >
       {item.vizType === "stacked-bar" && (
         <StackedBar counts={q.counts} answered={q.answered} myAnswer={my} />
@@ -385,15 +389,17 @@ function ChartCard({ item, data, myAnswers }: {
   )
 }
 
-function CardWrapper({ title, subtitle, children }: {
+function CardWrapper({ title, subtitle, isSample, children }: {
   title: string
   subtitle: string
+  isSample?: boolean
   children: React.ReactNode
 }) {
   return (
     <div style={{
       background: "#fff", borderRadius: 12, padding: "20px 24px",
       border: "1px solid rgba(0,0,0,0.08)", position: "relative",
+      overflow: "hidden",
     }}>
       <h3 style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e", margin: "0 0 4px", lineHeight: 1.5 }}>
         {title}
@@ -403,14 +409,26 @@ function CardWrapper({ title, subtitle, children }: {
       </p>
       {children}
       {/* Watermark — vertically centered */}
-      <span style={{
-        position: "absolute", top: "50%", right: 12,
-        transform: "translateY(-50%)",
-        fontSize: 9, color: "rgba(0,0,0,0.08)", fontWeight: 600,
-        pointerEvents: "none", userSelect: "none",
-      }}>
-        p.aicu.jp/R2602
-      </span>
+      {isSample ? (
+        <span style={{
+          position: "absolute", top: "50%", left: "50%",
+          transform: "translate(-50%, -50%) rotate(-20deg)",
+          fontSize: 18, color: "rgba(0,0,0,0.18)", fontWeight: 800,
+          pointerEvents: "none", userSelect: "none",
+          whiteSpace: "nowrap", letterSpacing: "0.02em",
+        }}>
+          [Sample Data] 調査依頼は info@aicu.jp まで
+        </span>
+      ) : (
+        <span style={{
+          position: "absolute", top: "50%", right: 12,
+          transform: "translateY(-50%)",
+          fontSize: 9, color: "rgba(0,0,0,0.08)", fontWeight: 600,
+          pointerEvents: "none", userSelect: "none",
+        }}>
+          p.aicu.jp/R2602
+        </span>
+      )}
     </div>
   )
 }
