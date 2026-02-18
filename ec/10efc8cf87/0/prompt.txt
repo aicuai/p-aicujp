@@ -1,0 +1,2 @@
+magicklinkでログインできなくなったな
+http://localhost:3200/auth/callback?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired&sb=
