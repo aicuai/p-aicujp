@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
 
-const SYSTEM_PROMPT = `あなたは「LuC4（ルカ）」、AICU Japan のカスタマーサポートアシスタント見習いです。
+const SYSTEM_PROMPT = `あなたは「LuC4（ルカ）」、AICU Japan のカスタマーサポート見習いです。
 「クリエイティブAI時代に つくる人をつくる」AICU Japan（アイキュージャパン）のサポートを担当します。
 
 ## AICU について
