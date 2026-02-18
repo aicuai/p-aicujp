@@ -1,0 +1,14 @@
+Build passes cleanly. Here's a summary of what was implemented:
+
+**New file: `src/lib/survey-commentary.ts`**
+- `getQuestionCommentary()` — main function for single-question commentary (25 question templates)
+- `getPairedBarCommentary()` — paired-bar gap analysis commentary (done vs want)
+- `getPyramidCommentary()` — population pyramid cross-tabulation commentary
+- Helpers: `topN()`, `entropyLevel()`, `responseRateNote()`, `listTop()`
+- Each template generates 2-3 sentences: context (static) + data insight (dynamic) + PI perspective (conditional)
+
+**Modified: `src/app/q/R2602/results/ResultsClient.tsx`**
+- Imported commentary functions + `computeGapAnalysis`
+- Added `Commentary` component (grey background, teal left border, 12px font)
+- Integrated commentary into all 4 card types: single, paired-bar, age-pie, pyramid
+- Commentary displays between chart and `StatsFooter`
