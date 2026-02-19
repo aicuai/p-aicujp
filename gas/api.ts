@@ -85,6 +85,9 @@ function handleRequest(action: string, params: Record<string, any>, method: stri
       case 'testSendTo':
         return testSendToAddress(params.id, params.email);
 
+      case 'sendToR2511':
+        return sendToR2511Sheet(params.id, params.dryRun === 'true');
+
       // 統計（管理者用）
       case 'getStats':
         return getStatistics();
@@ -456,9 +459,12 @@ function getCampaign(id: string): ApiResponse {
 function sendCampaignById(id: string, testMode: boolean = false): ApiResponse {
   if (!id) return { success: false, error: 'Missing campaign ID' };
 
-  // sendEmail.ts の sendCampaign を呼び出す
-  // 実装は sendEmail.ts 側
-  return { success: true, message: 'Campaign queued', testMode };
+  try {
+    sendCampaign(id, testMode);
+    return { success: true, message: `Campaign ${id} sent successfully`, testMode };
+  } catch (error: any) {
+    return { success: false, error: error.message || String(error) };
+  }
 }
 
 // =====================================================
@@ -1045,8 +1051,117 @@ function testSendToAddress(campaignId: string, email: string): ApiResponse {
 
   try {
     sendViaGmail(email, `[TEST] ${campaign.subject}`, personalizedHtml, senderName, replyTo, senderEmail);
+
+    // EmailLogs に記録
+    const logsSheet = ss.getSheetByName('EmailLogs');
+    if (logsSheet) {
+      logEmailSent(logsSheet, campaignId, testContact, 'sent');
+    }
+
     return { success: true, message: `Test sent to ${email}`, data: { campaignId, email } };
   } catch (e: any) {
+    // エラーも記録
+    const logsSheet = ss.getSheetByName('EmailLogs');
+    if (logsSheet) {
+      logEmailSent(logsSheet, campaignId, testContact, 'failed', e.message);
+    }
     return { success: false, error: e.message || 'Send failed' };
   }
+}
+
+/**
+ * R2511シートのAG列（メールアドレス）を読み取り、キャンペーンを送信
+ * dryRun=true の場合は送信せずメールリストのみ返す
+ */
+function sendToR2511Sheet(campaignId: string, dryRun: boolean = false): ApiResponse {
+  if (!campaignId) return { success: false, error: 'Campaign ID required' };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const r2511Sheet = ss.getSheetByName('R2511');
+  if (!r2511Sheet) return { success: false, error: 'R2511 sheet not found' };
+
+  const campaignsSheet = ss.getSheetByName('Campaigns');
+  if (!campaignsSheet) return { success: false, error: 'Campaigns sheet not found' };
+
+  const logsSheet = ss.getSheetByName('EmailLogs');
+
+  const campaign = getCampaignById(campaignsSheet, campaignId);
+  if (!campaign) return { success: false, error: 'Campaign not found: ' + campaignId };
+
+  const htmlContent = campaign.content_html || markdownToHtml(campaign.content_markdown);
+  const senderName = getSetting('sender_name') || 'AICU Japan';
+  const senderEmail = getSetting('sender_email');
+  const replyTo = getSetting('reply_to');
+  const baseUrl = getSetting('base_url') || 'https://p.aicu.jp';
+
+  // AG列 = 33列目 からメールアドレスを取得
+  const lastRow = r2511Sheet.getLastRow();
+  const emailRange = r2511Sheet.getRange(2, 33, lastRow - 1, 1); // AG列, 2行目から
+  const emailValues = emailRange.getValues();
+
+  // 有効なメールアドレスを抽出
+  const emails: string[] = [];
+  emailValues.forEach((row: any[]) => {
+    const val = String(row[0] || '').trim();
+    if (val && val !== '' && val.includes('@') && val !== '[EMAIL]') {
+      emails.push(val);
+    }
+  });
+
+  // 重複除去
+  const uniqueEmails = [...new Set(emails.map(e => e.toLowerCase()))];
+
+  if (dryRun) {
+    return {
+      success: true,
+      message: `Dry run: ${uniqueEmails.length} recipients found`,
+      data: { count: uniqueEmails.length, emails: uniqueEmails }
+    };
+  }
+
+  // 送信実行
+  let sentCount = 0;
+  let errorCount = 0;
+  const errors: string[] = [];
+
+  uniqueEmails.forEach(email => {
+    const contact: ContactInfo = {
+      id: 'r2511-' + email,
+      email: email,
+      first_name: '',
+      last_name: '',
+      company: '',
+      subscription_status: 'subscribed',
+      subscription_token: '',
+      rowIndex: -1,
+    };
+
+    const personalizedHtml = personalizeHtml(
+      htmlContent, contact, campaignId, baseUrl, false
+    );
+
+    try {
+      sendViaGmail(email, campaign.subject, personalizedHtml, senderName, replyTo, senderEmail);
+      if (logsSheet) {
+        logEmailSent(logsSheet, campaignId, contact, 'sent');
+      }
+      sentCount++;
+    } catch (e: any) {
+      if (logsSheet) {
+        logEmailSent(logsSheet, campaignId, contact, 'failed', e.message);
+      }
+      errors.push(`${email}: ${e.message}`);
+      errorCount++;
+    }
+  });
+
+  // キャンペーンステータス更新
+  updateCampaignField(campaignsSheet, campaignId, 'status', 'sent');
+  updateCampaignField(campaignsSheet, campaignId, 'total_recipients', uniqueEmails.length);
+
+  return {
+    success: true,
+    message: `Sent ${sentCount}/${uniqueEmails.length}, errors: ${errorCount}`,
+    data: { sent: sentCount, total: uniqueEmails.length, errors }
+  };
 }

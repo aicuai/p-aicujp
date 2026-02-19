@@ -26,6 +26,7 @@ export type SurveyQuestion = {
   required?: boolean
   options?: string[]
   popularOptions?: string[]  // shown as quick-select buttons before search
+  maxSelections?: number     // max selections for multi_choice (0 = unlimited)
   entryId?: number      // Google Form entry ID
   skipIf?: SkipCondition  // conditional skip (section skipIf cascades to child questions)
   autoAnswer?: boolean  // auto-skip if pre-filled value exists in answers

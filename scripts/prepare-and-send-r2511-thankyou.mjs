@@ -39,46 +39,80 @@ if (!GAS_URL) { console.error('GAS_WEBAPP_URL not set'); process.exit(1) }
 async function getWixMemberEmails() {
   const { createClient, ApiKeyStrategy } = await import('@wix/sdk')
   const { members } = await import('@wix/members')
+  const contactsPublic = await import('@wix/contacts/build/cjs/src/contacts-v4-contact.public.js')
 
   const client = createClient({
     auth: ApiKeyStrategy({ apiKey: WIX_API_KEY, siteId: WIX_SITE_ID }),
-    modules: { members },
+    modules: { members, contacts: contactsPublic },
   })
 
+  // Members APIではemailが取れないので、Contacts APIを使う
+  // NOTE: Contacts API pagination is broken with API Key auth (always returns same 50)
+  // So we get all we can from first call
   const emails = []
-  let offset = 0
-  const limit = 100
 
-  while (true) {
-    const result = await client.members.queryMembers()
-      .limit(limit)
-      .skip(offset)
-      .find()
+  console.log('[wix] Fetching contacts via Contacts API...')
+  try {
+    const result = await client.contacts.queryContacts({
+      paging: { limit: 1000 },
+    })
+    const contacts = result.contacts ?? []
+    const total = result.pagingMetadata?.total ?? contacts.length
+    console.log(`[wix] Contacts: got ${contacts.length} of ${total} total`)
 
-    const items = result.items || []
-    if (offset === 0) {
-      console.log(`[wix] totalCount = ${result.totalCount}, first batch = ${items.length}`)
-    }
-
-    for (const member of items) {
-      const email = member.loginEmail
-        || member.profile?.email
-        || member.contactDetails?.emails?.[0]
+    for (const c of contacts) {
+      const email = c.primaryInfo?.email
+        || c.info?.emails?.[0]?.email
       if (email) {
-        const name = member.profile?.nickname
-          || member.profile?.slug
+        const name = c.info?.name?.first
+          || c.primaryInfo?.name?.first
           || ''
-        emails.push({ email, name })
+        const lastName = c.info?.name?.last
+          || c.primaryInfo?.name?.last
+          || ''
+        emails.push({ email, name, lastName })
       }
     }
-
-    if (items.length < limit) break
-    offset += limit
-    if (offset >= 10000) break
+  } catch (err) {
+    console.error('[wix] Contacts API failed:', err.message)
   }
 
-  console.log(`[wix] Total member emails: ${emails.length}`)
-  return emails
+  // Also try Members API for loginEmail (some may have it)
+  if (emails.length < 50) {
+    console.log('[wix] Also trying Members API...')
+    let offset = 0
+    const limit = 100
+    while (true) {
+      const result = await client.members.queryMembers()
+        .limit(limit)
+        .skip(offset)
+        .find()
+      const items = result.items || []
+      if (offset === 0) {
+        console.log(`[wix] Members totalCount = ${result.totalCount}`)
+      }
+      for (const member of items) {
+        const email = member.loginEmail || member.loginEmailAddress
+        if (email && !emails.find(e => e.email === email)) {
+          emails.push({ email, name: member.profile?.nickname || '', lastName: '' })
+        }
+      }
+      if (items.length < limit) break
+      offset += limit
+      if (offset >= 10000) break
+    }
+  }
+
+  // Deduplicate
+  const seen = new Set()
+  const unique = emails.filter(e => {
+    if (seen.has(e.email.toLowerCase())) return false
+    seen.add(e.email.toLowerCase())
+    return true
+  })
+
+  console.log(`[wix] Total unique emails: ${unique.length}`)
+  return unique
 }
 
 // ─── GAS API helpers ────────────────────────────────

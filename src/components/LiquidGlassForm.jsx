@@ -445,7 +445,13 @@ function Dropdown({ q, onSubmit }) {
 function MultiChoice({ q, onSubmit }) {
   const [sel, setSel] = useState(new Set());
   const [otherText, setOtherText] = useState("");
-  const toggle = (o) => setSel((p) => { const n = new Set(p); n.has(o) ? n.delete(o) : n.add(o); return n; });
+  const maxSel = q.maxSelections || 0; // 0 = unlimited
+  const toggle = (o) => setSel((p) => {
+    const n = new Set(p);
+    if (n.has(o)) { n.delete(o); }
+    else if (!maxSel || n.size < maxSel) { n.add(o); }
+    return n;
+  });
 
   const isSeparator = (o) => typeof o === "string" && o.includes("─────");
   const selectableOptions = q.options.filter((o) => !isSeparator(o));
@@ -487,8 +493,9 @@ function MultiChoice({ q, onSubmit }) {
               </div>
             );
           }
+          const atMax = maxSel > 0 && sel.size >= maxSel && !sel.has(o);
           return (
-            <button key={o} onClick={() => toggle(o)} className="lgf-choice" style={choiceBtnStyle(sel.has(o))}>{shortLabel(o)}</button>
+            <button key={o} onClick={() => !atMax && toggle(o)} className="lgf-choice" style={{ ...choiceBtnStyle(sel.has(o)), opacity: atMax ? 0.35 : 1, cursor: atMax ? "default" : "pointer" }}>{shortLabel(o)}</button>
           );
         })}
       </div>
@@ -503,7 +510,12 @@ function MultiChoice({ q, onSubmit }) {
           />
         </div>
       )}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+      {maxSel > 0 && (
+        <div style={{ fontSize: 11, color: sel.size >= maxSel ? s.accent : s.textDim, marginTop: 6, textAlign: "right" }}>
+          {sel.size}/{maxSel}件選択{sel.size >= maxSel ? "（上限）" : ""}
+        </div>
+      )}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: maxSel ? 4 : 12 }}>
         <button
           onClick={doSubmit}
           disabled={q.required && sel.size === 0}
@@ -515,7 +527,7 @@ function MultiChoice({ q, onSubmit }) {
             opacity: q.required && sel.size === 0 ? 0.3 : 1,
           }}
         >
-          {sel.size > 0 ? `${sel.size}件選択して次へ` : "次へ"}
+          {sel.size > 0 ? `${sel.size}${maxSel ? `/${maxSel}` : ""}件選択して次へ` : "次へ"}
         </button>
       </div>
     </div>
@@ -527,18 +539,21 @@ function SearchableMulti({ q, onSubmit }) {
   const [customItems, setCustomItems] = useState([]);
   const [filter, setFilter] = useState("");
   const ref = useRef(null);
+  const maxSel = q.maxSelections || 0;
 
   useEffect(() => { ref.current?.focus(); }, []);
 
   const toggle = (o) => setSel((p) => {
     const n = new Set(p);
-    n.has(o) ? n.delete(o) : n.add(o);
+    if (n.has(o)) { n.delete(o); }
+    else if (!maxSel || n.size < maxSel) { n.add(o); }
     return n;
   });
 
   const addCustom = (text) => {
     const trimmed = text.trim();
     if (!trimmed || sel.has(trimmed) || q.options.includes(trimmed)) return;
+    if (maxSel && sel.size >= maxSel) return;
     setCustomItems((p) => [...p, trimmed]);
     setSel((p) => new Set([...p, trimmed]));
   };
@@ -575,16 +590,20 @@ function SearchableMulti({ q, onSubmit }) {
       {/* Popular quick-select buttons — always visible */}
       {unselectedPopular.length > 0 && !filter && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 12, color: s.textDim, marginBottom: 6 }}>よく選ばれています</div>
+          <div style={{ fontSize: 12, color: s.textDim, marginBottom: 6 }}>よく選ばれています　<span style={{ opacity: 0.7 }}>直接入力すると追加できます</span></div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {unselectedPopular.map((o) => (
-              <button key={o} onClick={() => toggle(o)} className="lgf-choice" style={{
-                ...choiceBtnStyle(false),
-                background: "rgba(0,49,216,0.06)",
-                borderColor: "rgba(0,49,216,0.25)",
-                fontWeight: 600,
-              }}>{shortLabel(o)}</button>
-            ))}
+            {unselectedPopular.map((o) => {
+              const atMax = maxSel > 0 && sel.size >= maxSel;
+              return (
+                <button key={o} onClick={() => !atMax && toggle(o)} className="lgf-choice" style={{
+                  ...choiceBtnStyle(false),
+                  background: "rgba(0,49,216,0.06)",
+                  borderColor: "rgba(0,49,216,0.25)",
+                  fontWeight: 600,
+                  opacity: atMax ? 0.35 : 1, cursor: atMax ? "default" : "pointer",
+                }}>{shortLabel(o)}</button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -629,11 +648,14 @@ function SearchableMulti({ q, onSubmit }) {
           display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8,
         }}>
           {unselectedFiltered.length > 0 ? (
-            unselectedFiltered.map((o) => (
-              <button key={o} onClick={() => { toggle(o); setFilter(""); ref.current?.focus(); }} className="lgf-choice" style={choiceBtnStyle(false)}>
-                {shortLabel(o)}
-              </button>
-            ))
+            unselectedFiltered.map((o) => {
+              const atMax = maxSel > 0 && sel.size >= maxSel;
+              return (
+                <button key={o} onClick={() => { if (!atMax) { toggle(o); setFilter(""); ref.current?.focus(); } }} className="lgf-choice" style={{ ...choiceBtnStyle(false), opacity: atMax ? 0.35 : 1, cursor: atMax ? "default" : "pointer" }}>
+                  {shortLabel(o)}
+                </button>
+              );
+            })
           ) : (
             <div style={{ fontSize: 13, color: s.textDim, padding: "8px 4px" }}>
               該当なし — Enterで「{filter}」を追加
@@ -645,7 +667,13 @@ function SearchableMulti({ q, onSubmit }) {
       {/* Hint + submit */}
       {!filter && sel.size === 0 && unselectedPopular.length === 0 && (
         <div style={{ fontSize: 12, color: s.textDim, marginBottom: 8, paddingLeft: 4 }}>
-          {q.options.length}件の候補から検索できます
+          {q.options.length}件の候補から検索できます{maxSel ? `（最大${maxSel}件）` : ""}
+        </div>
+      )}
+
+      {maxSel > 0 && sel.size > 0 && (
+        <div style={{ fontSize: 11, color: sel.size >= maxSel ? s.accent : s.textDim, marginBottom: 4, textAlign: "right" }}>
+          {sel.size}/{maxSel}件選択{sel.size >= maxSel ? "（上限）" : ""}
         </div>
       )}
 
@@ -661,7 +689,7 @@ function SearchableMulti({ q, onSubmit }) {
             opacity: q.required && sel.size === 0 ? 0.3 : 1,
           }}
         >
-          {sel.size > 0 ? `${sel.size}件選択して次へ` : "次へ"}
+          {sel.size > 0 ? `${sel.size}${maxSel ? `/${maxSel}` : ""}件選択して次へ` : "次へ"}
         </button>
       </div>
     </div>
