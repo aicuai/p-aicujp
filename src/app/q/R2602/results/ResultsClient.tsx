@@ -413,8 +413,8 @@ function CardWrapper({ title, subtitle, isSample, children }: {
         {subtitle}
       </p>
       {children}
-      {/* Watermark — vertically centered */}
-      {isSample ? (
+      {/* Sample overlay */}
+      {isSample && (
         <span style={{
           position: "absolute", top: "50%", left: "50%",
           transform: "translate(-50%, -50%) rotate(-20deg)",
@@ -424,16 +424,16 @@ function CardWrapper({ title, subtitle, isSample, children }: {
         }}>
           [Sample Data] 調査依頼は r2602@aicu.jp まで
         </span>
-      ) : (
-        <span style={{
-          position: "absolute", top: "50%", right: 12,
-          transform: "translateY(-50%)",
-          fontSize: 9, color: "rgba(0,0,0,0.2)", fontWeight: 600,
-          pointerEvents: "none", userSelect: "none",
-        }}>
-          p.aicu.jp/R2602
-        </span>
       )}
+      {/* Watermark — always visible */}
+      <span style={{
+        position: "absolute", top: "50%", right: 12,
+        transform: "translateY(-50%)",
+        fontSize: 9, color: "rgba(0,0,0,0.2)", fontWeight: 600,
+        pointerEvents: "none", userSelect: "none",
+      }}>
+        p.aicu.jp/R2602
+      </span>
     </div>
   )
 }
