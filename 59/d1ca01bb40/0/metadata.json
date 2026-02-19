@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "59d1ca01bb40",
+  "session_id": "1367b1d5-2621-426c-9a43-8b15da029084",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-19T16:41:03.554843Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".env.example",
+    "next.config.ts",
+    "src/app/api/chatwoot/hmac/route.ts",
+    "src/app/api/chatwoot/webhook/route.ts",
+    "src/lib/chatwoot.ts",
+    "src/lib/gemini.ts",
+    "src/lib/supabase.ts"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 2875,
+    "cache_creation_tokens": 360878,
+    "cache_read_tokens": 25939883,
+    "output_tokens": 13729,
+    "api_call_count": 268
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-19T16:41:02.759459Z",
+    "agent_lines": 0,
+    "human_added": 244,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 244,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-aki-git-local-app-aicujp/1367b1d5-2621-426c-9a43-8b15da029084.jsonl"
+}
