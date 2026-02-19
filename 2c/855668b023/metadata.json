@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "2c855668b023",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "gas/api.ts",
+    "scripts/prepare-and-send-r2511-thankyou.mjs",
+    "scripts/send-r2511-thankyou.mjs",
+    "src/components/LiquidGlassForm.jsx",
+    "src/data/surveys/R2602.ts",
+    "src/data/surveys/index.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2c/855668b023/0/metadata.json",
+      "transcript": "/2c/855668b023/0/full.jsonl",
+      "context": "/2c/855668b023/0/context.md",
+      "content_hash": "/2c/855668b023/0/content_hash.txt",
+      "prompt": "/2c/855668b023/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 13574,
+    "cache_creation_tokens": 1187206,
+    "cache_read_tokens": 61096062,
+    "output_tokens": 63942,
+    "api_call_count": 582
+  }
+}

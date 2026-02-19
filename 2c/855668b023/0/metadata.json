@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "2c855668b023",
+  "session_id": "0a9df89c-7edf-4220-ad9a-2f459194827c",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-19T05:24:52.291462Z",
+  "branch": "main",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "gas/api.ts",
+    "scripts/prepare-and-send-r2511-thankyou.mjs",
+    "scripts/send-r2511-thankyou.mjs",
+    "src/components/LiquidGlassForm.jsx",
+    "src/data/surveys/R2602.ts",
+    "src/data/surveys/index.ts"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "321a0b4d-4c52-4a0f-abac-85756fc7b24e",
+  "token_usage": {
+    "input_tokens": 13574,
+    "cache_creation_tokens": 1187206,
+    "cache_read_tokens": 61096062,
+    "output_tokens": 63942,
+    "api_call_count": 582
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-19T05:24:48.812443Z",
+    "agent_lines": 223,
+    "human_added": 0,
+    "human_modified": 8,
+    "human_removed": 0,
+    "total_committed": 231,
+    "agent_percentage": 96.53679653679653
+  },
+  "transcript_path": ".claude/projects/-Users-aki-git-local-p-aicujp/0a9df89c-7edf-4220-ad9a-2f459194827c.jsonl"
+}
