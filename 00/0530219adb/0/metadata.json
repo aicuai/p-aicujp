@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "000530219adb",
+  "session_id": "0a9df89c-7edf-4220-ad9a-2f459194827c",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-20T01:43:15.925209Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/prtimes-033-R2602.md"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "97158f24-31e8-4818-9e56-2492df31f66f",
+  "checkpoint_transcript_start": 3881,
+  "transcript_lines_at_start": 3881,
+  "token_usage": {
+    "input_tokens": 46,
+    "cache_creation_tokens": 165976,
+    "cache_read_tokens": 1484400,
+    "output_tokens": 1616,
+    "api_call_count": 27
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-20T01:43:12.413314Z",
+    "agent_lines": 88,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 88,
+    "agent_percentage": 100
+  },
+  "transcript_path": ".claude/projects/-Users-aki-git-local-p-aicujp/0a9df89c-7edf-4220-ad9a-2f459194827c.jsonl"
+}
