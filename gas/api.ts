@@ -133,6 +133,10 @@ function handleRequest(action: string, params: Record<string, any>, method: stri
       case 'deleteAllTriggers':
         return deleteAllTriggers();
 
+      // クォータ確認
+      case 'emailQuota':
+        return { success: true, data: { remainingDailyQuota: MailApp.getRemainingDailyQuota() } };
+
       // ヘルスチェック
       case 'health':
         return { success: true, message: 'OK', timestamp: new Date().toISOString() };
@@ -1244,11 +1248,75 @@ function sendPendingDrafts(subject: string, limit: number = 50): ApiResponse {
 }
 
 /**
+ * 毎時クォータ記録（トリガーから呼び出す）
+ */
+function hourlyQuotaCheck(): void {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const now = new Date();
+  const quota = MailApp.getRemainingDailyQuota();
+
+  let logSheet = ss.getSheetByName('QuotaLog');
+  if (!logSheet) {
+    logSheet = ss.insertSheet('QuotaLog');
+    logSheet.appendRow(['timestamp', 'quota_before', 'quota_after', 'sent', 'errors', 'note']);
+  }
+  logSheet.appendRow([
+    Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss'),
+    quota,
+    '',
+    '',
+    '',
+    'hourly check',
+  ]);
+}
+
+/**
  * 毎朝のトリガーから呼び出す関数
  */
 function dailySendDraftsTrigger(): void {
-  // R2602キャンペーンの下書きを50件送信
-  sendPendingDrafts('生成AIクリエイター調査を開催中', 50);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // クォータ記録（送信前）
+  const quotaBefore = MailApp.getRemainingDailyQuota();
+  const now = new Date();
+
+  // 残クォータの90%を送信（10%は他用途の余裕として確保）
+  const sendLimit = Math.floor(quotaBefore * 0.9);
+  if (sendLimit <= 0) {
+    // クォータ枯渇 — ログだけ残して終了
+    let logSheet = ss.getSheetByName('QuotaLog');
+    if (!logSheet) {
+      logSheet = ss.insertSheet('QuotaLog');
+      logSheet.appendRow(['timestamp', 'quota_before', 'quota_after', 'sent', 'errors', 'note']);
+    }
+    logSheet.appendRow([
+      Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss'),
+      quotaBefore, quotaBefore, 0, 0, 'quota exhausted — skipped',
+    ]);
+    return;
+  }
+
+  const result = sendPendingDrafts('生成AIクリエイター調査を開催中', sendLimit);
+
+  // クォータ記録（送信後）
+  const quotaAfter = MailApp.getRemainingDailyQuota();
+
+  // QuotaLogシートに記録
+  let logSheet = ss.getSheetByName('QuotaLog');
+  if (!logSheet) {
+    logSheet = ss.insertSheet('QuotaLog');
+    logSheet.appendRow(['timestamp', 'quota_before', 'quota_after', 'sent', 'errors', 'note']);
+  }
+  const sent = result.data?.sent ?? 0;
+  const errors = result.data?.errors ?? 0;
+  logSheet.appendRow([
+    Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss'),
+    quotaBefore,
+    quotaAfter,
+    sent,
+    errors,
+    sent === 0 && quotaBefore === 0 ? 'quota exhausted' : '',
+  ]);
 }
 
 /**
