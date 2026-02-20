@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "2282152a6a00",
+  "session_id": "0a9df89c-7edf-4220-ad9a-2f459194827c",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-20T22:27:03.856538Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "gas/api.ts",
+    "gas/dist/appsscript.json",
+    "gas/sendEmail.ts"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "b840a660-fc64-4fd3-9f41-1a7ba71c133e",
+  "checkpoint_transcript_start": 7296,
+  "transcript_lines_at_start": 7296,
+  "token_usage": {
+    "input_tokens": 48,
+    "cache_creation_tokens": 83336,
+    "cache_read_tokens": 1869551,
+    "output_tokens": 1000,
+    "api_call_count": 36
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-20T22:26:57.978148Z",
+    "agent_lines": 67,
+    "human_added": 12,
+    "human_modified": 18,
+    "human_removed": 0,
+    "total_committed": 97,
+    "agent_percentage": 69.0721649484536
+  },
+  "transcript_path": ".claude/projects/-Users-aki-git-local-p-aicujp/0a9df89c-7edf-4220-ad9a-2f459194827c.jsonl"
+}
