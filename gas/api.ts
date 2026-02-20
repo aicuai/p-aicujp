@@ -123,6 +123,16 @@ function handleRequest(action: string, params: Record<string, any>, method: stri
       case 'setSetting':
         return setSettingApi(params.key, params.value);
 
+      // トリガー管理
+      case 'setupDailyTrigger':
+        return setupDailyDraftTrigger();
+
+      case 'listTriggers':
+        return listTriggers();
+
+      case 'deleteAllTriggers':
+        return deleteAllTriggers();
+
       // ヘルスチェック
       case 'health':
         return { success: true, message: 'OK', timestamp: new Date().toISOString() };
@@ -1239,6 +1249,59 @@ function sendPendingDrafts(subject: string, limit: number = 50): ApiResponse {
 function dailySendDraftsTrigger(): void {
   // R2602キャンペーンの下書きを50件送信
   sendPendingDrafts('生成AIクリエイター調査を開催中', 50);
+}
+
+/**
+ * 毎朝9時のトリガーを設定
+ */
+function setupDailyDraftTrigger(): ApiResponse {
+  // 既存の dailySendDraftsTrigger トリガーを削除
+  const existing = ScriptApp.getProjectTriggers();
+  let deleted = 0;
+  for (const t of existing) {
+    if (t.getHandlerFunction() === 'dailySendDraftsTrigger') {
+      ScriptApp.deleteTrigger(t);
+      deleted++;
+    }
+  }
+
+  // 毎日9時（JST）のトリガーを作成
+  ScriptApp.newTrigger('dailySendDraftsTrigger')
+    .timeBased()
+    .atHour(9)
+    .everyDays(1)
+    .inTimezone('Asia/Tokyo')
+    .create();
+
+  return {
+    success: true,
+    message: `Daily trigger set: dailySendDraftsTrigger at 9:00 JST (deleted ${deleted} old triggers)`,
+  };
+}
+
+/**
+ * 現在のトリガー一覧
+ */
+function listTriggers(): ApiResponse {
+  const triggers = ScriptApp.getProjectTriggers().map(t => ({
+    id: t.getUniqueId(),
+    handler: t.getHandlerFunction(),
+    type: String(t.getEventType()),
+    source: String(t.getTriggerSource()),
+  }));
+  return { success: true, data: { count: triggers.length, triggers } };
+}
+
+/**
+ * 全トリガーを削除
+ */
+function deleteAllTriggers(): ApiResponse {
+  const triggers = ScriptApp.getProjectTriggers();
+  const count = triggers.length;
+  for (const t of triggers) {
+    ScriptApp.deleteTrigger(t);
+  }
+  return { success: true, message: `Deleted ${count} triggers` };
 }
 
 /**

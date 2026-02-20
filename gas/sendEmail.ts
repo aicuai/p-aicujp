@@ -238,12 +238,12 @@ function personalizeHtml(
   trackingEnabled: boolean
 ): string {
   // 名前差し込み
-  const hasName = ((contact.last_name || '') + (contact.first_name || '')).trim();
+  const hasName = (String(contact.last_name || '') + String(contact.first_name || '')).trim();
   let personalized = html
-    .replace(/{{first_name}}/g, contact.first_name || '')
-    .replace(/{{last_name}}/g, contact.last_name || '')
+    .replace(/{{first_name}}/g, String(contact.first_name || ''))
+    .replace(/{{last_name}}/g, String(contact.last_name || ''))
     .replace(/{{email}}/g, contact.email)
-    .replace(/{{company}}/g, contact.company || '');
+    .replace(/{{company}}/g, String(contact.company || ''));
 
   // 名前が空の場合、孤立した「さま」を除去
   if (!hasName) {
