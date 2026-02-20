@@ -3,28 +3,41 @@ import { getAdminSupabase } from "@/lib/supabase"
 import { createHash } from "crypto"
 import { notifySlackDev } from "@/lib/slack"
 import { ALL_SURVEY_IDS } from "@/data/surveys"
+import { awardPointsByEmail } from "@/lib/wix"
 
-const WIX_REWARD_WEBHOOK_URL = process.env.WIX_REWARD_WEBHOOK_URL || ""
 const MAX_ANSWERS_SIZE = 50_000 // 50KB JSON limit
 
-// Trigger Wix Automation to create account + award points
-async function triggerReward(surveyId: string, email: string, points: number) {
-  if (!WIX_REWARD_WEBHOOK_URL || !email) return
+// Award loyalty points directly via Wix SDK
+async function triggerReward(surveyId: string, email: string, points: number, responseId: string) {
+  if (!email) return
+  const db = getAdminSupabase()
+  const idempotencyKey = createHash("sha256").update(email + surveyId).digest("hex").slice(0, 16)
+
   try {
-    await fetch(WIX_REWARD_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        research_id: surveyId,
-        string_data: createHash("sha256").update(email + surveyId).digest("hex").slice(0, 8),
-        number_field: points,
-        research_name: `${surveyId}調査謝礼`,
-        dateTime_field: new Date().toISOString(),
-        email_field: email,
-      }),
-    })
+    const result = await awardPointsByEmail(
+      email,
+      points,
+      idempotencyKey,
+      `${surveyId}調査謝礼`,
+    )
+
+    if (result.success) {
+      await db.from("survey_responses").update({
+        reward_status: "confirmed",
+        reward_confirmed_at: new Date().toISOString(),
+      }).eq("id", responseId)
+      console.log(`[reward] OK: ${email.slice(0, 4)}*** / ${surveyId} / ${points}pt / contact=${result.contactId}`)
+    } else {
+      await db.from("survey_responses").update({
+        reward_status: "failed",
+      }).eq("id", responseId)
+      console.error(`[reward] FAIL: ${email.slice(0, 4)}*** / ${surveyId}: ${result.error}`)
+    }
   } catch (e) {
-    console.error("Wix reward webhook error:", e)
+    await db.from("survey_responses").update({
+      reward_status: "failed",
+    }).eq("id", responseId)
+    console.error("[reward] unexpected error:", e)
   }
 }
 
@@ -67,7 +80,7 @@ export async function POST(
   const ipHash = createHash("sha256").update(ip).digest("hex").slice(0, 16)
 
   const db = getAdminSupabase()
-  const { error } = await db.from("survey_responses").insert({
+  const { data: inserted, error } = await db.from("survey_responses").insert({
     survey_id: surveyId,
     answers,
     submitted_at: new Date().toISOString(), // Always use server time
@@ -75,16 +88,16 @@ export async function POST(
     user_agent: req.headers.get("user-agent")?.slice(0, 256) ?? null,
     email: email || null,
     reward_status: email ? "pending" : "none",
-  })
+  }).select("id").single()
 
   if (error) {
     console.error("Survey insert error:", error)
     return NextResponse.json({ error: "Failed to save" }, { status: 500 })
   }
 
-  // Trigger reward (fire-and-forget, don't block response)
-  if (email) {
-    triggerReward(surveyId, email, 10000).catch(() => {})
+  // Trigger reward via Wix SDK (fire-and-forget, don't block response)
+  if (email && inserted?.id) {
+    triggerReward(surveyId, email, 10000, inserted.id).catch(() => {})
   }
 
   // Slack dev notification (fire-and-forget, hash email for privacy)

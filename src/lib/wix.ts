@@ -280,3 +280,100 @@ export async function getLoyaltyByContactId(contactId: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (result as any).account ?? result ?? null
 }
+
+/**
+ * メールアドレスでポイントを付与する（Wix SDK 直接呼び出し）
+ * 1. Contact を検索（なければ作成）
+ * 2. Loyalty アカウントを取得（なければ作成）
+ * 3. earnPoints でポイント付与
+ * @returns { success, contactId, accountId, error? }
+ */
+export async function awardPointsByEmail(
+  email: string,
+  points: number,
+  idempotencyKey: string,
+  description: string,
+): Promise<{ success: boolean; contactId?: string; accountId?: string; error?: string }> {
+  const client = getWixClient()
+
+  // 1. Find or create contact
+  let contact = await getContactByEmail(email)
+  if (!contact) {
+    try {
+      // SDK createContact is broken with @wix/contacts import — use REST API
+      const res = await fetch("https://www.wixapis.com/contacts/v4/contacts", {
+        method: "POST",
+        headers: {
+          Authorization: process.env.WIX_API_KEY!,
+          "wix-site-id": process.env.WIX_SITE_ID!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          info: { emails: { items: [{ email }] } },
+        }),
+      })
+      const data = await res.json()
+      contact = data?.contact ?? null
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { success: false, error: `createContact failed: ${(e as any).message}` }
+    }
+  }
+
+  const contactId = contact?._id ?? contact?.id ?? contact?.contactId
+  if (!contactId) {
+    return { success: false, error: "Could not resolve contactId" }
+  }
+
+  // 2. Find or create loyalty account
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let account: any = null
+  try {
+    const result = await client.accounts.getAccountBySecondaryId({ contactId })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    account = (result as any).account ?? result
+  } catch {
+    // getAccountBySecondaryId threw — account doesn't exist
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let accountId = (account as any)?._id ?? (account as any)?.id ?? (account as any)?.accountId
+
+  if (!accountId) {
+    // Account doesn't exist or was empty — create via REST API (SDK has bug with createAccount)
+    try {
+      const res = await fetch("https://www.wixapis.com/loyalty-accounts/v1/accounts", {
+        method: "POST",
+        headers: {
+          Authorization: process.env.WIX_API_KEY!,
+          "wix-site-id": process.env.WIX_SITE_ID!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ contactId }),
+      })
+      const data = await res.json()
+      account = data?.account ?? null
+      accountId = account?.id ?? account?._id
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { success: false, contactId, error: `createAccount failed: ${(e as any).message}` }
+    }
+  }
+  if (!accountId) {
+    return { success: false, contactId, error: "Could not resolve accountId" }
+  }
+
+  // 3. Earn points
+  try {
+    await client.accounts.earnPoints(accountId, {
+      amount: points,
+      appId: "p-aicujp-survey",
+      idempotencyKey,
+      description,
+    })
+    return { success: true, contactId, accountId }
+  } catch (e) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { success: false, contactId, accountId, error: `earnPoints failed: ${(e as any).message}` }
+  }
+}
