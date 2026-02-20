@@ -339,6 +339,8 @@ function TextInput({ q, onSubmit, initialValue }) {
   };
 
   const Tag = ta ? "textarea" : "input";
+  const isEmailField = !ta && (q.placeholder || "").includes("@");
+  const showEmailNudge = isEmailField && !q.required && !v.trim();
   return (
     <div>
       <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
@@ -359,6 +361,14 @@ function TextInput({ q, onSubmit, initialValue }) {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
+      {showEmailNudge && (
+        <div style={{
+          fontSize: 12, lineHeight: 1.6, color: s.accent, marginTop: 8, paddingLeft: 4,
+          background: "rgba(65,201,180,0.08)", borderRadius: 8, padding: "8px 12px",
+        }}>
+          メールアドレスをご登録いただくことで、AICU.jp の無料会員として登録可能です。次回アンケートへの参加やメールニュースの配信停止などは自由に行えます。
+        </div>
+      )}
       <div style={{ fontSize: 12, color: s.textDim, marginTop: 6, paddingLeft: 4 }}>
         {ta ? "Ctrl+Enter\u3067送信" : "Enter\u3067送信"}{!q.required && " / スキップ可"}
       </div>

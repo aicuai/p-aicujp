@@ -103,6 +103,14 @@ export default async function AdminDashboard() {
   const rewardWithEmail = rewardWithEmailResult.count ?? 0
   const rewardRate = safeRate(rewardConfirmed, rewardWithEmail)
 
+  // Email registration & cost metrics
+  const emailRegistrationRate = safeRate(rewardWithEmail, surveyCount)
+  const POINTS_PER_RESPONSE = 10000
+  const YEN_PER_POINT = 0.1 // 10000pt = 1000円
+  const costPerEmail = rewardWithEmail > 0 ? Math.round(rewardWithEmail * POINTS_PER_RESPONSE * YEN_PER_POINT) : 0
+  const costPerEmailUnit = rewardWithEmail > 0 ? Math.round(POINTS_PER_RESPONSE * YEN_PER_POINT) : 0
+  const costPerResponse = surveyCount > 0 ? Math.round((rewardWithEmail * POINTS_PER_RESPONSE * YEN_PER_POINT) / surveyCount) : 0
+
   // Loyalty cache
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const loyaltyCache = (loyaltyCacheResult as any)?.data as { data: { totalAccounts: number; totalEarned: number; totalRedeemed: number; consumptionRate: number }; updated_at: string } | null
@@ -298,6 +306,29 @@ export default async function AdminDashboard() {
                 {rewardFailed > 0 && (
                   <div style={{ width: `${safeRate(rewardFailed, rewardWithEmail)}%`, background: "#ef4444" }} />
                 )}
+              </div>
+
+              {/* Email registration & cost metrics */}
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>メール登録率</span>
+                  <span style={{ fontWeight: 700, color: emailRegistrationRate >= 80 ? "var(--aicu-teal)" : "#f59e0b" }}>{emailRegistrationRate}%</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>1件あたりコスト</span>
+                  <span style={{ fontWeight: 600 }}>{costPerResponse.toLocaleString()}円</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>メール獲得単価</span>
+                  <span style={{ fontWeight: 600 }}>{costPerEmailUnit.toLocaleString()}円</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>総コスト（換算）</span>
+                  <span style={{ fontWeight: 600 }}>{costPerEmail.toLocaleString()}円</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 4 }}>
+                ※ 10,000pt = 1,000円換算（メール登録者のみポイント付与）
               </div>
             </div>
 
