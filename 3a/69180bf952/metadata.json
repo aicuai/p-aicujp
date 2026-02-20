@@ -1,0 +1,62 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "3a69180bf952",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".env.example",
+    ".gitignore",
+    "docs/call-for-R2602-dcaj-detail.md",
+    "docs/call-for-R2602-prtimes.md",
+    "docs/call-for-R2602.md",
+    "docs/email-R2511-thankyou-and-R2602-announce.md",
+    "docs/prtimes-033-R2602.md",
+    "gas/api.ts",
+    "next.config.ts",
+    "scripts/export-survey-data.mjs",
+    "scripts/prepare-and-send-r2511-thankyou.mjs",
+    "scripts/retry-pending-rewards.mjs",
+    "scripts/send-r2511-thankyou.mjs",
+    "src/app/api/admin/wix-emails/route.ts",
+    "src/app/api/chatwoot/webhook/route.ts",
+    "src/app/api/cron/daily-report/route.ts",
+    "src/app/api/cron/loyalty-cache/route.ts",
+    "src/app/api/surveys/[id]/route.ts",
+    "src/app/api/surveys/[id]/status/route.ts",
+    "src/app/api/surveys/dcaj/route.ts",
+    "src/app/api/surveys/reward-confirm/route.ts",
+    "src/app/dashboard/admin/page.tsx",
+    "src/app/dashboard/page.tsx",
+    "src/app/page.tsx",
+    "src/app/q/R2602/policy/page.tsx",
+    "src/app/q/R2602/results/ResultsClient.tsx",
+    "src/app/q/[id]/SurveyGate.tsx",
+    "src/components/LiquidGlassForm.jsx",
+    "src/components/WixEmailExport.tsx",
+    "src/data/surveys/R2602.ts",
+    "src/data/surveys/index.ts",
+    "src/lib/slack.ts",
+    "src/lib/survey-commentary.ts",
+    "src/lib/wix.ts",
+    "src/middleware.ts",
+    "supabase/migrations/008_create_admin_cache.sql",
+    "vercel.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/3a/69180bf952/0/metadata.json",
+      "transcript": "/3a/69180bf952/0/full.jsonl",
+      "context": "/3a/69180bf952/0/context.md",
+      "content_hash": "/3a/69180bf952/0/content_hash.txt",
+      "prompt": "/3a/69180bf952/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1540,
+    "cache_creation_tokens": 15459,
+    "cache_read_tokens": 1914651,
+    "output_tokens": 211,
+    "api_call_count": 13
+  }
+}
