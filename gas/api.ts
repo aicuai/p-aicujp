@@ -85,8 +85,22 @@ function handleRequest(action: string, params: Record<string, any>, method: stri
       case 'testSendTo':
         return testSendToAddress(params.id, params.email);
 
+      case 'sendToOne':
+        return sendToOneAddress(params.id, params.email);
+
       case 'sendToR2511':
         return sendToR2511Sheet(params.id, params.dryRun === 'true');
+
+      // Gmail送信トレイ検索
+      case 'getSentEmails':
+        return getSentEmails(params.subject, params.after, params.before);
+
+      // 下書き作成＆送信
+      case 'createDraft':
+        return createCampaignDraft(params.id, params.email);
+
+      case 'sendDrafts':
+        return sendPendingDrafts(params.subject, parseInt(params.limit || '50', 10));
 
       // 統計（管理者用）
       case 'getStats':
@@ -1064,6 +1078,229 @@ function testSendToAddress(campaignId: string, email: string): ApiResponse {
     const logsSheet = ss.getSheetByName('EmailLogs');
     if (logsSheet) {
       logEmailSent(logsSheet, campaignId, testContact, 'failed', e.message);
+    }
+    return { success: false, error: e.message || 'Send failed' };
+  }
+}
+
+/**
+ * Gmail送信トレイから送信済みメールアドレスを取得
+ * @param subject 件名の部分一致検索文字列
+ * @param after 開始日 (YYYY/MM/DD or YYYY-MM-DD)
+ * @param before 終了日 (YYYY/MM/DD or YYYY-MM-DD)
+ */
+function getSentEmails(subject: string, after?: string, before?: string): ApiResponse {
+  if (!subject) {
+    return { success: false, error: 'subject is required' };
+  }
+
+  let query = `in:sent subject:"${subject}"`;
+  if (after) query += ` after:${after.replace(/-/g, '/')}`;
+  if (before) query += ` before:${before.replace(/-/g, '/')}`;
+
+  try {
+    const threads = GmailApp.search(query, 0, 500);
+    const recipients: string[] = [];
+    const seen = new Set<string>();
+
+    for (const thread of threads) {
+      const messages = thread.getMessages();
+      for (const msg of messages) {
+        // 送信メール（from が自分）の宛先を取得
+        const to = msg.getTo();
+        // "name <email>" or "email" 形式を解析
+        const emailMatches = to.match(/[\w.+-]+@[\w.-]+/g);
+        if (emailMatches) {
+          for (const email of emailMatches) {
+            const key = email.toLowerCase();
+            if (!seen.has(key)) {
+              seen.add(key);
+              recipients.push(key);
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        query,
+        threadCount: threads.length,
+        recipientCount: recipients.length,
+        recipients,
+      }
+    };
+  } catch (e: any) {
+    return { success: false, error: e.message || 'Gmail search failed' };
+  }
+}
+
+/**
+ * キャンペーンメールの下書きを1件作成
+ * GmailApp.createDraft() は送信クォータに影響しない
+ */
+function createCampaignDraft(campaignId: string, email: string): ApiResponse {
+  if (!campaignId || !email) {
+    return { success: false, error: 'id and email are required' };
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const campaignsSheet = ss.getSheetByName('Campaigns');
+  const contactsSheet = ss.getSheetByName('Contacts');
+  if (!campaignsSheet || !contactsSheet) return { success: false, error: 'Required sheet not found' };
+
+  const campaign = getCampaignById(campaignsSheet, campaignId);
+  if (!campaign) return { success: false, error: 'Campaign not found: ' + campaignId };
+
+  const htmlContent = campaign.content_html || markdownToHtml(campaign.content_markdown);
+  const senderName = getSetting('sender_name') || 'AICU Japan';
+  const senderEmail = getSetting('sender_email');
+  const replyTo = getSetting('reply_to');
+  const baseUrl = getSetting('base_url') || 'https://p.aicu.jp';
+  const trackingEnabled = getSetting('tracking_enabled') === 'true';
+
+  // Contactsシートから実データを取得
+  const contacts = getSubscribedContactsList(contactsSheet);
+  const contact = contacts.find(c => c.email.toLowerCase() === email.toLowerCase());
+  const sendContact: ContactInfo = contact || {
+    id: 'adhoc-' + email,
+    email: email,
+    first_name: '',
+    last_name: '',
+    company: '',
+    subscription_status: 'subscribed',
+    subscription_token: '',
+    rowIndex: -1,
+  };
+
+  const personalizedHtml = personalizeHtml(
+    htmlContent, sendContact, campaignId, baseUrl, trackingEnabled
+  );
+
+  try {
+    const options: any = {
+      htmlBody: personalizedHtml,
+      name: senderName,
+    };
+    if (replyTo) options.replyTo = replyTo;
+    if (senderEmail) options.from = senderEmail;
+
+    GmailApp.createDraft(email, campaign.subject, '', options);
+    return { success: true, message: `Draft created for ${email}` };
+  } catch (e: any) {
+    return { success: false, error: e.message || 'Draft creation failed' };
+  }
+}
+
+/**
+ * 下書きフォルダから指定件名のメールをlimit件送信
+ * 毎朝のトリガーから呼び出す想定
+ */
+function sendPendingDrafts(subject: string, limit: number = 50): ApiResponse {
+  if (!subject) {
+    return { success: false, error: 'subject is required' };
+  }
+
+  try {
+    const drafts = GmailApp.getDrafts();
+    let sent = 0;
+    let errors = 0;
+    const errorList: string[] = [];
+
+    for (const draft of drafts) {
+      if (sent + errors >= limit) break;
+
+      const msg = draft.getMessage();
+      if (!msg.getSubject().includes(subject)) continue;
+
+      try {
+        draft.send();
+        sent++;
+      } catch (e: any) {
+        errors++;
+        errorList.push(`${msg.getTo()}: ${e.message}`);
+      }
+    }
+
+    return {
+      success: true,
+      data: { sent, errors, errorList },
+      message: `Sent ${sent} drafts, ${errors} errors`,
+    };
+  } catch (e: any) {
+    return { success: false, error: e.message || 'sendDrafts failed' };
+  }
+}
+
+/**
+ * 毎朝のトリガーから呼び出す関数
+ */
+function dailySendDraftsTrigger(): void {
+  // R2602キャンペーンの下書きを50件送信
+  sendPendingDrafts('生成AIクリエイター調査を開催中', 50);
+}
+
+/**
+ * 1件だけ送信（Node側からのバッチ制御用）
+ * Contactsシートから実データ（名前・token）を引き、トラッキング有効で送信
+ */
+function sendToOneAddress(campaignId: string, email: string): ApiResponse {
+  if (!campaignId || !email) {
+    return { success: false, error: 'id and email are required' };
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const campaignsSheet = ss.getSheetByName('Campaigns');
+  const contactsSheet = ss.getSheetByName('Contacts');
+  if (!campaignsSheet || !contactsSheet) return { success: false, error: 'Required sheet not found' };
+
+  const campaign = getCampaignById(campaignsSheet, campaignId);
+  if (!campaign) return { success: false, error: 'Campaign not found: ' + campaignId };
+
+  const htmlContent = campaign.content_html || markdownToHtml(campaign.content_markdown);
+  const senderName = getSetting('sender_name') || 'AICU Japan';
+  const senderEmail = getSetting('sender_email');
+  const replyTo = getSetting('reply_to');
+  const baseUrl = getSetting('base_url') || 'https://p.aicu.jp';
+  const trackingEnabled = getSetting('tracking_enabled') === 'true';
+
+  // Contactsシートから実データを取得
+  const contacts = getSubscribedContactsList(contactsSheet);
+  const contact = contacts.find(c => c.email.toLowerCase() === email.toLowerCase());
+
+  // コンタクトが見つからない場合は仮データで送信
+  const sendContact: ContactInfo = contact || {
+    id: 'adhoc-' + email,
+    email: email,
+    first_name: '',
+    last_name: '',
+    company: '',
+    subscription_status: 'subscribed',
+    subscription_token: '',
+    rowIndex: -1,
+  };
+
+  const personalizedHtml = personalizeHtml(
+    htmlContent, sendContact, campaignId, baseUrl, trackingEnabled
+  );
+
+  try {
+    sendViaGmail(email, campaign.subject, personalizedHtml, senderName, replyTo, senderEmail);
+
+    const logsSheet = ss.getSheetByName('EmailLogs');
+    if (logsSheet) {
+      logEmailSent(logsSheet, campaignId, sendContact, 'sent');
+    }
+    if (contact) {
+      updateContactEmailStats(contactsSheet, email);
+    }
+
+    return { success: true, message: `Sent to ${email}` };
+  } catch (e: any) {
+    const logsSheet = ss.getSheetByName('EmailLogs');
+    if (logsSheet) {
+      logEmailSent(logsSheet, campaignId, sendContact, 'failed', e.message);
     }
     return { success: false, error: e.message || 'Send failed' };
   }
