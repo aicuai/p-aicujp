@@ -42,6 +42,32 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
   const [participation, setParticipation] = useState<Participation | null>(null)
   const [loadingStatus, setLoadingStatus] = useState(false)
 
+  // Send gate beacon (LP view tracking)
+  const beaconSent = useRef(false)
+  useEffect(() => {
+    if (beaconSent.current) return
+    beaconSent.current = true
+    try {
+      let sid = localStorage.getItem(`lgf_sid_${config.sourceUrl || surveyId}`)
+      if (!sid) {
+        sid = crypto.randomUUID()
+        localStorage.setItem(`lgf_sid_${config.sourceUrl || surveyId}`, sid)
+      }
+      const body = JSON.stringify({
+        surveyId: config.sourceUrl || surveyId,
+        sessionId: sid,
+        step: -1, // -1 = gate view (before survey)
+        answeredCount: 0,
+        totalQuestions: 0,
+      })
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon("/api/surveys/beacon", new Blob([body], { type: "application/json" }))
+      } else {
+        fetch("/api/surveys/beacon", { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {})
+      }
+    } catch { /* ignore */ }
+  }, [surveyId, config.sourceUrl])
+
   // Check if already consented
   useEffect(() => {
     try {
@@ -88,6 +114,24 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "survey_consent", { survey_id: surveyId })
     }
+    // Beacon: gate passed (step=0 means consent given, ready for survey)
+    try {
+      const sid = localStorage.getItem(`lgf_sid_${config.sourceUrl || surveyId}`)
+      if (sid) {
+        const body = JSON.stringify({
+          surveyId: config.sourceUrl || surveyId,
+          sessionId: sid,
+          step: 0,
+          answeredCount: 0,
+          totalQuestions: 0,
+        })
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon("/api/surveys/beacon", new Blob([body], { type: "application/json" }))
+        } else {
+          fetch("/api/surveys/beacon", { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {})
+        }
+      }
+    } catch { /* ignore */ }
     setPhase("survey")
   }
 

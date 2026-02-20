@@ -732,6 +732,32 @@ function clearProgress(surveyId) {
   try { localStorage.removeItem(`lgf_${surveyId}`); } catch { /* ignore */ }
 }
 
+// ─── Progress beacon (server-side funnel tracking) ───
+function getSessionId(surveyId) {
+  const key = `lgf_sid_${surveyId}`;
+  try {
+    let sid = localStorage.getItem(key);
+    if (!sid) {
+      sid = crypto.randomUUID();
+      localStorage.setItem(key, sid);
+    }
+    return sid;
+  } catch { return null; }
+}
+
+function sendBeacon(surveyId, step, answeredCount, totalQuestions) {
+  const sessionId = getSessionId(surveyId);
+  if (!sessionId) return;
+  try {
+    const body = JSON.stringify({ surveyId, sessionId, step, answeredCount, totalQuestions });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon("/api/surveys/beacon", new Blob([body], { type: "application/json" }));
+    } else {
+      fetch("/api/surveys/beacon", { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
+    }
+  } catch { /* ignore */ }
+}
+
 // ─── Main component ───
 export default function LiquidGlassForm({ formConfig, onComplete = null, initialEmail = "", initialBirthYear = "", surveyLabel = "" }) {
   const surveyId = formConfig.sourceUrl || formConfig.title;
@@ -886,6 +912,7 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
     let next = step + 1;
 
     saveProgress(surveyId, next, newAns);
+    sendBeacon(surveyId, step, Object.keys(newAns).length, totalQ);
 
     if (q.id !== "entry_1127213393" && answer) {
       const currentAnswered = Object.keys(newAns).length;

@@ -259,13 +259,21 @@ function personalizeHtml(
         if (url.includes('mailnews') || url.includes('unsubscribe')) {
           return match;
         }
-        const trackingUrl = `${baseUrl}/link?` +
-          `email=${encodeURIComponent(contact.email)}` +
-          `&campaign_id=${encodeURIComponent(campaignId)}` +
+        const trackingUrl = `${baseUrl}/api/mail/click?` +
+          `e=${encodeURIComponent(contact.email)}` +
+          `&c=${encodeURIComponent(campaignId)}` +
           `&url=${encodeURIComponent(url)}`;
         return `<a href="${trackingUrl}"${rest}>`;
       }
     );
+  }
+
+  // 開封トラッキングピクセル
+  if (trackingEnabled) {
+    const openPixelUrl = `${baseUrl}/api/mail/open?` +
+      `e=${encodeURIComponent(contact.email)}` +
+      `&c=${encodeURIComponent(campaignId)}`;
+    personalized += `<img src="${openPixelUrl}" width="1" height="1" alt="" style="display:none" />`;
   }
 
   // 配信停止リンク追加

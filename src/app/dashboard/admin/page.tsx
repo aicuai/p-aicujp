@@ -30,12 +30,13 @@ export default async function AdminDashboard() {
     surveyCountResult,
     surveyLatestResult,
     surveyAllTimestampsResult,
+    loyaltyCacheResult,
     rewardConfirmedResult,
     rewardPendingResult,
     rewardFailedResult,
     rewardNoneResult,
     rewardWithEmailResult,
-    loyaltyCacheResult,
+    funnelResult,
   ] = await Promise.all([
     admin.from("unified_users").select("id", { count: "exact", head: true }),
     admin.from("unified_users").select("id", { count: "exact", head: true }).not("wix_contact_id", "is", null),
@@ -58,6 +59,8 @@ export default async function AdminDashboard() {
     admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).eq("reward_status", "failed"),
     admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).eq("reward_status", "none"),
     admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).not("email", "is", null),
+    // Funnel/progress beacons
+    admin.from("survey_kv").select("value").eq("survey_id", "R2602").eq("key", "progress"),
   ])
 
   const totalUsers = unifiedResult.count ?? 0
@@ -114,6 +117,27 @@ export default async function AdminDashboard() {
   // Loyalty cache
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const loyaltyCache = (loyaltyCacheResult as any)?.data as { data: { totalAccounts: number; totalEarned: number; totalRedeemed: number; consumptionRate: number }; updated_at: string } | null
+
+  // Build funnel data from progress beacons
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const funnelRows = (funnelResult?.data ?? []) as { value: { step: number; answeredCount: number; totalQuestions: number } }[]
+  // step=-1: LP/gate view, step=0: gate passed, step=1+: survey questions
+  const funnelSteps = [
+    { label: "LP到達", minStep: -1 },
+    { label: "ゲート通過", minStep: 0 },
+    { label: "基本情報", minStep: 2 },
+    { label: "AI活動", minStep: 6 },
+    { label: "学習・環境", minStep: 12 },
+    { label: "効果", minStep: 17 },
+    { label: "態度・DCAJ", minStep: 19 },
+    { label: "証明・権利", minStep: 29 },
+    { label: "VoC・メール", minStep: 35 },
+  ]
+  const funnelTotal = funnelRows.length
+  const funnelBySection = funnelSteps.map((sec) => {
+    const reached = funnelRows.filter(r => r.value.step >= sec.minStep).length
+    return { ...sec, reached }
+  })
 
   // Build daily counts for progress chart
   const surveyTimestamps = (surveyAllTimestampsResult.data ?? []) as { submitted_at: string }[]
@@ -242,8 +266,9 @@ export default async function AdminDashboard() {
                     </div>
                   )
                 })}
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4, borderTop: "1px solid var(--border)", paddingTop: 8 }}>
-                  ※ Wix API制限により最新50件のみ表示
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4, borderTop: "1px solid var(--border)", paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                  <span>会員 {wixTotalMembers}人 / 連絡先 {wixTotalContacts}人</span>
+                  <span>取得: {new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
               </div>
             </div>
@@ -263,6 +288,42 @@ export default async function AdminDashboard() {
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>回答数推移（累計）</div>
                 <SurveyProgressChart dailyCounts={dailyCounts} goals={[100, 200, 300]} />
+              </div>
+            )}
+
+            {/* Funnel / Drop-off Analysis */}
+            {funnelTotal > 0 && (
+              <div style={{ marginBottom: 16, padding: 12, background: "rgba(0,0,0,0.02)", borderRadius: "var(--radius-sm)" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>
+                  離脱ファネル <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-tertiary)" }}>（{funnelTotal}セッション）</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {funnelBySection.map((sec, i) => {
+                    const pct = funnelTotal > 0 ? Math.round((sec.reached / funnelTotal) * 100) : 0
+                    const prevReached = i > 0 ? funnelBySection[i - 1].reached : funnelTotal
+                    const dropPct = prevReached > 0 ? Math.round(((prevReached - sec.reached) / prevReached) * 100) : 0
+                    return (
+                      <div key={sec.label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                        <span style={{ width: 72, color: "var(--text-secondary)", flexShrink: 0, textAlign: "right" }}>{sec.label}</span>
+                        <div style={{ flex: 1, height: 14, background: "var(--border)", borderRadius: 3, overflow: "hidden", position: "relative" }}>
+                          <div style={{
+                            width: `${pct}%`,
+                            height: "100%",
+                            background: dropPct > 30 ? "#ef4444" : dropPct > 15 ? "#f59e0b" : "var(--aicu-teal)",
+                            borderRadius: 3,
+                            transition: "width 0.3s",
+                          }} />
+                        </div>
+                        <span style={{ width: 70, fontSize: 11, color: dropPct > 30 ? "#ef4444" : "var(--text-tertiary)", flexShrink: 0 }}>
+                          {sec.reached} ({pct}%){dropPct > 0 && i > 0 ? ` -${dropPct}%` : ""}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 6 }}>
+                  ※ デプロイ後のデータのみ。赤=30%以上離脱 / 黄=15%以上離脱
+                </div>
               </div>
             )}
 
