@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "81c7b8b2d605",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "gas/api.ts",
+    "gas/dist/appsscript.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/81/c7b8b2d605/0/metadata.json",
+      "transcript": "/81/c7b8b2d605/0/full.jsonl",
+      "context": "/81/c7b8b2d605/0/context.md",
+      "content_hash": "/81/c7b8b2d605/0/content_hash.txt",
+      "prompt": "/81/c7b8b2d605/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 36,
+    "cache_creation_tokens": 11675,
+    "cache_read_tokens": 1910794,
+    "output_tokens": 556,
+    "api_call_count": 29
+  }
+}
