@@ -1229,6 +1229,7 @@ function sendPendingDrafts(subject: string, limit: number = 50): ApiResponse {
       if (!msg.getSubject().includes(subject)) continue;
 
       try {
+        if (sent > 0) Utilities.sleep(1000); // レートリミット対策: 1秒間隔
         draft.send();
         sent++;
       } catch (e: any) {
