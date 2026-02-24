@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "dde84c544c39",
+  "session_id": "a431b407-d0f8-43c9-92aa-74d4335f7dbc",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-24T01:30:40.48499Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/app/api/admin/retry-rewards/route.ts",
+    "src/app/api/surveys/[id]/route.ts",
+    "src/app/dashboard/admin/page.tsx",
+    "src/components/RetryRewardsButton.tsx",
+    "src/components/charts/SurveyComparisonChart.tsx",
+    "supabase/migrations/010_add_reward_error.sql"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "9d2c6648-a34c-4ee8-aa92-4aa3f8ae8152",
+  "token_usage": {
+    "input_tokens": 710,
+    "cache_creation_tokens": 232337,
+    "cache_read_tokens": 8483472,
+    "output_tokens": 11174,
+    "api_call_count": 87
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-24T01:30:39.720265Z",
+    "agent_lines": 438,
+    "human_added": 136,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 574,
+    "agent_percentage": 76.30662020905923
+  },
+  "transcript_path": ".claude/projects/-Users-aki-git-local-p-aicujp/a431b407-d0f8-43c9-92aa-74d4335f7dbc.jsonl"
+}
