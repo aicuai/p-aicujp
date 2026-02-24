@@ -1,0 +1,658 @@
+Implement the following plan:
+
+# AiCuty 常設ページ + イベントシステム (`/e/`)
+
+## Context
+
+Bottom nav の「Create」は終了済みイベント (Voice Audition) を指している。AiCuty を常設コンテンツとして独立ページ化し、イベントは `/e/` 配下にショートコード管理で SEO 対応する。Wix のイベント一覧から段階的に移植していく基盤を作る。
+
+**状態管理**: イベントは `preview` → `live` → `archive` と遷移。live は既存の静的 HTML (`public/e/Fes26Halu/`)、archive は React 内で描画。
+
+---
+
+## ルーティング設計
+
+| Path | Handler | 説明 |
+|:---|:---|:---|
+| `/aicuty` | React (Layout) | AiCuty 常設ページ (bottom nav) |
+| `/e` | React (Layout) | イベント一覧 |
+| `/e/Fes26Halu` | 静的 HTML (CF Pages `_redirects`) | ライブイベント |
+| `/e/VoiceAudition` | React → EventArchive → CreateVoice | アーカイブ |
+| `/e/<slug>` | React → EventArchive | 汎用アーカイブ |
+| `/create/voice` | React → CreateVoice | 後方互換 (維持) |
+
+**SW / _redirects の共存**: 静的 HTML イベントは `_redirects` で先にマッチ。残りの `/e/*` は SPA fallback。`navigateFallbackDenylist` は静的ページのみに限定。
+
+---
+
+## 新規ファイル
+
+### 1. `src/data/characters.js` — キャラクターデータ (共有)
+
+CreateVoice.jsx から characters 配列を抽出。AiCuty ページと VoiceAudition アーカイブ両方で import。
+
+### 2. `src/data/events.js` — イベントマスターデータ
+
+```js
+export const events = [
+  {
+    shortcode: 'Fes26Halu',
+    title: 'AICU はるフェス 2026',
+    emoji: '🌸',
+    status: 'live',           // 'preview' | 'live' | 'archive'
+    dateStart: '2026-03-06',
+    dateEnd: '2026-03-08',
+    venue: '新宿 Crypto Lounge GOX',
+    description: 'AI×クリエイティブの3日間フェスティバル',
+    image: '/e/Fes26Halu/img/og.png',
+    tags: ['festival', 'in-person'],
+    staticPath: '/e/Fes26Halu/',  // live のみ
+  },
+  {
+    shortcode: 'VoiceAudition',
+    title: 'AiCuty Voice Audition',
+    emoji: '🎤',
+    status: 'archive',
+    dateStart: '2026-01-01',
+    dateEnd: '2026-02-15',
+    venue: 'Online',
+    description: 'Qwen3-TTS で AiCuty のボイスを生成',
+    image: '/CoverArtWithText.webp',
+    tags: ['online', 'voice', 'aicuty'],
+  },
+];
+```
+
+ヘルパー: `getEventByShortcode(slug)`, `getEventsByStatus(status)`, `getSortedEvents()`
+
+### 3. `src/pages/AiCuty.jsx` — 常設ページ
+
+構成:
+1. ヘッダー: `← AICU` + `AiCuty`
+2. ヒーロー: グループ画像 + キャッチコピー
+3. メンバー紹介: characters.js から 5人のカード (カラー、担当、性格)
+4. 関連イベント: events.js から AiCuty 関連を表示 (status バッジ付き)
+5. ガイドライン: 著作物利用ガイドラインへのリンク
+6. JSON-LD: schema.org/CreativeWork
+
+### 4. `src/pages/Events.jsx` — イベント一覧 (`/e`)
+
+構成:
+1. ヘッダー: `← AICU` + `Events`
+2. ライブイベント (大きいカード、`<a href>` で静的ページに遷移)
+3. プレビュー (Coming soon バッジ)
+4. アーカイブ (カードリスト、`<Link to={'/e/' + shortcode}>`)
+
+**重要**: live イベントは `<a href>` (フルページ遷移) を使用。React Router の `<Link>` では静的 HTML に到達できない。
+
+### 5. `src/pages/EventArchive.jsx` — アーカイブラッパー (`/e/:slug`)
+
+- `useParams()` で slug 取得 → `getEventByShortcode()` で検索
+- 見つからない → `/e/` にリダイレクト
+- `live` → `window.location.href` で静的ページに飛ばす
+- `VoiceAudition` → `<CreateVoice archived />` を描画
+- その他 → `<GenericArchive event={event} />` (汎用テンプレート)
+
+GenericArchive: タイトル、日程、会場、説明、画像、「終了しました」バナー、`/e/` への戻りリンク
+
+---
+
+## 既存ファイル変更
+
+### 6. `src/pages/CreateVoice.jsx`
+
+- characters 配列を `import { characters } from '../data/characters'` に変更
+- `archived` prop 追加: true なら「このイベントは終了しました」バナー表示
+- ローカルの characters 定数は削除
+
+### 7. `src/App.jsx` — ルート追加
+
+```jsx
+import AiCuty from './pages/AiCuty';
+import Events from './pages/Events';
+import EventArchive from './pages/EventArchive';
+
+<Route path="/aicuty" element={<AiCuty />} />
+<Route path="/e" element={<Events />} />
+<Route path="/e/:slug" element={<EventArchive />} />
+// /create/voice は維持 (後方互換)
+```
+
+### 8. `src/components/Layout.jsx` — Bottom nav 更新
+
+```js
+// Before:
+{ path: '/create/voice', label: 'Create', icon: CreateIcon }
+// After:
+{ path: '/aicuty', label: 'AiCuty', icon: AiCutyIcon }
+```
+
+CreateIcon (星) をそのまま使うか、AiCuty 用アイコン (例: ハート or 星) を新設。
+
+### 9. `src/pages/Service.jsx` — イベントリンク更新
+
+serviceLinks 内の `{ icon: '📅', label: 'イベント', url: 'https://www.aicu.blog/event-list' }` を `/e/` に変更。`<a>` → `<Link>` のため `internal: true` フラグを追加し、レンダリングを条件分岐。
+
+### 10. `vite.config.js`
+
+- sitemap: `/aicuty`, `/e` を追加
+- `navigateFallbackDenylist`: `/^\/e\//` → `/^\/e\/Fes26Halu/` (静的ページのみ限定)
+- `staticEventsPlugin()`: 静的 HTML が存在する場合のみ bypass (変更不要、現状のロジックで OK)
+
+### 11. `public/_redirects`
+
+```
+/e/Fes26Halu    /e/Fes26Halu/index.html  200
+/e/Fes26Halu/   /e/Fes26Halu/index.html  200
+/e/*            /index.html              200
+/*              /index.html              200
+```
+
+`/e/*` ルールを追加 (静的ページより後、SPA fallback より前)。
+
+---
+
+## イベント状態遷移の運用
+
+イベントが `live` → `archive` に変わるとき:
+
+1. `events.js` の `status` を `'archive'` に変更
+2. `_redirects` から静的ページルールを削除
+3. `vite.config.js` の denylist から該当パスを削除
+4. (任意) `public/e/<shortcode>/` を削除 or 保持
+
+逆に新イベントを `live` にするとき:
+
+1. `public/e/<Shortcode>/index.html` を作成
+2. `_redirects` に静的ルールを追加
+3. `vite.config.js` の denylist にパスを追加
+4. `events.js` に `status: 'live'` で追加
+
+---
+
+## 実装順序
+
+1. `src/data/characters.js` — データ抽出
+2. `src/data/events.js` — イベントデータ定義
+3. `src/pages/AiCuty.jsx` — 常設ページ新規作成
+4. `src/pages/Events.jsx` — イベント一覧新規作成
+5. `src/pages/EventArchive.jsx` — アーカイブラッパー新規作成
+6. `src/pages/CreateVoice.jsx` — characters import 変更 + archived prop
+7. `src/App.jsx` — ルート追加
+8. `src/components/Layout.jsx` — Bottom nav 変更
+9. `src/pages/Service.jsx` — イベントリンク変更
+10. `vite.config.js` — sitemap + denylist 更新
+11. `public/_redirects` — `/e/*` ルール追加
+
+---
+
+## 検証
+
+1. `npm run dev` → bottom nav「AiCuty」→ `/aicuty` にキャラ5人表示
+2. `/e` → イベント一覧、Fes26Halu は live バッジ、VoiceAudition は archive バッジ
+3. `/e/Fes26Halu` → 静的 HTML がそのまま表示 (React ではない)
+4. `/e/VoiceAudition` → CreateVoice が「終了」バナー付きで表示
+5. `/create/voice` → 従来通り表示 (後方互換)
+6. Service ページの「イベント」→ `/e/` に遷移
+7. `npm run build` → エラーなし、`_redirects` が正しくコピーされている
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/aki/.REDACTED.jsonl
+
+---
+
+日本語で
+
+---
+
+dev サーバーで確認して
+
+---
+
+<task-notification>
+<task-id>b20f8d8</task-id>
+<output-file>/private/tmp/claude-502/-Users-aki-git-local-app-aicujp/tasks/b20f8d8.output</output-file>
+<status>completed</status>
+<summary>Background command "Start dev server" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-502/-Users-aki-git-local-app-aicujp/tasks/b20f8d8.output
+
+---
+
+e/の インデックスはバナー画像と 5W1H 的な情報が並んで欲しいな。コンパクトな整理でいいので。
+
+メインコンテンツにスキップ
+AICU-JapanTransp.png
+新生AICU開発中
+コミュニティ
+
+定期購読
+ComfyUI
+
+Blog
+ストア
+講習/勉強会/ご相談
+動画
+マガジン
+イベント
+認定検定
+求人
+AiCuty
+AICU.jpについて
+
+[More]
+
+あなたの声が、AIクリエイターの未来を形づくる! 生成AI「つくる人」調査 R2602 実施中
+41
+
+AICU Japan
+JA
+Events
+映画『マチルダ・悪魔の遺伝子』 #AIマチルダ 特別鑑賞会 
+会員特典
+映画『マチルダ・悪魔の遺伝子』 #AIマチルダ 特別鑑賞会
+12月22日(月)
+池袋シネマ・ロサ 1F集合
+特別鑑賞会 主催:AIFJ/協力:AICU Japan/映画『マチルダ・悪魔の遺伝子』/生成AI時代のクリエイター・遠藤久美子監督がおくる 70分の劇場向け長編作品/集合:2025年12月22日(月)17:30 劇場前/上映開始 18:00〜
+会場：池袋シネマ・ロサ 東京都豊島区西池袋1-37-12 ロサ会館  作品詳細 https://j.aicu.ai/251209 このページへのリンク https://j.aicu.ai/AIFJ251222
+詳細
+AICU Fes25s ActDay
+AICU Fes25s ActDay
+8月24日(日)
+東京科学大学INDEST(JR田町駅前)
+リアルタイムAIバトルステージ VAIBES@AICU Japan開幕戦 現地視聴
+オンライン視聴・参加登録フォームへのリンクはこちら！https://j.aicu.ai/VAIBES250824
+詳細
+AICU Fes25s ArtDay
+AICU Fes25s ArtDay
+8月23日(土)
+東京科学大学INDEST(JR田町駅前)
+13:00- 看護師からクリエイターへ！ヒーリングアートとAI(まいまい)
+15:00- [SOZO]AIアニメビジネスの現状とこれから
+17:00- Meetup Comfy Japan
+当日枠は守衛所でのチェックインが必要です
+詳細
+#AICU Creators Talk 7 「画像・動画生成AI ComfyUI マスターガイド」完成記念パーティ
+会員特典
+#AICU Creators Talk 7 「画像・動画生成AI ComfyUI マスターガイド」完成記念パーティ
+4月25日(金)
+港区
+2025年5月9日発売開始予定のAICU新刊「画像・動画生成AI ComfyUI マスターガイド」の開発、執筆、出版に関わった方々を集めて慰労会と、Coloso-AICU履修認定式(2024)を開催します。
+https://j.aicu.ai/comfysb
+詳細
+
+AI とチャットする
+
+AICU.jp のAIカスタマーサポート「Will」です。なんでも聞いてください。
+
+
+最新情報はメールニュースで！
+
+mail address
+
+Register
+AICU Japan
+108-0023 東京都港区芝浦3-3-6 東京科学大学INDEST
+
+icons8-リンク-100
+X 
+利用規約
+特定商品取引法
+
+---
+
+<task-notification>
+<task-id>b873869</task-id>
+<output-file>/private/tmp/claude-502/-Users-aki-git-local-app-aicujp/tasks/b873869.output</output-file>
+<status>completed</status>
+<summary>Background command "Start dev server" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-502/-Users-aki-git-local-app-aicujp/tasks/b873869.output
+
+---
+
+みてます！概要テキストが「詳細→」の前に欲しい、右側にカバーアートを表示
+
+AICU Creators Talks = ACT7
+https://static.wixstatic.com/media/938eaa_49a0cd0c0a694f3f8ac2e12d3f0b22a0~mv2.png/v1/fill/w_1200,h_675,al_c,q_90,enc_auto/938eaa_49a0cd0c0a694f3f8ac2e12d3f0b22a0~mv2.png
+
+AICU Fes25s ArtDay (Fes250823)
+https://static.wixstatic.com/media/938eaa_3bdd3a1d02eb4b92affcb7282654db4e~mv2.png/v1/fill/w_1771,h_996,al_c,q_90,usm_0.66_1.00_0.01,enc_auto/938eaa_3bdd3a1d02eb4b92affcb7282654db4e~mv2.png
+
+AICU Fes25s ActDay (Fes250824)
+https://static.wixstatic.com/media/938eaa_4eb49bb3b9c54697b0a511d4b8b3ee69~mv2.png/v1/fill/w_1771,h_996,al_c,q_90,usm_0.66_1.00_0.01,enc_auto/938eaa_4eb49bb3b9c54697b0a511d4b8b3ee69~mv2.png
+
+
+AIMatilda251222 にしておいて（もっとイベントあるかもなので)
+https://static.wixstatic.com/media/938eaa_22b789d943df4e219d5c186044a8de39~mv2.png/v1/fill/w_1280,h_670,al_c,q_90,enc_auto/938eaa_22b789d943df4e219d5c186044a8de39~mv2.png
+
+各ショートコードの更新とディレクトリにカバーアート画像を保存しておいて本番化
+
+---
+
+<task-notification>
+<task-id>ba7bd52</task-id>
+<output-file>/private/tmp/claude-502/-Users-aki-git-local-app-aicujp/tasks/ba7bd52.output</output-file>
+<status>completed</status>
+<summary>Background command "Start dev server" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-502/-Users-aki-git-local-app-aicujp/tasks/ba7bd52.output
+
+---
+
+はい、まあまあいい感じです。
+まずはインデックスの改善ですが、
+
+・タイトルを大きく
+・バナー画像は16:9(今は縦長になってる)
+・[Archive]は見ればわかるので消そう(そのうちどこかに入れる)
+・ACT7です CT7ではない
+
+共通
+Powered by AICU Inc.
+↓
+Powered by AICU Japan 
+リンクは https://aicu.jp [X@AICUai](https://x.com/aicuai) [AboutUs]としておいてください 
+
+
+会社情報についてのページも作ってください
+https://aicu.jp/corp
+参考
+https://corp.aicu.ai/ja/products
+AICU Japan株式会社
+〒108-0023
+東京都港区芝浦三丁目３番６号 東京科学大学キャンパス・イノベーションセンターINDEST
+メールでのお問い合わせ  japan[at]aicu.ai 　　適格事業者番号 T5010401186408
+
+noteカバーアート2024Q4 (7)☆事業拡大に伴い、2024年11月11日に日本法人登記を申請いたしました。詳しくはコーポレートブログにてお伝えしております。このページは新法人「AICU Japan」の立ち上げ業務を支援しております AICU Inc.(米国法人)日本法人設立準備室が担当しております。利用規約やプライバリーポリシーなどの日本法への遵法に関しましても整備を進めております。
+
+https://corp.aicu.ai/ja/tag/aicu-japan
+
+東京科学大学認定ベンチャー企業 第7号
+
+
+
+コーポレートサイトはいずれ corp.aicu.jp にするかもですが、まずは普通に必要な情報をまとめていこう
+
+---
+
+<task-notification>
+<task-id>b9852b7</task-id>
+<output-file>/private/tmp/claude-502/-Users-aki-git-local-app-aicujp/tasks/b9852b7.output</output-file>
+<status>completed</status>
+<summary>Background command "Start dev server" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-502/-Users-aki-git-local-app-aicujp/tasks/b9852b7.output
+
+---
+
+メール japan[at]aicu.ai → 記載しない
+
+以下は参考に
+AICU Japan 株式会社 AICU.jp
+
+AICU Japan株式会社は、生成AI時代に「つくる人をつくる」をビジョンにする生成AI分野で活動する米国発のクリエイターユニオン「AICU」の日本法人。東京科学大学発の認定ベンチャー企業として2024年11月11日に設立。東京科学大学の田町キャンパス内「INDEST」に拠点を置き、日本のクリエイター支援やオープンソース活用、クリエイティブAIメディア運営、AIDX、Cert事業
+著作権解決技術の開発、AIDX研究開発を推進する東京科学大学公認のベンチャー企業（第7号）。代表・白井暁彦（デジタルハリウッド大学大学院客員教授）。
+
+Q4-3-1 主力製品・サービス概要（200字以内）
+AICUは、生成AIによる画像生成技術を基盤に、入力言語や参照画像に基づく画像生成システムおよびその応用サービスを提供する大学発ベンチャーである。生成AI作品の制作プロセス、利用モデル、依拠関係を記録・証明する認証基盤（certサービス）や、教育・検定・メディア事業と連動し、研究成果の社会実装と責任あるAI活用を支援している。
+
+Q4-4 主力製品・サービスの市場性（200字以内）
+生成AIの急速な普及に伴い、画像生成技術の正当性、知的財産、説明責任を担保する仕組みへの需要は国内外で急拡大している。特に教育、研究、メディア、エンターテインメント分野では、生成プロセスの透明化と法制度への適合が市場参入の前提となりつつある。本技術は国際的にも適用可能であり、責任あるAI基盤としてグローバル展開が見込まれる。
+（約170字）
+Q4-5 主力製品・サービスの競合優位性（200字以内）
+入力言語や参照画像に基づく画像生成システムに関する中核特許を国内で成立させ、米国・中国・欧州でも審査を進めている点が最大の競争優位性である。研究起点の基盤技術に加え、生成プロセスの記録・証明、教育・検定、メディア発信を統合した実装力を持ち、技術・制度・社会実装を一体で提供できる点で、単一機能型の生成AIサービスとの差別化を実現している。
+---事業部としてはMEDIA、AIDX、CERT、CORPといった構成になります。
+このサイトとしては現在はメディア事業が多いので、「媒体情報」とか「広告出稿プログラムのご案内」みたいなページの構成は欲しいね /corp/media とかSPAでもいい(アプリとしての体裁を保ちつつSEOを効かせるのがだいじ)。
+AIDXもCERTも別途サイトは作りますが、まずはそのためにも情報を集約していこう
+
+---RSSについての気づき
+note.comブログ最新記事のカバーアートを更新してみたのだけどすぐに反映されている、これってキャッシュされていないってことだろうか？上手く動いているならいいんだけど。
+
+---
+
+この /corp/mediaの更新はどこのソースを修正すればいいの？
+
+---
+
+AI時代のSEO的に有利なのはどっちだろう？ ①/corp にSPA化 ② /corp/media
+
+---
+
+そうですね。それからサイトマップって出力した方がいいのでは。
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the entire conversation:
+
+1. Initial plan implementation request - AiCuty permanent page + event system (/e/)
+2. User feedback on events index - wanted banner images and 5W1H info
+3. User feedback on card layout - title bigger, 16:9 images, remove Archive badge, CT7→ACT7, footer changes
+4. Company info page creation (/corp)
+5. Media page creation (/corp/media)
+6. SEO improvements - document.title, sitemap, robots.txt
+7. Most recent: user asked to also review meta description and GA4 settings
+
+Let me trace through all the files created and modified, errors encountered, and user feedback.
+
+Key errors:
+- React hooks ordering issue in EventArchive.jsx (useEffect inside conditional)
+- Home.jsx footer nesting (footer inside footer)
+- CT7 should be ACT7
+- robots.txt had wrong sitemap filename (sitemap.xml vs sitemap-0.xml)
+
+User messages (non-tool):
+1. Initial plan implementation request
+2. "dev サーバーで確認して"
+3. Additional requirements about GA4, PRTIMES links, directory structure, KPI
+4. "e/の インデックスはバナー画像と 5W1H 的な情報が並んで欲しいな" + Wix reference
+5. "みてます！概要テキストが「詳細→」の前に欲しい、右側にカバーアートを表示" + image URLs + shortcode corrections
+6. Multiple UI/content feedback items (title size, 16:9, Archive badge, ACT7, footer, corp page)
+7. "この /corp/mediaの更新はどこのソースを修正すればいいの？"
+8. SEO question about SPA vs separate pages
+9. "そうですね。それからサイトマップって出力した方がいいのでは。"
+10. "meta descriptionとGA4の設定もこの際なので見直しましょう"
+
+Current work: Was adding usePageMeta hook to all pages. Had completed: Service, AiCuty, Events, Corp, CorpMedia. Still need to add to: EventArchive, CreateVoice, Home, About, Login, Profile, Bookmarks, News. Also need to address the user's latest request about meta description and GA4 review.
+
+Summary:
+1. Primary Request and Intent:
+   - Implement AiCuty permanent page + event system (`/e/`) per detailed plan
+   - Create event routing: static HTML for live events, React SPA for archives
+   - Extract shared character data, create event master data with helpers
+   - Update bottom nav from "Create" to "AiCuty"
+   - Create company info page (`/corp`) with business division structure (MEDIA/AIDX/CERT/CORP)
+   - Create media kit page (`/corp/media`) for advertising/press info
+   - Standardize footer across all pages to "Powered by AICU Japan / X@AICUai / AboutUs"
+   - Add per-page `document.title` and meta description for SEO
+   - Fix sitemap output and robots.txt
+   - Review meta description and GA4 settings across the site (latest request, in progress)
+
+2. Key Technical Concepts:
+   - React SPA on Cloudflare Pages with Vite + vite-plugin-pwa
+   - Event state machine: `preview` → `live` → `archive`
+   - Live events served as static HTML via CF Pages `_redirects` + Vite `staticEventsPlugin()`
+   - `navigateFallbackDenylist` narrowed to only static event paths (not all `/e/`)
+   - `<a href>` for live events (full page nav to static HTML), `<Link>` for archive (SPA routing)
+   - Shared data files (`src/data/characters.js`, `src/data/events.js`) with helper functions
+   - Common `<Footer>` component for consistent branding
+   - `usePageMeta` hook for dynamic `document.title` and meta description
+   - JSON-LD structured data on key pages (CreativeWork, Organization, WebPage)
+   - GA4 tracking: `GtagRouteTracker` for SPA page views, custom `event_click` events with shortcode/status dimensions
+   - RSS feed caching: 3-hour worker cron + 5min client localStorage + R2 image hosting (immutable)
+   - vite-plugin-sitemap generates `sitemap-0.xml` at build time
+
+3. Files and Code Sections:
+
+   - **`src/data/characters.js`** (NEW)
+     - Extracted from CreateVoice.jsx for sharing between AiCuty and CreateVoice pages
+     - 5 characters: elena, mei, mina, nao, saki with id, emoji, name, nameJp, speaker, seed, birthday, personality, sampleText, color
+
+   - **`src/data/events.js`** (NEW)
+     - Event master data with 6 events: Fes26Halu (live), VoiceAudition, AIMatilda251222, Fes250824, Fes250823, ACT7 (all archive)
+     - Fields: shortcode, title, emoji, status, dateLabel, dateStart, dateEnd, venue, organizer, description, image, tags, links[], capacity (optional), staticPath (live only)
+     - Helpers: `getEventByShortcode(slug)`, `getEventsByStatus(status)`, `getSortedEvents()`
+
+   - **`src/pages/AiCuty.jsx`** (NEW)
+     - Permanent page at `/aicuty` with header, hero image, member cards from characters.js, related events with status badges, guideline link, JSON-LD CreativeWork
+     - Now includes `usePageMeta` hook
+
+   - **`src/pages/Events.jsx`** (NEW)
+     - Event index at `/e` with two card layouts:
+       - Live: full-width banner (16:9 via padding-top: 56.25%), title 18px/800, LIVE badge, 5W1H info rows, description, "詳細→"
+       - Archive/Preview: left text + right cover art (140px width, object-fit: cover), NO Archive badge, 5W1H rows, description before "詳細→"
+     - Live uses `<a href>` (static HTML), archive uses `<Link>`, preview has no link
+     - GA4 `event_click` tracking on live card clicks
+     - Now includes `usePageMeta` hook
+
+   - **`src/pages/EventArchive.jsx`** (NEW)
+     - Route `/e/:slug` - archive wrapper with hooks-safe pattern (all hooks before conditionals)
+     - GA4 page_view with event_shortcode/event_status custom params
+     - VoiceAudition → `<CreateVoice archived />`, live → `window.location.href`, generic → `<GenericArchive>`
+     - GenericArchive renders event.links array (PRTIMES, video archive, etc.)
+
+   - **`src/pages/Corp.jsx`** (NEW)
+     - Company info at `/corp` with:
+       - Company overview (no email), representative, establishment date, qualified business number
+       - 4 business divisions: MEDIA (links to /corp/media), AIDX, CERT, CORP
+       - Technical advantages section (patents)
+       - Related links (corp site, blog, PRTIMES, legal)
+       - JSON-LD Organization with founder
+     - Now includes `usePageMeta` hook
+
+   - **`src/pages/CorpMedia.jsx`** (NEW)
+     - Media kit at `/corp/media` with:
+       - 5 media channels (note, Wix Blog, X, YouTube, aicu.jp)
+       - 4 ad programs (article tie-up, event sponsorship, research collaboration, education)
+       - Audience description, press info table, contact CTA
+       - JSON-LD WebPage
+     - Now includes `usePageMeta` hook
+
+   - **`src/components/Footer.jsx`** (NEW)
+     - Shared footer: "Powered by AICU Japan / X@AICUai / AboutUs"
+     - Used in AiCuty, Events, EventArchive, CreateVoice, Home, Corp, CorpMedia
+
+   - **`src/hooks/usePageMeta.js`** (NEW)
+     - Sets `document.title` as `"${title} | AICU Japan"` or default
+     - Updates `meta[name="description"]` content
+     - Cleans up on unmount
+     ```js
+     import { useEffect } from 'react';
+     const SITE_NAME = 'AICU Japan';
+     export default function usePageMeta(title, description) {
+       useEffect(() => {
+         const prev = document.title;
+         document.title = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — クリエイティブAI時代に つくる人をつくる`;
+         let metaDesc = document.querySelector('meta[name="description"]');
+         const prevDesc = metaDesc?.getAttribute('content');
+         if (description && metaDesc) {
+           metaDesc.setAttribute('content', description);
+         }
+         return () => {
+           document.title = prev;
+           if (prevDesc && metaDesc) metaDesc.setAttribute('content', prevDesc);
+         };
+       }, [title, description]);
+     }
+     ```
+
+   - **`src/pages/CreateVoice.jsx`** (MODIFIED)
+     - Added `import { characters } from '../data/characters'` and `import Footer from '../components/Footer'`
+     - Added `archived` prop with "このイベントは終了しました" banner when true
+     - Removed local characters array (62 lines)
+     - Footer replaced with `<Footer />`
+
+   - **`src/App.jsx`** (MODIFIED)
+     - Added imports: AiCuty, Events, EventArchive, Corp, CorpMedia
+     - Added routes: `/aicuty`, `/e`, `/e/:slug`, `/corp`, `/corp/media`
+     - `/create/voice` maintained for backward compat
+
+   - **`src/components/Layout.jsx`** (MODIFIED)
+     - Bottom nav: `{ path: '/create/voice', label: 'Create' }` → `{ path: '/aicuty', label: 'AiCuty' }`
+
+   - **`src/pages/Service.jsx`** (MODIFIED)
+     - Service grid: イベント link changed from external Wix URL to `/e` with `internal: true`
+     - Service grid rendering updated to use `<Link>` for internal items
+     - Footer "Powered by" line updated to AICU Japan / X@AICUai / AboutUs
+     - Added `usePageMeta` import and call
+
+   - **`src/pages/Home.jsx`** (MODIFIED)
+     - Footer replaced with `<Footer />` component
+     - Added `import Footer from '../components/Footer'`
+
+   - **`src/pages/About.jsx`** (MODIFIED)
+     - Footer "Powered by" line updated inline (has its own legal links section)
+     - Added `import { Link } from 'react-router-dom'`
+
+   - **`vite.config.js`** (MODIFIED)
+     - Sitemap dynamicRoutes: added `/aicuty`, `/e`, `/corp`, `/corp/media`
+     - `navigateFallbackDenylist`: changed from `/^\/e\//` to `/^\/e\/Fes26Halu/`
+
+   - **`public/_redirects`** (MODIFIED)
+     - Added `/e/*  /index.html  200` between static rules and `/*` catch-all
+
+   - **`public/robots.txt`** (MODIFIED)
+     - Fixed sitemap URL from `sitemap.xml` to `sitemap-0.xml`
+
+   - **Cover art images downloaded** to:
+     - `public/e/ACT7/cover.png` (309KB)
+     - `public/e/Fes250823/cover.png` (798KB)
+     - `public/e/Fes250824/cover.png` (1.2MB)
+     - `public/e/AIMatilda251222/cover.png` (1.1MB)
+
+4. Errors and fixes:
+   - **React hooks ordering in EventArchive.jsx**: `useEffect` was called conditionally inside `if (event.status === 'live')`. Fixed by moving all hooks to top of component, using conditional logic inside the effect body.
+   - **Footer nesting in Home.jsx**: First attempt replaced the `<p>Powered by...</p>` with `<Footer />` but left the wrapping `<footer>` tag, creating nested footers. Fixed by removing both the `<footer>` wrapper and the old content, replacing with just `<Footer />`.
+   - **CT7 vs ACT7**: User corrected that "AICU Creators Talks = ACT7, not CT7". Fixed shortcode in events.js, image path, and renamed directory from `public/e/CT7` to `public/e/ACT7`.
+   - **robots.txt sitemap filename mismatch**: `sitemap.xml` referenced but actual file is `sitemap-0.xml` (vite-plugin-sitemap default). Fixed the URL.
+   - **Event card images too tall**: User reported banner images were vertically stretched. Fixed by using 16:9 aspect ratio container (`padding-top: 56.25%` with absolute positioned image) for live events, and `object-fit: cover` with fixed width for archive cards.
+
+5. Problem Solving:
+   - Static HTML / SPA routing coexistence solved via `_redirects` priority ordering + `navigateFallbackDenylist`
+   - Event state transitions documented (live→archive: change status, remove redirect rules, update denylist)
+   - RSS feed caching investigated: 3-hour worker cron + 5min localStorage + immutable R2 images. Cover art updates reflect within 3 hours max.
+   - SEO for SPA: separate URLs preferred for AI search citation, JSON-LD per page, dynamic document.title
+
+6. All user messages:
+   - "Implement the following plan: [detailed AiCuty + event system plan]"
+   - "dev サーバーで確認して"
+   - "アーカイブ済みイベントページにも共通のGA4タグを貼っておいてね。PRTIMESや有料ビデオアーカイブなどへのリンクを追加する。固定のHTMLというよりはディレクトリになっていればよく、画像や動画、資料などはそのディレクトリに移動させる。システムとしては共通情報や現状を把握したり経営の判断(japan-corp)にするため、参加規模やアクセスなどKPIを回収できる構造を意識すること。"
+   - "日本語で"
+   - "e/の インデックスはバナー画像と 5W1H 的な情報が並んで欲しいな。コンパクトな整理でいいので。[Wix event list reference pasted]"
+   - "みてます！概要テキストが「詳細→」の前に欲しい、右側にカバーアートを表示。[Cover art URLs for ACT7, Fes250823, Fes250824, AIMatilda251222 provided]. AIMatilda251222 にしておいて. 各ショートコードの更新とディレクトリにカバーアート画像を保存しておいて本番化"
+   - "はい、まあまあいい感じです。まずはインデックスの改善ですが、タイトルを大きく、バナー画像は16:9、[Archive]は見ればわかるので消そう、ACT7です CT7ではない。共通 Powered by AICU Japan [link specs]. 会社情報についてのページも作ってください /corp [detailed company info provided with divisions MEDIA/AIDX/CERT/CORP, media page request]"
+   - "この /corp/mediaの更新はどこのソースを修正すればいいの？"
+   - "AI時代のSEO的に有利なのはどっちだろう？ ①/corp にSPA化 ② /corp/media"
+   - "そうですね。それからサイトマップって出力した方がいいのでは。"
+   - "meta descriptionとGA4の設定もこの際なので見直しましょう。"
+
+7. Pending Tasks:
+   - **Finish adding `usePageMeta` to remaining pages**: EventArchive, CreateVoice, Home, About, Login, Profile, Bookmarks, News (was in progress when interrupted)
+   - **Review and improve meta descriptions** across all pages per user's latest request
+   - **Review GA4 settings** — user asked to review GA4 configuration across the site
+   - Build verification after all changes complete
+
+8. Current Work:
+   Was in the middle of adding `usePageMeta` hook to all pages. Completed: Service.jsx, AiCuty.jsx, Events.jsx, Corp.jsx, CorpMedia.jsx. Still need to add to: EventArchive.jsx, CreateVoice.jsx, Home.jsx, About.jsx, and other pages (Login, Profile, Bookmarks, News).
+   
+   The user's most recent message was: "meta descriptionとGA4の設定もこの際なので見直しましょう。" — requesting a review of meta descriptions and GA4 settings across the whole site.
+
+9. Optional Next Step:
+   Continue adding `usePageMeta` to remaining pages (EventArchive, CreateVoice, Home, About, Login, Profile, Bookmarks, News), then review/improve the default meta description in `index.html` and GA4 configuration (the `GtagRouteTracker` in App.jsx and custom events in Events.jsx and EventArchive.jsx). The user explicitly said: "meta descriptionとGA4の設定もこの際なので見直しましょう。"
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/aki/.claude/projects/-Users-aki-git-local-app-aicujp/f924599e-c7c9-400b-aeee-9b6327bbde26.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+p-aicujp に GA4 Data API のエンドポイントを作って dashboard/admin に最終更新時間とダッシュボードを表示するIssueを追加。
+
+追加でこちらも検討。
+noteブログの更新と通知を自由に発行できる機能ってどこで作れそう？
+
+---
+
+p-aicujp に手動プッシュ通知UIのIssueを追加して
