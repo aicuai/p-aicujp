@@ -5,7 +5,9 @@ import { getAdminSupabase } from "@/lib/supabase"
 import { getTotalContactsCount, getTotalMembersCount, getSubscriptionStats } from "@/lib/wix"
 import Link from "next/link"
 import SurveyProgressChart from "@/components/charts/SurveyProgressChart"
+import SurveyComparisonChart from "@/components/charts/SurveyComparisonChart"
 import WixEmailExport from "@/components/WixEmailExport"
+import RetryRewardsButton from "@/components/RetryRewardsButton"
 
 export default async function AdminDashboard() {
   const user = await getUser()
@@ -37,6 +39,10 @@ export default async function AdminDashboard() {
     rewardNoneResult,
     rewardWithEmailResult,
     funnelResult,
+    failedRewardsResult,
+    newestUsersResult,
+    r2602CountResult,
+    r2511CountResult,
   ] = await Promise.all([
     admin.from("unified_users").select("id", { count: "exact", head: true }),
     admin.from("unified_users").select("id", { count: "exact", head: true }).not("wix_contact_id", "is", null),
@@ -50,7 +56,7 @@ export default async function AdminDashboard() {
     admin.from("unified_users").select("primary_email, last_login_at, wix_contact_id, discord_id").order("last_login_at", { ascending: false, nullsFirst: false }).limit(10),
     admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true),
     admin.from("survey_responses").select("survey_id, email, submitted_at, reward_status").neq("is_test", true).order("submitted_at", { ascending: false }).limit(10),
-    admin.from("survey_responses").select("submitted_at").neq("is_test", true).order("submitted_at", { ascending: true }),
+    admin.from("survey_responses").select("survey_id, submitted_at").neq("is_test", true).order("submitted_at", { ascending: true }),
     // Loyalty cache
     admin.from("admin_cache").select("data, updated_at").eq("key", "loyalty-summary").single(),
     // Reward status counts (excluding test data)
@@ -61,6 +67,13 @@ export default async function AdminDashboard() {
     admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).not("email", "is", null),
     // Funnel/progress beacons
     admin.from("survey_kv").select("value").eq("survey_id", "R2602").eq("key", "progress"),
+    // Failed rewards
+    admin.from("survey_responses").select("id, survey_id, email, submitted_at, reward_status").neq("is_test", true).eq("reward_status", "failed").order("submitted_at", { ascending: false }),
+    // Newest users for Task 3
+    admin.from("unified_users").select("primary_email, created_at, wix_contact_id, wix_member_id").order("created_at", { ascending: false }).limit(5),
+    // R2602-specific counts
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).eq("survey_id", "R2602"),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }).neq("is_test", true).eq("survey_id", "R2511"),
   ])
 
   const totalUsers = unifiedResult.count ?? 0
@@ -93,6 +106,17 @@ export default async function AdminDashboard() {
   const profileRate = safeRate(profilesCount, authUsersTotal)
   const pushRate = safeRate(pushSubsCount, authUsersTotal)
   const wauMauRatio = safeRate(login7d, login30d)
+
+  // Subscription tier counts (active only)
+  const tierFree = Object.entries(subscriptionStats.byPlanAndStatus)
+    .filter(([name]) => name.includes("Free") || name.includes("無料"))
+    .reduce((sum, [, s]) => sum + (s["ACTIVE"] || 0), 0)
+  const tierBasic = Object.entries(subscriptionStats.byPlanAndStatus)
+    .filter(([name]) => name.includes("Basic") || name.includes("基本"))
+    .reduce((sum, [, s]) => sum + (s["ACTIVE"] || 0), 0)
+  const tierLabPlus = Object.entries(subscriptionStats.byPlanAndStatus)
+    .filter(([name]) => name.includes("Lab+"))
+    .reduce((sum, [, s]) => sum + (s["ACTIVE"] || 0), 0)
 
   const recentLogins = recentLoginsResult.data ?? []
   const surveyCount = surveyCountResult.count ?? 0
@@ -139,17 +163,50 @@ export default async function AdminDashboard() {
     return { ...sec, reached }
   })
 
-  // Build daily counts for progress chart
-  const surveyTimestamps = (surveyAllTimestampsResult.data ?? []) as { submitted_at: string }[]
+  // Build daily counts for progress chart (all surveys combined + per-survey)
+  const surveyTimestamps = (surveyAllTimestampsResult.data ?? []) as { survey_id: string; submitted_at: string }[]
   const dailyMap: Record<string, number> = {}
+  const dailyMapBySurvey: Record<string, Record<string, number>> = {}
   for (const row of surveyTimestamps) {
     if (!row.submitted_at) continue
     const date = row.submitted_at.slice(0, 10) // "2026-02-01"
     dailyMap[date] = (dailyMap[date] || 0) + 1
+    if (!dailyMapBySurvey[row.survey_id]) dailyMapBySurvey[row.survey_id] = {}
+    dailyMapBySurvey[row.survey_id][date] = (dailyMapBySurvey[row.survey_id][date] || 0) + 1
   }
   const dailyCounts = Object.entries(dailyMap)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, count]) => ({ date, count }))
+
+  // Build "elapsed days" comparison data for R2511 vs R2602
+  const buildElapsedSeries = (surveyId: string) => {
+    const map = dailyMapBySurvey[surveyId] ?? {}
+    const sorted = Object.entries(map).sort(([a], [b]) => a.localeCompare(b))
+    if (sorted.length === 0) return []
+    const firstDate = new Date(sorted[0][0])
+    let cumulative = 0
+    return sorted.map(([date, count]) => {
+      cumulative += count
+      const elapsed = Math.round((new Date(date).getTime() - firstDate.getTime()) / 86400000)
+      return { day: elapsed, daily: count, cumulative, date }
+    })
+  }
+  const r2511Series = buildElapsedSeries("R2511")
+  const r2602Series = buildElapsedSeries("R2602")
+  const r2511Total = r2511Series.length > 0 ? r2511Series[r2511Series.length - 1].cumulative : 0
+  const r2602Total = r2602Series.length > 0 ? r2602Series[r2602Series.length - 1].cumulative : 0
+  const r2511Days = r2511Series.length > 0 ? r2511Series[r2511Series.length - 1].day : 0
+  const r2602Days = r2602Series.length > 0 ? r2602Series[r2602Series.length - 1].day : 0
+
+  // Failed rewards
+  const failedRewards = (failedRewardsResult?.data ?? []) as { id: string; survey_id: string; email: string | null; submitted_at: string; reward_status: string }[]
+
+  // Newest users
+  const newestUsers = (newestUsersResult?.data ?? []) as { primary_email: string | null; created_at: string; wix_contact_id: string | null; wix_member_id: string | null }[]
+
+  // Per-survey counts
+  const r2602Count = r2602CountResult?.count ?? 0
+  const r2511Count = r2511CountResult?.count ?? 0
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -174,66 +231,75 @@ export default async function AdminDashboard() {
       <div style={{ flex: 1, width: "100%", maxWidth: 640, margin: "0 auto", padding: "16px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
 
-          {/* KPI Summary Cards */}
-          <div className="animate-in" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <KpiCard label="総ユーザー" value={totalUsers} />
-            <KpiCard label="Wix 紐付け率" value={`${wixRate}%`} sub={`${wixLinked}/${totalUsers}`} />
-            <KpiCard label="7日アクティブ" value={login7d} sub={`WAU/MAU ${wauMauRatio}%`} />
-            <KpiCard label="Push 購読率" value={`${pushRate}%`} sub={`${pushSubsCount}人`} />
-          </div>
-
-          {/* Retention Section */}
-          <div className="card animate-in-delay" style={{ padding: 20 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>継続率</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <StatRow label="WAU（7日アクティブ）" value={String(login7d)} />
-              <StatRow label="MAU（30日アクティブ）" value={String(login30d)} />
-              <StatRow label="WAU/MAU" value={`${wauMauRatio}%`} highlight />
-              <StatRow label="新規ユーザー（7日以内）" value={String(newUsers7d)} />
-              <StatRow label="プロフィール完了率" value={`${profileRate}%（${profilesCount}人）`} />
-              <StatRow label="Discord 連携率" value={`${discordRate}%（${discordLinked}人）`} />
-            </div>
-          </div>
-
-          {/* Wix Integration */}
-          <div className="card animate-in-delay-2" style={{ padding: 20 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>Wix 連携状況</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "var(--text-secondary)" }}>Wix サイト会員</span>
-                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{wixTotalMembers}人</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "var(--text-secondary)" }}>Wix 連絡先（全体）</span>
-                <span style={{ fontWeight: 500, color: "var(--text-tertiary)" }}>{wixTotalContacts}人</span>
-              </div>
-              {/* Breakdown note */}
-              <div style={{ background: "var(--aicu-teal-light)", borderRadius: "var(--radius-sm)", padding: "10px 12px", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>差分 {wixTotalContacts - wixTotalMembers}人の内訳</p>
-                <p>サイト会員ではない連絡先（ゲスト購入、フォーム送信、アプリ経由の問い合わせ、自動生成の空レコード等）。Wix ダッシュボード &gt; 顧客・リード管理で「非会員」フィルタで確認可。</p>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "var(--text-secondary)" }}>p.aicu.jp 登録者</span>
-                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{totalUsers}人</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "var(--text-secondary)" }}>Wix 連携済み</span>
-                <span style={{ fontWeight: 600, color: "var(--aicu-teal)" }}>{wixLinked}人</span>
-              </div>
-              {/* Ratio bar */}
-              <div style={{ marginTop: 4 }}>
-                <div style={{ display: "flex", fontSize: 11, color: "var(--text-tertiary)", marginBottom: 4, justifyContent: "space-between" }}>
-                  <span>連携済み {wixRate}%</span>
-                  <span>会員全体の {wixTotalMembers > 0 ? safeRate(wixLinked, wixTotalMembers) : 0}%</span>
+          {/* Member Funnel */}
+          <div className="card animate-in" style={{ padding: 20 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 16 }}>会員ファネル</h2>
+            {(() => {
+              const funnelLayers = [
+                { label: "Wix 連絡先", count: wixTotalContacts, color: "var(--text-tertiary)", bg: "rgba(0,0,0,0.04)" },
+                { label: "Wix サイト会員", count: wixTotalMembers, color: "var(--text-secondary)", bg: "rgba(0,0,0,0.06)" },
+                { label: "調査参加者（Free）", count: rewardWithEmail, color: "#0031D8", bg: "rgba(0,49,216,0.08)" },
+                { label: "基本会員（Basic）", count: tierBasic, color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+                { label: "Lab+ 会員", count: tierLabPlus, color: "var(--aicu-teal)", bg: "rgba(65,201,180,0.12)" },
+              ]
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {funnelLayers.map((layer, i) => {
+                    const widthPct = wixTotalContacts > 0 ? Math.max(8, (layer.count / wixTotalContacts) * 100) : 0
+                    return (
+                      <div key={layer.label}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+                          <span style={{ color: "var(--text-secondary)" }}>{layer.label}</span>
+                          <span style={{ fontWeight: 600, color: layer.color }}>{layer.count}人</span>
+                        </div>
+                        <div style={{ height: 18, borderRadius: 4, background: "var(--border)", overflow: "hidden", position: "relative" }}>
+                          <div style={{
+                            width: `${widthPct}%`,
+                            height: "100%",
+                            background: layer.bg,
+                            borderRadius: 4,
+                            borderLeft: `3px solid ${layer.color}`,
+                            display: "flex",
+                            alignItems: "center",
+                            paddingLeft: 6,
+                            transition: "width 0.5s ease",
+                          }}>
+                            {widthPct > 15 && (
+                              <span style={{ fontSize: 9, color: layer.color, fontWeight: 600 }}>
+                                {wixTotalContacts > 0 ? safeRate(layer.count, wixTotalContacts) : 0}%
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {i < funnelLayers.length - 1 && (
+                          <div style={{ fontSize: 9, color: "var(--text-tertiary)", textAlign: "right", marginTop: 1 }}>
+                            {funnelLayers[i + 1].count > 0 && layer.count > 0 ? `${safeRate(funnelLayers[i + 1].count, layer.count)}% ↓` : ""}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-                <div style={{ height: 8, borderRadius: 4, background: "var(--border)", overflow: "hidden", display: "flex" }}>
-                  <div style={{
-                    width: `${wixTotalMembers > 0 ? safeRate(wixLinked, wixTotalMembers) : 0}%`,
-                    background: "var(--aicu-teal)",
-                    borderRadius: 4,
-                    transition: "width 0.5s ease",
-                  }} />
+              )
+            })()}
+            {/* Active site users */}
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", marginBottom: 8 }}>新サイト アクティブユーザー</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <div style={{ padding: 10, borderRadius: "var(--radius-sm)", background: "rgba(0,0,0,0.02)" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>p.aicu.jp 登録者</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)" }}>{totalUsers}</div>
+                  {newUsers7d > 0 && <div style={{ fontSize: 10, color: "var(--aicu-teal)", fontWeight: 600 }}>+{newUsers7d} (7日)</div>}
                 </div>
+                <div style={{ padding: 10, borderRadius: "var(--radius-sm)", background: "rgba(0,0,0,0.02)" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>7日アクティブ</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: "var(--text-primary)" }}>{login7d}</div>
+                  <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>WAU/MAU {wauMauRatio}%</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 8, fontSize: 11, color: "var(--text-tertiary)" }}>
+                <span>Push購読: {pushSubsCount}人 ({pushRate}%)</span>
+                <span>Discord: {discordLinked}人 ({discordRate}%)</span>
               </div>
             </div>
           </div>
@@ -244,50 +310,46 @@ export default async function AdminDashboard() {
             <WixEmailExport />
           </div>
 
-          {/* Subscriptions */}
-          {subscriptionStats.total > 0 && (
-            <div className="card animate-in-delay-2" style={{ padding: 20 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>サブスクリプション</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {Object.entries(subscriptionStats.byPlanAndStatus).map(([planName, statuses]) => {
-                  const active = statuses["ACTIVE"] || 0
-                  const canceled = statuses["CANCELED"] || 0
-                  const other = Object.entries(statuses).filter(([s]) => s !== "ACTIVE" && s !== "CANCELED").reduce((sum, [, n]) => sum + n, 0)
-                  return (
-                    <div key={planName}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 4 }}>
-                        <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{planName}</span>
-                      </div>
-                      <div style={{ display: "flex", gap: 8, fontSize: 12 }}>
-                        {active > 0 && <span style={{ color: "var(--aicu-teal)", fontWeight: 600 }}>有効 {active}</span>}
-                        {canceled > 0 && <span style={{ color: "#ef4444" }}>解約 {canceled}</span>}
-                        {other > 0 && <span style={{ color: "var(--text-tertiary)" }}>他 {other}</span>}
-                      </div>
-                    </div>
-                  )
-                })}
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4, borderTop: "1px solid var(--border)", paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
-                  <span>会員 {wixTotalMembers}人 / 連絡先 {wixTotalContacts}人</span>
-                  <span>取得: {new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Survey Responses */}
           <div className="card animate-in-delay-3" style={{ padding: 20 }}>
             <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
               調査回答 <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-tertiary)" }}>（survey_responses）</span>
             </h2>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 8 }}>
               <span style={{ color: "var(--text-secondary)" }}>総回答数</span>
               <span style={{ fontWeight: 700, fontSize: 20, color: "var(--text-primary)" }}>{surveyCount}</span>
+            </div>
+            <div style={{ display: "flex", gap: 12, fontSize: 12, marginBottom: 12 }}>
+              <span style={{ color: "var(--text-tertiary)" }}>R2511: <strong style={{ color: "#8884d8" }}>{r2511Count}</strong></span>
+              <span style={{ color: "var(--text-tertiary)" }}>R2602: <strong style={{ color: "var(--aicu-teal)" }}>{r2602Count}</strong></span>
             </div>
             {/* Cumulative progress chart */}
             {dailyCounts.length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>回答数推移（累計）</div>
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>回答数推移（累計・全調査合計）</div>
                 <SurveyProgressChart dailyCounts={dailyCounts} goals={[100, 200, 300]} />
+              </div>
+            )}
+
+            {/* R2511 vs R2602 Comparison */}
+            {(r2511Series.length > 0 || r2602Series.length > 0) && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>
+                  R2511 vs R2602 成長比較
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 8 }}>
+                  開始日からの経過日数 vs 累計エントリー数
+                </div>
+                <SurveyComparisonChart r2511={r2511Series} r2602={r2602Series} />
+                <div style={{ display: "flex", gap: 16, fontSize: 11, color: "var(--text-tertiary)", marginTop: 6, flexWrap: "wrap" }}>
+                  <span style={{ color: "#8884d8" }}>R2511: {r2511Total}件 / {r2511Days}日</span>
+                  <span style={{ color: "#41C9B4" }}>R2602: {r2602Total}件 / {r2602Days}日</span>
+                  {r2602Days > 0 && r2511Days > 0 && (
+                    <span>
+                      ペース比: {(r2602Total / r2602Days).toFixed(1)}件/日 vs {(r2511Total / r2511Days).toFixed(1)}件/日
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
@@ -391,6 +453,32 @@ export default async function AdminDashboard() {
               <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 4 }}>
                 ※ 10,000pt = 1,000円換算（メール登録者のみポイント付与）
               </div>
+
+              {/* Failed rewards detail */}
+              {failedRewards.length > 0 && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#ef4444" }}>
+                      失敗エントリー ({failedRewards.length}件)
+                    </span>
+                    <RetryRewardsButton />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {failedRewards.map((row) => (
+                      <div key={row.id} style={{ fontSize: 11, padding: "4px 0", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontFamily: "monospace", color: "var(--text-primary)" }}>
+                            {row.email ? `${row.email.split("@")[0]}@***` : "—"}
+                          </span>
+                          <span style={{ color: "var(--text-tertiary)", fontSize: 10 }}>
+                            {row.submitted_at ? new Date(row.submitted_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {surveyLatest.length > 0 && (
