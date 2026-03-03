@@ -8,14 +8,34 @@ import {
   getGA4TopPages,
   getGA4TrafficSources,
   getGA4DataStreams,
+  getGA4SearchTerms,
+  getGA4OrganicLandings,
+  getGA4DeviceCategories,
+  getGA4Retention,
   type GA4Overview,
   type GA4DailyData,
   type GA4PageData,
   type GA4SourceData,
   type GA4StreamData,
+  type GA4SearchTerm,
+  type GA4OrganicLanding,
+  type GA4DeviceData,
+  type GA4RetentionData,
 } from "@/lib/ga4"
 import Link from "next/link"
 import GA4TrendChart from "@/components/charts/GA4TrendChart"
+
+const DEVICE_LABELS: Record<string, string> = {
+  desktop: "PC",
+  mobile: "モバイル",
+  tablet: "タブレット",
+}
+
+const DEVICE_ICONS: Record<string, string> = {
+  desktop: "\u{1F5A5}",
+  mobile: "\u{1F4F1}",
+  tablet: "\u{1F4BB}",
+}
 
 export default async function GA4Dashboard() {
   const user = await getUser()
@@ -49,15 +69,23 @@ export default async function GA4Dashboard() {
   let topPages: GA4PageData[] = []
   let trafficSources: GA4SourceData[] = []
   let dataStreams: GA4StreamData[] = []
+  let searchTerms: GA4SearchTerm[] = []
+  let organicLandings: GA4OrganicLanding[] = []
+  let devices: GA4DeviceData[] = []
+  let retention7d: GA4RetentionData | null = null
   let error: string | null = null
 
   try {
-    ;[overview, dailyTrend, topPages, trafficSources, dataStreams] = await Promise.all([
+    ;[overview, dailyTrend, topPages, trafficSources, dataStreams, searchTerms, organicLandings, devices, retention7d] = await Promise.all([
       getGA4Overview(),
       getGA4DailyTrend(30),
       getGA4TopPages(30, 20),
       getGA4TrafficSources(30, 15),
       getGA4DataStreams(30),
+      getGA4SearchTerms(30, 20),
+      getGA4OrganicLandings(30, 15),
+      getGA4DeviceCategories(30),
+      getGA4Retention(7),
     ])
   } catch (e) {
     console.error("[ga4] fetch error:", e)
@@ -111,6 +139,41 @@ export default async function GA4Dashboard() {
                   <MetricRow label="平均時間" value={fmtDuration(overview.avgSessionDuration30d)} />
                 </div>
               </div>
+
+              {/* Retention + Device inline */}
+              {(retention7d || devices.length > 0) && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
+                  {/* 7-day Retention */}
+                  {retention7d && (
+                    <div>
+                      <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 8, fontWeight: 600 }}>7日間リピート率</p>
+                      <p style={{ fontSize: 24, fontWeight: 700, color: "var(--aicu-teal)", letterSpacing: "-0.02em" }}>
+                        {retention7d.returningRate}%
+                      </p>
+                      <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>
+                        再訪 {fmt(retention7d.returningUsers)} / 新規 {fmt(retention7d.newUsers)}
+                      </p>
+                    </div>
+                  )}
+                  {/* Device breakdown */}
+                  {devices.length > 0 && (
+                    <div>
+                      <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 8, fontWeight: 600 }}>デバイス（30日）</p>
+                      {devices.map((d) => (
+                        <div key={d.category} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
+                          <span style={{ color: "var(--text-secondary)" }}>
+                            {DEVICE_ICONS[d.category] || ""} {DEVICE_LABELS[d.category] || d.category}
+                          </span>
+                          <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                            {d.pct}%
+                            <span style={{ fontSize: 10, color: "var(--text-tertiary)", marginLeft: 4 }}>({fmt(d.sessions)})</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -127,6 +190,129 @@ export default async function GA4Dashboard() {
               <GA4TrendChart data={dailyTrend} />
             </div>
           )}
+
+          {/* Data Streams */}
+          {dataStreams.length > 0 && (
+            <div className="card animate-in" style={{ padding: 20 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
+                サイト別（30日）
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {dataStreams.map((stream) => {
+                  const totalSessions = dataStreams.reduce((s, d) => s + d.sessions, 0)
+                  const pct = totalSessions > 0 ? Math.round((stream.sessions / totalSessions) * 100) : 0
+                  const siteUrl = stream.url ? `https://${stream.url}` : null
+                  return (
+                    <div key={stream.streamId}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 2 }}>
+                        <span>
+                          {siteUrl ? (
+                            <a href={siteUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--aicu-teal)", fontWeight: 500, textDecoration: "none" }}>
+                              {stream.url}
+                            </a>
+                          ) : (
+                            <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{stream.streamName}</span>
+                          )}
+                          {stream.url && stream.streamName && (
+                            <span style={{ color: "var(--text-tertiary)", fontSize: 10, marginLeft: 4 }}>({stream.streamName})</span>
+                          )}
+                        </span>
+                        <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                          {fmt(stream.sessions)} ({pct}%)
+                        </span>
+                      </div>
+                      <div style={{ height: 14, borderRadius: 4, background: "var(--border)", overflow: "hidden" }}>
+                        <div style={{
+                          width: `${pct}%`,
+                          height: "100%",
+                          background: "rgba(65, 201, 180, 0.3)",
+                          borderRadius: 4,
+                          display: "flex",
+                          alignItems: "center",
+                          paddingLeft: 4,
+                        }}>
+                          {pct >= 10 && <span style={{ fontSize: 9, color: "var(--aicu-teal)", fontWeight: 600 }}>{fmt(stream.users)} users</span>}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Search Keywords / Organic Landings */}
+          <div className="card animate-in" style={{ padding: 20 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
+              検索流入（30日）
+            </h2>
+
+            {/* Ads keywords if available */}
+            {searchTerms.length > 0 && (
+              <>
+                <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 8, fontWeight: 600 }}>検索キーワード</p>
+                <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse", marginBottom: 16 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                      <th style={{ textAlign: "left", padding: "4px", color: "var(--text-tertiary)", fontWeight: 500 }}>キーワード</th>
+                      <th style={{ textAlign: "right", padding: "4px", color: "var(--text-tertiary)", fontWeight: 500 }}>Sessions</th>
+                      <th style={{ textAlign: "right", padding: "4px", color: "var(--text-tertiary)", fontWeight: 500 }}>Users</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchTerms.map((term, i) => (
+                      <tr key={term.query + i} style={{ borderBottom: "1px solid var(--border)" }}>
+                        <td style={{ padding: "4px", color: "var(--text-primary)" }}>{term.query}</td>
+                        <td style={{ padding: "4px", textAlign: "right", fontWeight: 600, color: "var(--aicu-teal)" }}>{fmt(term.sessions)}</td>
+                        <td style={{ padding: "4px", textAlign: "right", color: "var(--text-secondary)" }}>{fmt(term.users)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+
+            {/* Organic landing pages */}
+            <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 8, fontWeight: 600 }}>
+              オーガニック検索 ランディングページ
+            </p>
+            {organicLandings.length > 0 ? (
+              <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                    <th style={{ textAlign: "left", padding: "4px", color: "var(--text-tertiary)", fontWeight: 500 }}>ページ</th>
+                    <th style={{ textAlign: "right", padding: "4px", color: "var(--text-tertiary)", fontWeight: 500 }}>Sessions</th>
+                    <th style={{ textAlign: "right", padding: "4px", color: "var(--text-tertiary)", fontWeight: 500 }}>Users</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {organicLandings.map((page, i) => (
+                    <tr key={page.hostname + page.path + i} style={{ borderBottom: "1px solid var(--border)" }}>
+                      <td style={{ padding: "4px", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <a
+                          href={`https://${page.hostname}${page.path}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: "var(--text-primary)", textDecoration: "none" }}
+                          title={`${page.hostname}${page.path}`}
+                        >
+                          <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{page.hostname}</span>{" "}
+                          {page.path}
+                        </a>
+                      </td>
+                      <td style={{ padding: "4px", textAlign: "right", fontWeight: 600, color: "var(--aicu-teal)" }}>{fmt(page.sessions)}</td>
+                      <td style={{ padding: "4px", textAlign: "right", color: "var(--text-secondary)" }}>{fmt(page.users)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>オーガニック検索データなし</p>
+            )}
+            <p style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 8 }}>
+              ※ Google検索キーワードの詳細は Search Console との連携が必要です
+            </p>
+          </div>
 
           {/* Top Pages */}
           {topPages.length > 0 && (
@@ -148,9 +334,17 @@ export default async function GA4Dashboard() {
                     {topPages.map((page, i) => (
                       <tr key={page.hostname + page.path + i} style={{ borderBottom: "1px solid var(--border)" }}>
                         <td style={{ padding: "6px 4px", color: "var(--text-tertiary)" }}>{i + 1}</td>
-                        <td style={{ padding: "6px 4px", color: "var(--text-primary)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          <span style={{ fontSize: 10, color: "var(--text-tertiary)", marginRight: 4 }}>{page.hostname}</span>
-                          <span title={page.title}>{page.path}</span>
+                        <td style={{ padding: "6px 4px", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <a
+                            href={`https://${page.hostname}${page.path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "var(--text-primary)", textDecoration: "none" }}
+                            title={page.title}
+                          >
+                            <span style={{ fontSize: 10, color: "var(--text-tertiary)", marginRight: 4 }}>{page.hostname}</span>
+                            {page.path}
+                          </a>
                         </td>
                         <td style={{ padding: "6px 4px", textAlign: "right", fontWeight: 600, color: "var(--aicu-teal)" }}>{fmt(page.pageviews)}</td>
                         <td style={{ padding: "6px 4px", textAlign: "right", color: "var(--text-secondary)" }}>{fmt(page.users)}</td>
@@ -190,52 +384,6 @@ export default async function GA4Dashboard() {
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-
-          {/* Data Streams */}
-          {dataStreams.length > 0 && (
-            <div className="card animate-in" style={{ padding: 20 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
-                データストリーム別（30日）
-              </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {dataStreams.map((stream) => {
-                  const totalSessions = dataStreams.reduce((s, d) => s + d.sessions, 0)
-                  const pct = totalSessions > 0 ? Math.round((stream.sessions / totalSessions) * 100) : 0
-                  return (
-                    <div key={stream.streamId}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 2 }}>
-                        <span>
-                          <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{stream.url || stream.streamName}</span>
-                          {stream.url && stream.streamName && (
-                            <span style={{ color: "var(--text-tertiary)", fontSize: 10, marginLeft: 4 }}>({stream.streamName})</span>
-                          )}
-                        </span>
-                        <span style={{ fontWeight: 600, color: "var(--aicu-teal)" }}>
-                          {fmt(stream.sessions)} ({pct}%)
-                        </span>
-                      </div>
-                      <div style={{ height: 14, borderRadius: 4, background: "var(--border)", overflow: "hidden" }}>
-                        <div style={{
-                          width: `${pct}%`,
-                          height: "100%",
-                          background: "rgba(65, 201, 180, 0.3)",
-                          borderRadius: 4,
-                          display: "flex",
-                          alignItems: "center",
-                          paddingLeft: 4,
-                        }}>
-                          {pct >= 10 && <span style={{ fontSize: 9, color: "var(--aicu-teal)", fontWeight: 600 }}>{fmt(stream.users)} users</span>}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-              <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 8 }}>
-                ユーザー合計: {fmt(dataStreams.reduce((s, d) => s + d.users, 0))}
-              </p>
             </div>
           )}
 

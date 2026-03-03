@@ -235,3 +235,143 @@ export async function getGA4DataStreams(days: number = 30): Promise<GA4StreamDat
     }
   })
 }
+
+// --- Search keywords (organic) ---
+
+export type GA4SearchTerm = {
+  query: string
+  sessions: number
+  users: number
+}
+
+export async function getGA4SearchTerms(days: number = 30, limit: number = 20): Promise<GA4SearchTerm[]> {
+  const client = getClient()
+  try {
+    const [response] = await client.runReport({
+      property: `properties/${GA4_PROPERTY_ID}`,
+      dateRanges: [{ startDate: `${days}daysAgo`, endDate: "today" }],
+      dimensions: [{ name: "sessionGoogleAdsKeyword" }],
+      metrics: [
+        { name: "sessions" },
+        { name: "activeUsers" },
+      ],
+      orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+      limit,
+    })
+
+    return (response.rows ?? [])
+      .map((row) => ({
+        query: row.dimensionValues?.[0]?.value ?? "",
+        sessions: Number(row.metricValues?.[0]?.value ?? 0),
+        users: Number(row.metricValues?.[1]?.value ?? 0),
+      }))
+      .filter((r) => r.query && r.query !== "(not set)")
+  } catch {
+    // Fallback: try organic search landing pages as proxy
+    return []
+  }
+}
+
+// --- Organic search landing pages (proxy for keywords) ---
+
+export type GA4OrganicLanding = {
+  hostname: string
+  path: string
+  sessions: number
+  users: number
+}
+
+export async function getGA4OrganicLandings(days: number = 30, limit: number = 15): Promise<GA4OrganicLanding[]> {
+  const client = getClient()
+  const [response] = await client.runReport({
+    property: `properties/${GA4_PROPERTY_ID}`,
+    dateRanges: [{ startDate: `${days}daysAgo`, endDate: "today" }],
+    dimensions: [
+      { name: "hostName" },
+      { name: "landingPagePlusQueryString" },
+    ],
+    metrics: [
+      { name: "sessions" },
+      { name: "activeUsers" },
+    ],
+    dimensionFilter: {
+      filter: {
+        fieldName: "sessionMedium",
+        stringFilter: { value: "organic", matchType: "EXACT" },
+      },
+    },
+    orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+    limit,
+  })
+
+  return (response.rows ?? []).map((row) => ({
+    hostname: row.dimensionValues?.[0]?.value ?? "",
+    path: row.dimensionValues?.[1]?.value ?? "",
+    sessions: Number(row.metricValues?.[0]?.value ?? 0),
+    users: Number(row.metricValues?.[1]?.value ?? 0),
+  }))
+}
+
+// --- Device categories ---
+
+export type GA4DeviceData = {
+  category: string
+  sessions: number
+  users: number
+  pct: number
+}
+
+export async function getGA4DeviceCategories(days: number = 30): Promise<GA4DeviceData[]> {
+  const client = getClient()
+  const [response] = await client.runReport({
+    property: `properties/${GA4_PROPERTY_ID}`,
+    dateRanges: [{ startDate: `${days}daysAgo`, endDate: "today" }],
+    dimensions: [{ name: "deviceCategory" }],
+    metrics: [
+      { name: "sessions" },
+      { name: "activeUsers" },
+    ],
+    orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+  })
+
+  const rows = (response.rows ?? []).map((row) => ({
+    category: row.dimensionValues?.[0]?.value ?? "",
+    sessions: Number(row.metricValues?.[0]?.value ?? 0),
+    users: Number(row.metricValues?.[1]?.value ?? 0),
+    pct: 0,
+  }))
+  const total = rows.reduce((s, r) => s + r.sessions, 0)
+  return rows.map((r) => ({ ...r, pct: total > 0 ? Math.round((r.sessions / total) * 1000) / 10 : 0 }))
+}
+
+// --- New vs Returning users (retention proxy) ---
+
+export type GA4RetentionData = {
+  newUsers: number
+  returningUsers: number
+  totalUsers: number
+  returningRate: number
+}
+
+export async function getGA4Retention(days: number = 7): Promise<GA4RetentionData> {
+  const client = getClient()
+  const [response] = await client.runReport({
+    property: `properties/${GA4_PROPERTY_ID}`,
+    dateRanges: [{ startDate: `${days}daysAgo`, endDate: "today" }],
+    dimensions: [{ name: "newVsReturning" }],
+    metrics: [{ name: "activeUsers" }],
+  })
+
+  let newUsers = 0
+  let returningUsers = 0
+  for (const row of response.rows ?? []) {
+    const type = row.dimensionValues?.[0]?.value ?? ""
+    const count = Number(row.metricValues?.[0]?.value ?? 0)
+    if (type === "new") newUsers = count
+    else if (type === "returning") returningUsers = count
+  }
+  const totalUsers = newUsers + returningUsers
+  const returningRate = totalUsers > 0 ? Math.round((returningUsers / totalUsers) * 1000) / 10 : 0
+
+  return { newUsers, returningUsers, totalUsers, returningRate }
+}
