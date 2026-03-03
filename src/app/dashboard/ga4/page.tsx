@@ -146,9 +146,10 @@ export default async function GA4Dashboard() {
                   </thead>
                   <tbody>
                     {topPages.map((page, i) => (
-                      <tr key={page.path + i} style={{ borderBottom: "1px solid var(--border)" }}>
+                      <tr key={page.hostname + page.path + i} style={{ borderBottom: "1px solid var(--border)" }}>
                         <td style={{ padding: "6px 4px", color: "var(--text-tertiary)" }}>{i + 1}</td>
-                        <td style={{ padding: "6px 4px", color: "var(--text-primary)", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "6px 4px", color: "var(--text-primary)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: 10, color: "var(--text-tertiary)", marginRight: 4 }}>{page.hostname}</span>
                           <span title={page.title}>{page.path}</span>
                         </td>
                         <td style={{ padding: "6px 4px", textAlign: "right", fontWeight: 600, color: "var(--aicu-teal)" }}>{fmt(page.pageviews)}</td>
@@ -198,25 +199,35 @@ export default async function GA4Dashboard() {
               <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
                 データストリーム別（30日）
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {dataStreams.map((stream) => {
                   const totalSessions = dataStreams.reduce((s, d) => s + d.sessions, 0)
                   const pct = totalSessions > 0 ? Math.round((stream.sessions / totalSessions) * 100) : 0
                   return (
                     <div key={stream.streamId}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
-                        <span style={{ color: "var(--text-secondary)" }}>{stream.streamName || stream.streamId}</span>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 2 }}>
+                        <span>
+                          <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{stream.url || stream.streamName}</span>
+                          {stream.url && stream.streamName && (
+                            <span style={{ color: "var(--text-tertiary)", fontSize: 10, marginLeft: 4 }}>({stream.streamName})</span>
+                          )}
+                        </span>
                         <span style={{ fontWeight: 600, color: "var(--aicu-teal)" }}>
-                          {fmt(stream.sessions)} sessions ({pct}%)
+                          {fmt(stream.sessions)} ({pct}%)
                         </span>
                       </div>
-                      <div style={{ height: 12, borderRadius: 4, background: "var(--border)", overflow: "hidden" }}>
+                      <div style={{ height: 14, borderRadius: 4, background: "var(--border)", overflow: "hidden" }}>
                         <div style={{
                           width: `${pct}%`,
                           height: "100%",
                           background: "rgba(65, 201, 180, 0.3)",
                           borderRadius: 4,
-                        }} />
+                          display: "flex",
+                          alignItems: "center",
+                          paddingLeft: 4,
+                        }}>
+                          {pct >= 10 && <span style={{ fontSize: 9, color: "var(--aicu-teal)", fontWeight: 600 }}>{fmt(stream.users)} users</span>}
+                        </div>
                       </div>
                     </div>
                   )

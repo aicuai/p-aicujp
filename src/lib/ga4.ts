@@ -121,6 +121,7 @@ export async function getGA4DailyTrend(days: number = 30): Promise<GA4DailyData[
 // --- Top pages ---
 
 export type GA4PageData = {
+  hostname: string
   path: string
   title: string
   pageviews: number
@@ -133,6 +134,7 @@ export async function getGA4TopPages(days: number = 30, limit: number = 20): Pro
     property: `properties/${GA4_PROPERTY_ID}`,
     dateRanges: [{ startDate: `${days}daysAgo`, endDate: "today" }],
     dimensions: [
+      { name: "hostName" },
       { name: "pagePath" },
       { name: "pageTitle" },
     ],
@@ -145,8 +147,9 @@ export async function getGA4TopPages(days: number = 30, limit: number = 20): Pro
   })
 
   return (response.rows ?? []).map((row) => ({
-    path: row.dimensionValues?.[0]?.value ?? "",
-    title: row.dimensionValues?.[1]?.value ?? "",
+    hostname: row.dimensionValues?.[0]?.value ?? "",
+    path: row.dimensionValues?.[1]?.value ?? "",
+    title: row.dimensionValues?.[2]?.value ?? "",
     pageviews: Number(row.metricValues?.[0]?.value ?? 0),
     users: Number(row.metricValues?.[1]?.value ?? 0),
   }))
@@ -188,9 +191,19 @@ export async function getGA4TrafficSources(days: number = 30, limit: number = 15
 
 // --- Data streams breakdown ---
 
+// Known stream ID → URL mapping (from GA4 Admin API)
+const STREAM_URLS: Record<string, string> = {
+  "10401142105": "www.aicu.blog",
+  "12088235980": "drawing.aicu.jp",
+  "13038509086": "u.aicu.jp",
+  "13238148560": "oshi.aicu.jp",
+  "13590341306": "aicu.jp",
+}
+
 export type GA4StreamData = {
   streamName: string
   streamId: string
+  url: string
   sessions: number
   users: number
 }
@@ -211,10 +224,14 @@ export async function getGA4DataStreams(days: number = 30): Promise<GA4StreamDat
     orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
   })
 
-  return (response.rows ?? []).map((row) => ({
-    streamName: row.dimensionValues?.[0]?.value ?? "",
-    streamId: row.dimensionValues?.[1]?.value ?? "",
-    sessions: Number(row.metricValues?.[0]?.value ?? 0),
-    users: Number(row.metricValues?.[1]?.value ?? 0),
-  }))
+  return (response.rows ?? []).map((row) => {
+    const streamId = row.dimensionValues?.[1]?.value ?? ""
+    return {
+      streamName: row.dimensionValues?.[0]?.value ?? "",
+      streamId,
+      url: STREAM_URLS[streamId] ?? "",
+      sessions: Number(row.metricValues?.[0]?.value ?? 0),
+      users: Number(row.metricValues?.[1]?.value ?? 0),
+    }
+  })
 }
