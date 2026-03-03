@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "da53bd4f77a8",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/dashboard/ga4/page.tsx",
+    "src/lib/ga4.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/da/53bd4f77a8/0/metadata.json",
+      "transcript": "/da/53bd4f77a8/0/full.jsonl",
+      "context": "/da/53bd4f77a8/0/context.md",
+      "content_hash": "/da/53bd4f77a8/0/content_hash.txt",
+      "prompt": "/da/53bd4f77a8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 13,
+    "cache_creation_tokens": 20844,
+    "cache_read_tokens": 1494827,
+    "output_tokens": 4318,
+    "api_call_count": 11
+  }
+}
