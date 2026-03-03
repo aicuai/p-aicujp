@@ -221,9 +221,14 @@ export default async function AdminDashboard() {
               Admin
             </span>
           </div>
-          <Link href="/dashboard" style={{ fontSize: 13, color: "var(--aicu-teal)", textDecoration: "none", fontWeight: 500 }}>
-            &larr; ダッシュボード
-          </Link>
+          <div style={{ display: "flex", gap: 12 }}>
+            <Link href="/dashboard/ga4" style={{ fontSize: 13, color: "var(--aicu-teal)", textDecoration: "none", fontWeight: 500 }}>
+              GA4
+            </Link>
+            <Link href="/dashboard" style={{ fontSize: 13, color: "var(--text-secondary)", textDecoration: "none", fontWeight: 500 }}>
+              Dashboard
+            </Link>
+          </div>
         </div>
       </header>
 
