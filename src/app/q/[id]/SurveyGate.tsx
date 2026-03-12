@@ -190,21 +190,33 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
             &#128340;
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: "#1a1a2e" }}>
-            このアンケートは現在、入力を受け付けておりません。
+            {opensAt && now < opensAt
+              ? "このアンケートは現在、入力を受け付けておりません。"
+              : "ご協力ありがとうございました。"
+            }
           </h2>
           <p style={{ fontSize: 15, color: "#666", lineHeight: 1.7 }}>
             {opensAt && now < opensAt
               ? `開始予定: ${opensAt.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
-              : "調査期間は終了しました。ご参加ありがとうございました。"
+              : "調査期間は終了しました。"
             }
           </p>
-          {config.reward && (
+          {config.reward && opensAt && now < opensAt && (
             <p style={{ fontSize: 14, color: "#999", marginTop: 12 }}>
               報酬: {config.reward}（開始後に回答可能になります）
             </p>
           )}
-          {/* Embedded tweet */}
-          <TweetEmbed tweetUrl="https://x.com/AICUai/status/2024119075144978928" />
+          {/* R2602: note.com embed for results article */}
+          {surveyId === "R2602" && closesAt && now > closesAt && (
+            <div style={{ marginTop: 24, textAlign: "left" }}>
+              <p style={{ fontSize: 14, color: "#666", marginBottom: 12, textAlign: "center" }}>
+                <a href="https://note.com/aicu/n/n4b137c2f2bf6" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>
+                  生成AI時代の&quot;つくる人&quot;調査（R2602）中間報告
+                </a>
+              </p>
+              <NoteEmbed noteUrl="https://note.com/embed/notes/n4b137c2f2bf6" />
+            </div>
+          )}
           <div style={{ marginTop: 32, fontSize: 12, color: "#bbb" }}>
             Powered by{" "}
             <span style={{ fontFamily: "'Outfit', sans-serif", color: "var(--aicu-teal, #41C9B4)", fontWeight: 700 }}>AICU</span>
@@ -429,38 +441,32 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
   )
 }
 
-function TweetEmbed({ tweetUrl }: { tweetUrl: string }) {
+function NoteEmbed({ noteUrl }: { noteUrl: string }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    // Extract tweet ID from URL
-    const match = tweetUrl.match(/status\/(\d+)/)
-    if (!match || !ref.current) return
-    const tweetId = match[1]
-
-    type Twttr = { widgets: { createTweet: (id: string, el: HTMLElement, opts?: Record<string, unknown>) => Promise<HTMLElement> } }
-    const w = window as unknown as { twttr?: Twttr }
-
-    const render = () => {
-      if (!w.twttr?.widgets || !ref.current) return
-      ref.current.innerHTML = ""
-      w.twttr.widgets.createTweet(tweetId, ref.current, { lang: "ja", theme: "light" })
-    }
-
-    if (w.twttr?.widgets) { render(); return }
-    // Load Twitter widgets.js
-    if (!document.querySelector('script[src*="platform.twitter.com/widgets.js"]')) {
+    if (!ref.current) return
+    // Load note.com embed script
+    if (!document.querySelector('script[src*="note.com/scripts/embed.js"]')) {
       const s = document.createElement("script")
-      s.src = "https://platform.twitter.com/widgets.js"
+      s.src = "https://note.com/scripts/embed.js"
       s.async = true
+      s.charset = "utf-8"
       document.head.appendChild(s)
     }
-    // Wait for twttr to be ready
-    const interval = setInterval(() => {
-      if (w.twttr?.widgets) { clearInterval(interval); render() }
-    }, 200)
-    return () => clearInterval(interval)
-  }, [tweetUrl])
-  return <div ref={ref} style={{ maxWidth: 400, margin: "24px auto 0" }} />
+  }, [])
+  return (
+    <div ref={ref}>
+      <iframe
+        className="note-embed"
+        src={noteUrl}
+        style={{
+          border: 0, display: "block", maxWidth: "99%",
+          width: 494, padding: 0, margin: "10px 0",
+        }}
+        height={400}
+      />
+    </div>
+  )
 }
 
 const selectStyle: React.CSSProperties = {

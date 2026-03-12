@@ -6,7 +6,7 @@ export const WS260313_CONFIG: SurveyConfig = {
   submitUrl: "/api/surveys/WS260313",
   estimatedMinutes: 1,
   skipGate: true,
-  opensAt: "2026-03-13T00:00:00+09:00",
+  opensAt: "2026-03-12T00:00:00+09:00",
   closesAt: "2026-03-31T23:59:59+09:00",
 
   questions: [
