@@ -10,21 +10,28 @@ import {
 import { SUPERUSER_EMAILS } from "@/lib/constants"
 
 export async function POST(req: NextRequest) {
-  // Verify the sender is a superuser via Supabase auth
-  const userId = await verifySupabaseToken(req.headers.get("authorization"))
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  // Auth: accept CRON_SECRET for server-to-server calls (e.g. Vercel Cron, Workers)
+  const authHeader = req.headers.get("authorization")
+  const cronSecret = process.env.CRON_SECRET
+  const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`
 
-  // Check superuser by looking up the user's email
-  const { createClient } = await import("@supabase/supabase-js")
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!,
-  )
-  const { data: userData } = await supabase.auth.admin.getUserById(userId)
-  if (!userData?.user?.email || !SUPERUSER_EMAILS.includes(userData.user.email)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  if (!isCron) {
+    // Fallback: verify the sender is a superuser via Supabase auth
+    const userId = await verifySupabaseToken(req.headers.get("authorization"))
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Check superuser by looking up the user's email
+    const { createClient } = await import("@supabase/supabase-js")
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!,
+    )
+    const { data: userData } = await supabase.auth.admin.getUserById(userId)
+    if (!userData?.user?.email || !SUPERUSER_EMAILS.includes(userData.user.email)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
   }
 
   const { title, body, url, targetUserId } = await req.json()
