@@ -8,6 +8,120 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import type { SurveyConfig } from "@/data/surveys"
 import SurveyForm from "./SurveyForm"
 
+// ── Gate UI translations ──
+const GATE_I18N: Record<string, {
+  estimatedMinutes: (n: number) => string
+  reward: (r: string) => string
+  ageVerification: string
+  year: string
+  month: string
+  day: string
+  yearSuffix: string
+  monthSuffix: string
+  daySuffix: string
+  termsAgree: string
+  termsLink: string
+  privacyAgree: string
+  privacyLink: string
+  startButton: string
+  closedTitle: string
+  closedEnded: string
+  opensAt: (d: string) => string
+  rewardNote: (r: string) => string
+  thanksTitle: string
+}> = {
+  ja: {
+    estimatedMinutes: (n) => `所要時間: 約${n}分`,
+    reward: (r) => `報酬: ${r}`,
+    ageVerification: "年齢確認（生年月日）",
+    year: "年", month: "月", day: "日",
+    yearSuffix: "年", monthSuffix: "月", daySuffix: "日",
+    termsAgree: "に同意する", termsLink: "利用規約",
+    privacyAgree: "に同意する", privacyLink: "プライバシーポリシー",
+    startButton: "同意して開始",
+    closedTitle: "このアンケートは現在、入力を受け付けておりません。",
+    closedEnded: "調査期間は終了しました。",
+    opensAt: (d) => `開始予定: ${d}`,
+    rewardNote: (r) => `報酬: ${r}（開始後に回答可能になります）`,
+    thanksTitle: "ご協力ありがとうございました。",
+  },
+  en: {
+    estimatedMinutes: (n) => `Estimated time: ~${n} min`,
+    reward: (r) => `Reward: ${r}`,
+    ageVerification: "Age verification (date of birth)",
+    year: "Year", month: "Month", day: "Day",
+    yearSuffix: "", monthSuffix: "", daySuffix: "",
+    termsAgree: "I agree to the ", termsLink: "Terms of Service",
+    privacyAgree: "I agree to the ", privacyLink: "Privacy Policy",
+    startButton: "Agree & Start",
+    closedTitle: "This survey is not currently accepting responses.",
+    closedEnded: "The survey period has ended.",
+    opensAt: (d) => `Opens: ${d}`,
+    rewardNote: (r) => `Reward: ${r} (available after opening)`,
+    thanksTitle: "Thank you for your participation.",
+  },
+  ko: {
+    estimatedMinutes: (n) => `소요 시간: 약 ${n}분`,
+    reward: (r) => `보상: ${r}`,
+    ageVerification: "연령 확인 (생년월일)",
+    year: "년", month: "월", day: "일",
+    yearSuffix: "년", monthSuffix: "월", daySuffix: "일",
+    termsAgree: "에 동의합니다", termsLink: "이용약관",
+    privacyAgree: "에 동의합니다", privacyLink: "개인정보 처리방침",
+    startButton: "동의하고 시작",
+    closedTitle: "현재 이 설문은 응답을 받지 않고 있습니다.",
+    closedEnded: "조사 기간이 종료되었습니다.",
+    opensAt: (d) => `시작 예정: ${d}`,
+    rewardNote: (r) => `보상: ${r} (시작 후 응답 가능)`,
+    thanksTitle: "참여해 주셔서 감사합니다.",
+  },
+  zh: {
+    estimatedMinutes: (n) => `预计时间：约${n}分钟`,
+    reward: (r) => `奖励：${r}`,
+    ageVerification: "年龄验证（出生日期）",
+    year: "年", month: "月", day: "日",
+    yearSuffix: "年", monthSuffix: "月", daySuffix: "日",
+    termsAgree: "我同意", termsLink: "使用条款",
+    privacyAgree: "我同意", privacyLink: "隐私政策",
+    startButton: "同意并开始",
+    closedTitle: "本问卷目前不接受回答。",
+    closedEnded: "调查期间已结束。",
+    opensAt: (d) => `开始时间：${d}`,
+    rewardNote: (r) => `奖励：${r}（开始后可回答）`,
+    thanksTitle: "感谢您的参与。",
+  },
+  fr: {
+    estimatedMinutes: (n) => `Durée estimée : ~${n} min`,
+    reward: (r) => `Récompense : ${r}`,
+    ageVerification: "Vérification de l'âge (date de naissance)",
+    year: "Année", month: "Mois", day: "Jour",
+    yearSuffix: "", monthSuffix: "", daySuffix: "",
+    termsAgree: "J'accepte les ", termsLink: "Conditions d'utilisation",
+    privacyAgree: "J'accepte la ", privacyLink: "Politique de confidentialité",
+    startButton: "Accepter et commencer",
+    closedTitle: "Ce questionnaire n'accepte pas de réponses actuellement.",
+    closedEnded: "La période d'enquête est terminée.",
+    opensAt: (d) => `Ouverture : ${d}`,
+    rewardNote: (r) => `Récompense : ${r} (disponible après ouverture)`,
+    thanksTitle: "Merci de votre participation.",
+  },
+  es: {
+    estimatedMinutes: (n) => `Tiempo estimado: ~${n} min`,
+    reward: (r) => `Recompensa: ${r}`,
+    ageVerification: "Verificación de edad (fecha de nacimiento)",
+    year: "Año", month: "Mes", day: "Día",
+    yearSuffix: "", monthSuffix: "", daySuffix: "",
+    termsAgree: "Acepto los ", termsLink: "Términos de servicio",
+    privacyAgree: "Acepto la ", privacyLink: "Política de privacidad",
+    startButton: "Aceptar y comenzar",
+    closedTitle: "Esta encuesta no acepta respuestas actualmente.",
+    closedEnded: "El período de la encuesta ha terminado.",
+    opensAt: (d) => `Apertura: ${d}`,
+    rewardNote: (r) => `Recompensa: ${r} (disponible tras la apertura)`,
+    thanksTitle: "Gracias por su participación.",
+  },
+}
+
 type Props = {
   surveyId: string
   config: SurveyConfig
@@ -33,6 +147,7 @@ function daysInMonth(year: number, month: number) {
 }
 
 export default function SurveyGate({ surveyId, config, email }: Props) {
+  const t = GATE_I18N[config.currentLang || "ja"] || GATE_I18N.ja
   const [phase, setPhase] = useState<"gate" | "survey">("gate")
   const [birthYear, setBirthYear] = useState("")
   const [birthMonth, setBirthMonth] = useState("")
@@ -191,19 +306,19 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: "#1a1a2e" }}>
             {opensAt && now < opensAt
-              ? "このアンケートは現在、入力を受け付けておりません。"
-              : "ご協力ありがとうございました。"
+              ? t.closedTitle
+              : t.thanksTitle
             }
           </h2>
           <p style={{ fontSize: 15, color: "#666", lineHeight: 1.7 }}>
             {opensAt && now < opensAt
-              ? `開始予定: ${opensAt.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
-              : "調査期間は終了しました。"
+              ? t.opensAt(opensAt.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }))
+              : t.closedEnded
             }
           </p>
           {config.reward && opensAt && now < opensAt && (
             <p style={{ fontSize: 14, color: "#999", marginTop: 12 }}>
-              報酬: {config.reward}（開始後に回答可能になります）
+              {t.rewardNote(config.reward)}
             </p>
           )}
           {/* R2602: note.com embed for results article */}
@@ -297,8 +412,8 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
           background: "#fff", border: "1px solid rgba(0,0,0,0.08)",
           fontSize: 13, color: "#888", lineHeight: 2,
         }}>
-          {config.estimatedMinutes && <div>所要時間: 約{config.estimatedMinutes}分</div>}
-          {config.reward && <div>報酬: {config.reward}</div>}
+          {config.estimatedMinutes && <div>{t.estimatedMinutes(config.estimatedMinutes)}</div>}
+          {config.reward && <div>{t.reward(config.reward)}</div>}
           {surveyId === "R2602" && (
             <>
               <div>
@@ -361,25 +476,25 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
           background: "#fff", border: "1px solid rgba(0,0,0,0.08)",
         }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: "#999", marginBottom: 12 }}>
-            年齢確認（生年月日）
+            {t.ageVerification}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <select value={birthYear} onChange={(e) => setBirthYear(e.target.value)} style={selectStyle}>
-              <option value="">年</option>
+              <option value="">{t.year}</option>
               {yearOptions().map((y) => (
-                <option key={y} value={y}>{y}年</option>
+                <option key={y} value={y}>{y}{t.yearSuffix}</option>
               ))}
             </select>
             <select value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)} style={selectStyle}>
-              <option value="">月</option>
+              <option value="">{t.month}</option>
               {months.map((m) => (
-                <option key={m} value={m}>{m}月</option>
+                <option key={m} value={m}>{m}{t.monthSuffix}</option>
               ))}
             </select>
             <select value={birthDay} onChange={(e) => setBirthDay(e.target.value)} style={selectStyle}>
-              <option value="">日</option>
+              <option value="">{t.day}</option>
               {dayOptions.map((d) => (
-                <option key={d} value={d}>{d}日</option>
+                <option key={d} value={d}>{d}{t.daySuffix}</option>
               ))}
             </select>
           </div>
@@ -395,8 +510,7 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
               style={{ width: 18, height: 18, accentColor: BLUE }}
             />
             <span style={{ color: "#333" }}>
-              <a href="https://www.aicu.blog/terms/plan-free" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>利用規約</a>
-              に同意する
+              {t.termsAgree}<a href="https://www.aicu.blog/terms/plan-free" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>{t.termsLink}</a>
             </span>
           </label>
           <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 14 }}>
@@ -407,8 +521,7 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
               style={{ width: 18, height: 18, accentColor: BLUE }}
             />
             <span style={{ color: "#333" }}>
-              <a href="https://corp.aicu.ai/ja/privacy" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>プライバシーポリシー</a>
-              に同意する
+              {t.privacyAgree}<a href="https://corp.aicu.ai/ja/privacy" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>{t.privacyLink}</a>
             </span>
           </label>
         </div>
@@ -427,7 +540,7 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
             boxShadow: canProceed ? "0 4px 20px rgba(0,49,216,0.25)" : "none",
           }}
         >
-          同意して開始
+          {t.startButton}
         </button>
 
         {/* Footer */}
