@@ -15,6 +15,7 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.vercel-check
 
 # Debug
 npm-debug.log*
@@ -29,6 +30,10 @@ yarn-error.log*
 *.swp
 *.swo
 
+# Tools
+.mcp.json
+.serena/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -36,6 +41,7 @@ Thumbs.db
 # Temporary data exports (never commit)
 tmp/
 *.csv
+wix-test-pagination.cjs
 
 # Supabase
 supabase/.temp/
