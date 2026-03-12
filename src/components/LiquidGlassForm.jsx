@@ -1040,8 +1040,13 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
           <span style={{ fontSize: 13, fontWeight: 600, color: s.text }}>Research</span>
         </a>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {formConfig.title && (
+            <span style={{ fontSize: 13, fontWeight: 700, color: s.text, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {formConfig.title}
+            </span>
+          )}
           {surveyLabel && (
-            <span style={{ fontSize: 12, fontWeight: 600, color: s.textDim, letterSpacing: "0.03em" }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: s.textDim, letterSpacing: "0.03em" }}>
               {surveyLabel}
             </span>
           )}
@@ -1114,77 +1119,95 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
               </p>
             </>)}
 
-            {/* Share CTA */}
-            <div style={{
-              marginTop: 24, padding: "16px 20px", borderRadius: 16, width: "100%", maxWidth: 340,
-              background: "rgba(0,49,216,0.04)", border: "1px solid rgba(0,49,216,0.12)",
-            }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: s.text, marginBottom: 10 }}>
-                この調査をシェアする
-              </div>
-              <p style={{ fontSize: 13, color: s.textSub, lineHeight: 1.7, marginBottom: 12 }}>
-                一人でも多くの声が、より良い政策提言につながります
-              </p>
-              {(() => {
-                const sid = surveyLabel || "survey";
-                const surveyUrl = "https://p.aicu.jp/q/" + sid;
-                const shareText = formConfig.title + " に参加しました。\nチャットで答える新感覚アンケート！\n" + surveyUrl + "\n#AICU";
-                const copyAndToast = () => {
-                  navigator.clipboard.writeText(shareText).then(() => {
-                    setCopyToast(true);
-                    setTimeout(() => setCopyToast(false), 2000);
-                  }).catch(() => {});
-                };
-                return (<>
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({ text: shareText, url: surveyUrl }).catch(() => {});
-                      } else {
-                        copyAndToast();
-                      }
-                    }}
-                    style={{
-                      width: "100%", padding: "12px 16px", borderRadius: 12,
-                      border: "none", fontSize: 15, fontWeight: 700, fontFamily: "inherit",
-                      cursor: "pointer", background: "#0031D8", color: "#fff",
-                      boxShadow: "0 2px 12px rgba(0,49,216,0.2)",
-                    }}
-                  >
-                    シェアする
-                  </button>
-                  {copyToast && (
-                    <div style={{
-                      marginTop: 8, padding: "8px 16px", borderRadius: 10, textAlign: "center",
-                      background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)",
-                      color: "#059669", fontSize: 13, fontWeight: 600,
-                      animation: "lgf-fi 0.2s ease both",
-                    }}>
-                      URLをコピーしました
-                    </div>
-                  )}
-                  <div style={{ display: "flex", gap: 8, marginTop: 8, justifyContent: "center" }}>
-                    <a
-                      href={"https://x.com/intent/tweet?text=" + encodeURIComponent(shareText)}
-                      target="_blank" rel="noopener"
-                      style={{ fontSize: 13, color: s.textDim, textDecoration: "underline" }}
-                    >
-                      X (Twitter)
-                    </a>
-                    <span style={{ color: s.textDim, fontSize: 13 }}>|</span>
+            {/* End card: share CTA for reward surveys, AICU link for others */}
+            {formConfig.reward ? (
+              <div style={{
+                marginTop: 24, padding: "16px 20px", borderRadius: 16, width: "100%", maxWidth: 340,
+                background: "rgba(0,49,216,0.04)", border: "1px solid rgba(0,49,216,0.12)",
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: s.text, marginBottom: 10 }}>
+                  この調査をシェアする
+                </div>
+                <p style={{ fontSize: 13, color: s.textSub, lineHeight: 1.7, marginBottom: 12 }}>
+                  一人でも多くの声が、より良い政策提言につながります
+                </p>
+                {(() => {
+                  const sid = surveyLabel || "survey";
+                  const surveyUrl = "https://p.aicu.jp/q/" + sid;
+                  const shareText = formConfig.title + " に参加しました。\nチャットで答える新感覚アンケート！\n" + surveyUrl + "\n#AICU";
+                  const copyAndToast = () => {
+                    navigator.clipboard.writeText(shareText).then(() => {
+                      setCopyToast(true);
+                      setTimeout(() => setCopyToast(false), 2000);
+                    }).catch(() => {});
+                  };
+                  return (<>
                     <button
-                      onClick={copyAndToast}
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({ text: shareText, url: surveyUrl }).catch(() => {});
+                        } else {
+                          copyAndToast();
+                        }
+                      }}
                       style={{
-                        background: "none", border: "none", padding: 0, fontSize: 13,
-                        color: s.textDim, textDecoration: "underline", cursor: "pointer", fontFamily: "inherit",
+                        width: "100%", padding: "12px 16px", borderRadius: 12,
+                        border: "none", fontSize: 15, fontWeight: 700, fontFamily: "inherit",
+                        cursor: "pointer", background: "#0031D8", color: "#fff",
+                        boxShadow: "0 2px 12px rgba(0,49,216,0.2)",
                       }}
                     >
-                      URLをコピー
+                      シェアする
                     </button>
-                  </div>
-                </>);
-              })()}
-            </div>
+                    {copyToast && (
+                      <div style={{
+                        marginTop: 8, padding: "8px 16px", borderRadius: 10, textAlign: "center",
+                        background: "rgba(52,211,153,0.15)", border: "1px solid rgba(52,211,153,0.3)",
+                        color: "#059669", fontSize: 13, fontWeight: 600,
+                        animation: "lgf-fi 0.2s ease both",
+                      }}>
+                        URLをコピーしました
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 8, marginTop: 8, justifyContent: "center" }}>
+                      <a
+                        href={"https://x.com/intent/tweet?text=" + encodeURIComponent(shareText)}
+                        target="_blank" rel="noopener"
+                        style={{ fontSize: 13, color: s.textDim, textDecoration: "underline" }}
+                      >
+                        X (Twitter)
+                      </a>
+                      <span style={{ color: s.textDim, fontSize: 13 }}>|</span>
+                      <button
+                        onClick={copyAndToast}
+                        style={{
+                          background: "none", border: "none", padding: 0, fontSize: 13,
+                          color: s.textDim, textDecoration: "underline", cursor: "pointer", fontFamily: "inherit",
+                        }}
+                      >
+                        URLをコピー
+                      </button>
+                    </div>
+                  </>);
+                })()}
+              </div>
+            ) : (
+              <div style={{ marginTop: 24, textAlign: "center" }}>
+                <a
+                  href="https://aicu.jp"
+                  target="_blank"
+                  rel="noopener"
+                  style={{
+                    display: "inline-block", padding: "14px 28px", borderRadius: 12,
+                    background: "linear-gradient(135deg, #41C9B4, #2BA594)",
+                    color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none",
+                    boxShadow: "0 3px 12px rgba(65, 201, 180, 0.3)",
+                  }}
+                >
+                  AICU.jp をよろしくお願いいたします
+                </a>
+              </div>
+            )}
 
             <div style={{ marginTop: 20, fontSize: 13, color: s.textDim, lineHeight: 1.6 }}>
               <a href="https://corp.aicu.ai/ja/privacy" target="_blank" rel="noopener" style={{ color: s.textDim, textDecoration: "underline" }}>プライバシーポリシー</a>
