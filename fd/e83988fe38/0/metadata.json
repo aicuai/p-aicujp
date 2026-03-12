@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "fde83988fe38",
+  "session_id": "8df53660-e653-4499-819f-e2874608481d",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-12T12:31:34.079338Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/q/[id]/SurveyGate.tsx",
+    "src/data/surveys/R2603.ts",
+    "src/data/surveys/WS260313.ts"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "34f8d973-31a5-4399-ab06-93dbca372873",
+  "checkpoint_transcript_start": 440,
+  "transcript_lines_at_start": 440,
+  "token_usage": {
+    "input_tokens": 22,
+    "cache_creation_tokens": 9200,
+    "cache_read_tokens": 2030066,
+    "output_tokens": 4789,
+    "api_call_count": 18
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-12T12:31:33.628059Z",
+    "agent_lines": 0,
+    "human_added": 892,
+    "human_modified": 49,
+    "human_removed": 0,
+    "total_committed": 910,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-aki-git-local-p-aicujp/8df53660-e653-4499-819f-e2874608481d.jsonl"
+}
