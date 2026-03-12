@@ -44,6 +44,9 @@ export type SurveyConfig = {
   estimatedMinutes?: number
   opensAt?: string   // ISO 8601 — survey closed before this time
   closesAt?: string  // ISO 8601 — survey closed after this time
+  skipGate?: boolean  // skip consent gate (for closed/workshop surveys)
+  availableLangs?: string[]  // available language codes (for multilingual surveys)
+  currentLang?: string       // current language code
   questions: SurveyQuestion[]
   mergedQuestions?: MergedQuestionSplit[]  // split merged answers for API submission
 }
@@ -51,6 +54,19 @@ export type SurveyConfig = {
 // Registry of all surveys
 const registry: Record<string, () => Promise<SurveyConfig>> = {
   R2602: () => import("./R2602").then((m) => m.R2602_CONFIG),
+  R2603: () => import("./R2603").then((m) => m.R2603_CONFIG),
+  WS260313: () => import("./WS260313").then((m) => m.WS260313_CONFIG),
+}
+
+// Language-aware config loader (for multilingual surveys)
+export async function getSurveyConfigWithLang(id: string, lang?: string): Promise<SurveyConfig | null> {
+  if (id === "R2603" && lang) {
+    const { getR2603Config, R2603_LANGS } = await import("./R2603")
+    type R2603Lang = typeof R2603_LANGS[number]
+    const validLang = R2603_LANGS.includes(lang as R2603Lang) ? (lang as R2603Lang) : "ja"
+    return getR2603Config(validLang)
+  }
+  return getSurveyConfig(id)
 }
 
 export function getSurveyConfig(id: string): Promise<SurveyConfig> | null {
@@ -60,4 +76,4 @@ export function getSurveyConfig(id: string): Promise<SurveyConfig> | null {
 }
 
 // All known survey IDs (for status checks)
-export const ALL_SURVEY_IDS = ["R2511", "R2602"]
+export const ALL_SURVEY_IDS = ["R2511", "R2602", "R2603", "WS260313"]

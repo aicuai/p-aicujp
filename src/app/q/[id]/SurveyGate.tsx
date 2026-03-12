@@ -215,7 +215,8 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
     )
   }
 
-  if (phase === "survey") {
+  // Skip gate for closed/workshop surveys
+  if (config.skipGate || phase === "survey") {
     return <SurveyForm surveyId={surveyId} config={config} email={email} birthYear={consentBirthYear} />
   }
 
@@ -252,6 +253,30 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
           {config.description && (
             <p style={{ fontSize: 15, color: "#666", lineHeight: 1.6 }}>{config.description}</p>
           )}
+          {/* Language switcher */}
+          {config.availableLangs && config.availableLangs.length > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
+              {config.availableLangs.map((lang) => {
+                const labels: Record<string, string> = { ja: "日本語", en: "English", ko: "한국어", zh: "中文", fr: "Français", es: "Español" }
+                const isActive = lang === (config.currentLang || "ja")
+                return (
+                  <a
+                    key={lang}
+                    href={`?lang=${lang}`}
+                    style={{
+                      padding: "4px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                      textDecoration: "none",
+                      background: isActive ? BLUE : "rgba(0,0,0,0.05)",
+                      color: isActive ? "#fff" : "#666",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {labels[lang] || lang}
+                  </a>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Info block */}
@@ -262,23 +287,27 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
         }}>
           {config.estimatedMinutes && <div>所要時間: 約{config.estimatedMinutes}分</div>}
           {config.reward && <div>報酬: {config.reward}</div>}
-          <div>
-            前回調査結果:{" "}
-            <a href="https://u.aicu.jp/r/R2511" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>R2511</a>
-          </div>
-          <div>
-            結果速報の例:{" "}
-            <a href="/q/R2602/results" style={{ color: BLUE, textDecoration: "underline" }}>R2602 速報ページ</a>
-          </div>
-          <div>
-            データ利用方針:{" "}
-            <a href="/q/R2602/policy" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>p.aicu.jp/q/R2602/policy</a>
-          </div>
-          <div>
-            調査協力:{" "}
-            <a href="https://www.dcaj.or.jp/" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>一般財団法人デジタルコンテンツ協会</a>
-            {" "}(DCAJ)
-          </div>
+          {surveyId === "R2602" && (
+            <>
+              <div>
+                前回調査結果:{" "}
+                <a href="https://u.aicu.jp/r/R2511" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>R2511</a>
+              </div>
+              <div>
+                結果速報の例:{" "}
+                <a href="/q/R2602/results" style={{ color: BLUE, textDecoration: "underline" }}>R2602 速報ページ</a>
+              </div>
+              <div>
+                データ利用方針:{" "}
+                <a href="/q/R2602/policy" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>p.aicu.jp/q/R2602/policy</a>
+              </div>
+              <div>
+                調査協力:{" "}
+                <a href="https://www.dcaj.or.jp/" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>一般財団法人デジタルコンテンツ協会</a>
+                {" "}(DCAJ)
+              </div>
+            </>
+          )}
         </div>
 
         {/* Participation status */}

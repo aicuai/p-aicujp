@@ -7,6 +7,11 @@ import { awardPointsByEmail } from "@/lib/wix"
 
 const MAX_ANSWERS_SIZE = 50_000 // 50KB JSON limit
 
+// Surveys that offer point rewards
+const REWARD_SURVEYS: Record<string, number> = {
+  R2602: 10000,
+}
+
 // Award loyalty points directly via Wix SDK
 async function triggerReward(surveyId: string, email: string, points: number, responseId: string) {
   if (!email) return
@@ -87,7 +92,7 @@ export async function POST(
     ip_hash: ipHash,
     user_agent: req.headers.get("user-agent")?.slice(0, 256) ?? null,
     email: email || null,
-    reward_status: email ? "pending" : "none",
+    reward_status: (email && REWARD_SURVEYS[surveyId]) ? "pending" : "none",
   }).select("id").single()
 
   if (error) {
@@ -96,8 +101,9 @@ export async function POST(
   }
 
   // Trigger reward via Wix SDK (fire-and-forget, don't block response)
-  if (email && inserted?.id) {
-    triggerReward(surveyId, email, 10000, inserted.id).catch(() => {})
+  const rewardPoints = REWARD_SURVEYS[surveyId]
+  if (email && rewardPoints && inserted?.id) {
+    triggerReward(surveyId, email, rewardPoints, inserted.id).catch(() => {})
   }
 
   // Slack dev notification (fire-and-forget, hash email for privacy)
