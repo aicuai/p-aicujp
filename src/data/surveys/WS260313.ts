@@ -1,7 +1,7 @@
 import type { SurveyConfig } from "./index"
 
 export const WS260313_CONFIG: SurveyConfig = {
-  title: "ワークショップ フィードバック",
+  title: 'さくらインターネット社内勉強会「イマドキのClaude Code ブートキャンプ」',
   description: "本日のワークショップについてご意見をお聞かせください（1分程度）",
   submitUrl: "/api/surveys/WS260313",
   estimatedMinutes: 1,
@@ -69,7 +69,7 @@ export const WS260313_CONFIG: SurveyConfig = {
     {
       id: "ws_email",
       type: "text",
-      question: "今後のご案内をお送りしてもよろしければ、メールアドレスをお知らせください。",
+      question: "メールアドレスをご登録いただいた方にAICUポイントをプレゼントします。",
       placeholder: "your@email.com",
       required: false,
     },

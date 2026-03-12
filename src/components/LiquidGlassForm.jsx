@@ -1102,15 +1102,17 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
             <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 10, color: s.text }}>
               ご回答ありがとうございました
             </h2>
-            <p style={{ fontSize: 15, color: s.textSub, lineHeight: 1.8, maxWidth: 340 }}>
-              謝礼 {reward} は{" "}
-              <a href="https://p.aicu.jp" target="_blank" rel="noopener" style={{ color: s.accent, textDecoration: "underline", fontWeight: 600 }}>p.aicu.jp</a>
-              {" "}で確認できます
-            </p>
-            <p style={{ fontSize: 14, color: s.textDim, lineHeight: 1.7, maxWidth: 340, marginTop: 10 }}>
-              AICUポイントのご利用はこちら:{" "}
-              <a href="https://www.aicu.blog/category/all-products" target="_blank" rel="noopener" style={{ color: s.accent, textDecoration: "underline", fontWeight: 600 }}>AICUマガジン・Amazonギフト券など</a>
-            </p>
+            {formConfig.reward && (<>
+              <p style={{ fontSize: 15, color: s.textSub, lineHeight: 1.8, maxWidth: 340 }}>
+                謝礼 {reward} は{" "}
+                <a href="https://p.aicu.jp" target="_blank" rel="noopener" style={{ color: s.accent, textDecoration: "underline", fontWeight: 600 }}>p.aicu.jp</a>
+                {" "}で確認できます
+              </p>
+              <p style={{ fontSize: 14, color: s.textDim, lineHeight: 1.7, maxWidth: 340, marginTop: 10 }}>
+                AICUポイントのご利用はこちら:{" "}
+                <a href="https://www.aicu.blog/category/all-products" target="_blank" rel="noopener" style={{ color: s.accent, textDecoration: "underline", fontWeight: 600 }}>AICUマガジン・Amazonギフト券など</a>
+              </p>
+            </>)}
 
             {/* Share CTA */}
             <div style={{
@@ -1124,8 +1126,9 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
                 一人でも多くの声が、より良い政策提言につながります
               </p>
               {(() => {
-                const shareText = "生成AI時代の\"つくる人\"調査(R2602)に参加しました。\nチャットで答える新感覚アンケート！\n約5分で完了＆10,000ポイントもらえます。\nhttps://p.aicu.jp/R2602\n#AICU #生成AIつくる人調査";
-                const shareUrl = "https://p.aicu.jp/R2602";
+                const sid = surveyLabel || "survey";
+                const surveyUrl = "https://p.aicu.jp/q/" + sid;
+                const shareText = formConfig.title + " に参加しました。\nチャットで答える新感覚アンケート！\n" + surveyUrl + "\n#AICU";
                 const copyAndToast = () => {
                   navigator.clipboard.writeText(shareText).then(() => {
                     setCopyToast(true);
@@ -1136,7 +1139,7 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
                   <button
                     onClick={() => {
                       if (navigator.share) {
-                        navigator.share({ text: shareText, url: shareUrl }).catch(() => {});
+                        navigator.share({ text: shareText, url: surveyUrl }).catch(() => {});
                       } else {
                         copyAndToast();
                       }
