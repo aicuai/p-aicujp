@@ -222,6 +222,9 @@ export default async function AdminDashboard() {
             </span>
           </div>
           <div style={{ display: "flex", gap: 12 }}>
+            <Link href="/dashboard/aiq" style={{ fontSize: 13, color: "var(--aicu-teal)", textDecoration: "none", fontWeight: 500 }}>
+              AIQ
+            </Link>
             <Link href="/dashboard/ga4" style={{ fontSize: 13, color: "var(--aicu-teal)", textDecoration: "none", fontWeight: 500 }}>
               GA4
             </Link>

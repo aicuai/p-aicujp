@@ -1029,27 +1029,24 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
     }}>
       {/* Header */}
       <div style={{
-        flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 20px", borderBottom: `1px solid ${s.border}`, zIndex: 2,
-        background: "#fff",
+        flexShrink: 0, display: "flex", flexDirection: "column",
+        padding: "12px 20px", borderBottom: `1px solid ${s.border}`, zIndex: 2,
+        background: "#fff", gap: 6,
       }}>
-        <a href="https://aicu.jp" target="_blank" rel="noopener" style={{
-          display: "flex", alignItems: "center", gap: 8, textDecoration: "none",
-        }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 800, color: "#41C9B4" }}>AICU</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: s.text }}>Research</span>
-        </a>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {formConfig.title && (
-            <span style={{ fontSize: 13, fontWeight: 700, color: s.text, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {formConfig.title}
-            </span>
-          )}
-          {surveyLabel && (
-            <span style={{ fontSize: 11, fontWeight: 600, color: s.textDim, letterSpacing: "0.03em" }}>
-              {surveyLabel}
-            </span>
-          )}
+        {/* Top row: AICU Research + progress */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a href="https://aicu.jp" target="_blank" rel="noopener" style={{
+            display: "flex", alignItems: "center", gap: 8, textDecoration: "none",
+          }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 800, color: "#41C9B4" }}>AICU</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: s.text }}>Research</span>
+          </a>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {surveyLabel && (
+              <span style={{ fontSize: 11, fontWeight: 600, color: s.textDim, letterSpacing: "0.03em" }}>
+                {surveyLabel}
+              </span>
+            )}
           <div style={{ width: 60, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.08)", overflow: "hidden" }}>
             <div style={{
               height: "100%", borderRadius: 2, background: s.accent,
@@ -1082,7 +1079,16 @@ export default function LiquidGlassForm({ formConfig, onComplete = null, initial
               return `残り${remaining}分`;
             })()}
           </span>
+          </div>
         </div>
+        {/* Title row — centered, full width */}
+        {formConfig.title && (
+          <div style={{ textAlign: "center", lineHeight: 1.4 }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: s.text }}>
+              {formConfig.title}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Chat area */}
