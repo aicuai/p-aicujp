@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "2ef31109a6e6",
+  "session_id": "8df53660-e653-4499-819f-e2874608481d",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-12T14:34:54.08626Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/api/cron/daily-report/route.ts",
+    "vercel.json"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "85642f23-9dd4-46f3-bf21-d7d4f86982d9",
+  "checkpoint_transcript_start": 888,
+  "transcript_lines_at_start": 888,
+  "token_usage": {
+    "input_tokens": 17,
+    "cache_creation_tokens": 6533,
+    "cache_read_tokens": 806309,
+    "output_tokens": 2912,
+    "api_call_count": 13
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-12T14:34:53.256458Z",
+    "agent_lines": 0,
+    "human_added": 0,
+    "human_modified": 6,
+    "human_removed": 0,
+    "total_committed": 0,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-aki-git-local-p-aicujp/8df53660-e653-4499-819f-e2874608481d.jsonl"
+}
