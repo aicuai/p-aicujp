@@ -43,8 +43,14 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("[auth/callback] exchangeCodeForSession error:", error)
+      // PKCE code verifier missing — user likely opened the link in a different browser/device
+      // or cookies were cleared. Redirect to login with a friendly message.
+      const isPKCE = error.message?.includes("code verifier")
+      const msg = isPKCE
+        ? "認証リンクの有効期限が切れたか、別のブラウザで開かれました。再度ログインしてください。"
+        : error.message
       return NextResponse.redirect(
-        new URL(`/auth/error?error=${encodeURIComponent(error.message)}`, request.url),
+        new URL(`/auth/error?error=${encodeURIComponent(msg)}`, request.url),
       )
     }
 
