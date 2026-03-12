@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "a0a0f0c40631",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".claude/skills/aiq-create/SKILL.md",
+    ".gitignore",
+    "src/app/api/surveys/[id]/route.ts",
+    "src/app/dashboard/aiq/page.tsx",
+    "src/app/q/[id]/SurveyGate.tsx",
+    "src/app/q/[id]/page.tsx",
+    "src/components/LiquidGlassForm.jsx",
+    "src/data/surveys/R2602.ts",
+    "src/data/surveys/R2603.ts",
+    "src/data/surveys/WS260313.ts",
+    "src/data/surveys/index.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a0/a0f0c40631/0/metadata.json",
+      "transcript": "/a0/a0f0c40631/0/full.jsonl",
+      "context": "/a0/a0f0c40631/0/context.md",
+      "content_hash": "/a0/a0f0c40631/0/content_hash.txt",
+      "prompt": "/a0/a0f0c40631/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 22,
+    "cache_creation_tokens": 16007,
+    "cache_read_tokens": 3021136,
+    "output_tokens": 8918,
+    "api_call_count": 20
+  }
+}
