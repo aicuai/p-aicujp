@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "04556e499464",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/app/q/[id]/SurveyGate.tsx",
+    "src/data/surveys/R2602.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/04/556e499464/0/metadata.json",
+      "transcript": "/04/556e499464/0/full.jsonl",
+      "context": "/04/556e499464/0/context.md",
+      "content_hash": "/04/556e499464/0/content_hash.txt",
+      "prompt": "/04/556e499464/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 28,
+    "cache_creation_tokens": 14348,
+    "cache_read_tokens": 2974047,
+    "output_tokens": 7607,
+    "api_call_count": 24
+  }
+}
