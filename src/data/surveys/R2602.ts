@@ -77,6 +77,7 @@ export const R2602_CONFIG: SurveyConfig = {
   reward: "10,000 AICUポイント",
   estimatedMinutes: 3,
   opensAt: "2026-02-18T23:50:00+09:00",
+  closesAt: "2026-03-12T23:59:59+09:00",
   mergedQuestions: MERGED_QUESTIONS,
 
   questions: [
