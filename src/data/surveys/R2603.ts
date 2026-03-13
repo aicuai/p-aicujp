@@ -769,7 +769,7 @@ export function getR2603Config(lang: R2603Lang = "ja"): SurveyConfig {
     description: t.description,
     submitUrl: "/api/surveys/R2603",
     estimatedMinutes: 3,
-    opensAt: "2026-03-12T00:00:00+09:00",
+    opensAt: "2026-03-16T00:00:00+09:00",
     availableLangs: [...R2603_LANGS],
     currentLang: lang,
     questions: buildQuestions(t),

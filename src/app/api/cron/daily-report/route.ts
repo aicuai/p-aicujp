@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { notifySlackStaff } from "@/lib/slack"
 
 // Active survey IDs to report — add new campaigns here
-const ACTIVE_SURVEYS = ["R2603"]
+const ACTIVE_SURVEYS = ["R2602"]
 
 export async function GET(request: NextRequest) {
   // Vercel Cron Secret 認証
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       process.env.SUPABASE_SERVICE_KEY!,
     )
 
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const results: Record<string, { total: number; recent: number; test: number }> = {}
 
     for (const surveyId of ACTIVE_SURVEYS) {
@@ -54,13 +54,13 @@ export async function GET(request: NextRequest) {
 
     const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
 
-    const lines = ["📊 ウィークリーレポート", `━━━━━━━━━━━━━━━━━━`]
+    const lines = ["📊 デイリーレポート", `━━━━━━━━━━━━━━━━━━`]
     for (const [sid, r] of Object.entries(results)) {
       lines.push(`【${sid}】`)
       lines.push(`  本番回答数: ${r.total} 件`)
-      lines.push(`  過去7日新規: +${r.recent} 件`)
+      lines.push(`  過去24h新規: +${r.recent} 件`)
       if (r.test) lines.push(`  テスト: ${r.test} 件（除外済み）`)
-      lines.push(`  回答ページ: https://p.aicu.jp/q/${sid}`)
+      lines.push(`  速報: https://p.aicu.jp/q/${sid}/results`)
     }
     lines.push(`━━━━━━━━━━━━━━━━━━`)
     lines.push(`集計時刻: ${now}`)
